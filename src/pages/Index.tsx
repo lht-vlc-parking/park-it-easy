@@ -3,6 +3,7 @@ import { ParkingSpotCard } from "@/components/ParkingSpotCard";
 import { BookingDialogWithValidation } from "@/components/BookingDialogWithValidation";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -239,12 +240,20 @@ const Index = () => {
               </div>
             </section>
 
-            {/* User's Bookings Section */}
+            {/* All Users' Bookings Section */}
             <section className="scale-in">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full"></div>
-                Upcoming Bookings
-              </h2>
+              <div className="mb-4">
+                <h2 className="text-xl md:text-2xl font-bold mb-2 flex items-center gap-2 flex-wrap">
+                  <div className="h-1 w-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full"></div>
+                  All Upcoming Bookings
+                  <Badge variant="outline" className="text-xs font-normal">
+                    Team-wide visibility
+                  </Badge>
+                </h2>
+                <p className="text-sm text-muted-foreground ml-10">
+                  View all team members' parking reservations. Your bookings are marked with a "You" badge.
+                </p>
+              </div>
               {allUpcomingBookings.length > 0 ? (
                 <div className="space-y-3">
                   {allUpcomingBookings
@@ -276,6 +285,8 @@ const Index = () => {
                         ? "ring-2 ring-orange-500/50 shadow-lg" 
                         : "";
                       
+                      const isMyBooking = booking.userName === (user?.user_metadata?.user_name || user?.email);
+                      
                       return (
                         <div
                           key={booking.id}
@@ -295,6 +306,7 @@ const Index = () => {
                               <div className="font-semibold truncate flex items-center gap-2">
                                 {booking.userName}
                                 {isToday && <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">Today</span>}
+                                {isMyBooking && <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">You</span>}
                               </div>
                               <div className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
                                 <span>Spot {booking.spotNumber}</span>
@@ -324,7 +336,7 @@ const Index = () => {
                               {booking.duration === "full" ? "All Day" : 
                                booking.duration === "morning" ? "Morning" : "Afternoon"}
                             </div>
-                            {booking.userName === (user?.user_metadata?.user_name || user?.email) && (
+                            {isMyBooking && (
                               <Button
                                 variant="outline"
                                 size="sm"
