@@ -1,0 +1,141 @@
+# Security Policy
+
+## Supported Versions
+
+We release patches for security vulnerabilities. Which versions are eligible for receiving such patches depends on the CVSS v3.0 Rating:
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.x.x   | :white_check_mark: |
+| < 1.0   | :x:                |
+
+## Reporting a Vulnerability
+
+We take the security of Park It Easy Office seriously. If you have discovered a security vulnerability, we appreciate your help in disclosing it to us in a responsible manner.
+
+### Where to Report
+
+**Please do NOT report security vulnerabilities through public GitHub issues.**
+
+Instead, please report security vulnerabilities by emailing:
+
+**[miguel@11nines.com](mailto:miguel@11nines.com)**
+
+### What to Include
+
+Please include the following information in your report:
+
+- Type of issue (e.g., buffer overflow, SQL injection, cross-site scripting, etc.)
+- Full paths of source file(s) related to the manifestation of the issue
+- The location of the affected source code (tag/branch/commit or direct URL)
+- Any special configuration required to reproduce the issue
+- Step-by-step instructions to reproduce the issue
+- Proof-of-concept or exploit code (if possible)
+- Impact of the issue, including how an attacker might exploit it
+
+### What to Expect
+
+After you submit a vulnerability report, we will:
+
+1. **Acknowledge receipt** within 48 hours
+2. **Provide an initial assessment** of the vulnerability within 7 days
+3. **Keep you informed** about our progress in addressing the issue
+4. **Credit you** in the security advisory (unless you prefer to remain anonymous)
+
+### Security Update Process
+
+1. The security team will investigate and confirm the vulnerability
+2. A fix will be developed and tested
+3. A security advisory will be drafted
+4. The fix will be released as soon as possible
+5. The security advisory will be published
+
+## Security Best Practices for Users
+
+When deploying Park It Easy Office, please follow these security best practices:
+
+### Environment Variables
+
+- **Never commit** `.env` files to version control
+- Use **strong, unique values** for all credentials
+- **Rotate secrets** regularly
+- Use **environment-specific** configurations
+
+### Supabase Configuration
+
+- Enable **Row Level Security (RLS)** on all tables
+- Use **strong password policies** for user accounts
+- Enable **two-factor authentication** for admin accounts
+- Regularly **review and audit** database policies
+- Keep your Supabase instance **up to date**
+
+### Application Deployment
+
+- Always use **HTTPS** in production
+- Implement **rate limiting** to prevent abuse
+- Enable **CORS** only for trusted domains
+- Keep **dependencies up to date** (`npm audit` regularly)
+- Monitor your application for **unusual activity**
+
+### Authentication
+
+- Enforce **strong password requirements**
+- Implement **account lockout** after failed login attempts
+- Use **secure session management**
+- Enable **email verification** for new accounts
+
+## Known Security Considerations
+
+### Current Security Measures
+
+- ✅ Row Level Security (RLS) enabled on all database tables
+- ✅ Authentication via Supabase Auth
+- ✅ Environment variables for sensitive configuration
+- ✅ Input validation using Zod schemas
+- ✅ HTTPS enforced in production
+- ✅ No sensitive data in client-side code
+
+### Planned Security Enhancements
+
+- [ ] Rate limiting on API endpoints
+- [ ] Enhanced audit logging
+- [ ] Two-factor authentication support
+- [ ] Advanced session management
+- [ ] Security headers configuration
+
+## Security-Related Configuration
+
+### Content Security Policy (CSP)
+
+We recommend implementing the following CSP headers in your deployment:
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co;
+```
+
+### Additional Security Headers
+
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+```
+
+## Disclosure Policy
+
+We follow a coordinated vulnerability disclosure process:
+
+1. The security team will work with you to understand and validate the vulnerability
+2. We will develop and test a fix
+3. We will release the fix and publish a security advisory
+4. We ask that you do not publicly disclose the vulnerability until we have had a chance to address it
+
+## Comments on This Policy
+
+If you have suggestions on how this process could be improved, please submit a pull request or email [miguel@11nines.com](mailto:miguel@11nines.com).
+
+---
+
+Last updated: November 17, 2025

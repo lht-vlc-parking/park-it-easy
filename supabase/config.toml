@@ -1,0 +1,3 @@
+# project_id = "your_supabase_project_id"
+# Get this from your Supabase project settings
+# This file is for local development configuration only

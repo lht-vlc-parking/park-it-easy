@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Development environment for Park It Easy Office
+  app:
+    image: node:18-alpine
+    container_name: park-it-easy-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    stdin_open: true
+    tty: true
+    networks:
+      - park-it-easy-network
+
+networks:
+  park-it-easy-network:
+    driver: bridge
