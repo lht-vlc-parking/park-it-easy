@@ -102,9 +102,9 @@ const Index = () => {
 
       toast.success("Parking spot booked successfully!");
       fetchBookings(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating booking:', error);
-      const errorMessage = error?.message || 'Failed to create booking';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
       toast.error(errorMessage);
     }
   };
@@ -125,9 +125,9 @@ const Index = () => {
 
       toast.success("Booking cancelled successfully!");
       fetchBookings(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error cancelling booking:', error);
-      const errorMessage = error?.message || 'Failed to cancel booking';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel booking';
       toast.error(errorMessage);
     }
   };
