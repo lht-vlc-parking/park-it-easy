@@ -339,9 +339,6 @@ If you encounter any issues or have questions:
 
 ## 📝 Known Issues & TODOs
 
-### Database Constraints
-- **Unique constraint needed**: Add database-level unique constraint on `(spot_number, date, duration, vehicle_type)` for cars to prevent race conditions during concurrent bookings. Currently handled at application level only.
-
 ### Error Tracking
 - **Error monitoring**: Implement error tracking service integration (e.g., Sentry) in the ErrorBoundary component for better production error monitoring and debugging.
 

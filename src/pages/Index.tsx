@@ -92,13 +92,20 @@ const Index = () => {
           spot_number: booking.spotNumber,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating booking:', error);
+        // Show the actual error message from the database
+        const errorMessage = error.message || 'Failed to create booking';
+        toast.error(errorMessage);
+        return;
+      }
 
       toast.success("Parking spot booked successfully!");
       fetchBookings(); // Refresh the list
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating booking:', error);
-      toast.error('Failed to create booking');
+      const errorMessage = error?.message || 'Failed to create booking';
+      toast.error(errorMessage);
     }
   };
 
@@ -109,13 +116,19 @@ const Index = () => {
         .delete()
         .eq('id', bookingId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error cancelling booking:', error);
+        const errorMessage = error.message || 'Failed to cancel booking';
+        toast.error(errorMessage);
+        return;
+      }
 
-      toast.success("Booking cancelled successfully");
+      toast.success("Booking cancelled successfully!");
       fetchBookings(); // Refresh the list
-    } catch (error) {
-      console.error('Error deleting booking:', error);
-      toast.error('Failed to cancel booking');
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      const errorMessage = error?.message || 'Failed to cancel booking';
+      toast.error(errorMessage);
     }
   };
 
