@@ -1,0 +1,9 @@
+# Security: Do not install packages published less than 2 days ago
+# Protects against supply chain attacks from recently compromised packages
+# 2 days = 2880 minutes
+minimumReleaseAge: 2880
+
+ignoredBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - sharp
