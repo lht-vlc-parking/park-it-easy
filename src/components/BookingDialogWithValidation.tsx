@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Car, Bike } from "lucide-react";
+import { CalendarIcon, Car, Bike, Clock, Sun, Sunset, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -172,9 +172,14 @@ export const BookingDialogWithValidation = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] glass-card border-2">
         <DialogHeader>
-          <DialogTitle>Book Parking Spot {spotNumber}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+              <CalendarIcon className="h-4 w-4 text-white" />
+            </div>
+            Book Spot {spotNumber}
+          </DialogTitle>
           <DialogDescription>
             Fill in the details to reserve your parking spot. You can only have one booking per day.
           </DialogDescription>
@@ -182,21 +187,21 @@ export const BookingDialogWithValidation = ({
         
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label>Select Date</Label>
+            <Label className="text-sm font-semibold">Select Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal h-12 border-2 hover:border-primary/50 transition-all",
                     !date && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                   {date ? format(date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 glass-card" align="start">
                 <Calendar
                   mode="single"
                   selected={date}
@@ -209,51 +214,105 @@ export const BookingDialogWithValidation = ({
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label>Vehicle Type</Label>
-            <RadioGroup value={vehicleType} onValueChange={(v) => setVehicleType(v as "car" | "motorcycle")}>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted transition-smooth cursor-pointer">
-                <RadioGroupItem value="car" id="car" />
-                <Label htmlFor="car" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Car className="h-5 w-5 text-primary" />
-                  <span>Car</span>
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Vehicle Type</Label>
+            <RadioGroup value={vehicleType} onValueChange={(v) => setVehicleType(v as "car" | "motorcycle")} className="grid grid-cols-2 gap-3">
+              <div className={cn(
+                "flex items-center justify-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all",
+                vehicleType === "car" 
+                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" 
+                  : "border-border hover:border-primary/50 hover:bg-muted/50"
+              )}>
+                <RadioGroupItem value="car" id="car" className="hidden" />
+                <Label htmlFor="car" className="flex flex-col items-center gap-2 cursor-pointer">
+                  <Car className={cn("h-8 w-8", vehicleType === "car" ? "text-primary" : "text-muted-foreground")} />
+                  <span className={cn("font-medium", vehicleType === "car" && "text-primary")}>Car</span>
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted transition-smooth cursor-pointer">
-                <RadioGroupItem value="motorcycle" id="motorcycle" />
-                <Label htmlFor="motorcycle" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Bike className="h-5 w-5 text-primary" />
-                  <span>Motorcycle</span>
+              <div className={cn(
+                "flex items-center justify-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all",
+                vehicleType === "motorcycle" 
+                  ? "border-accent bg-accent/10 shadow-lg shadow-accent/10" 
+                  : "border-border hover:border-accent/50 hover:bg-muted/50"
+              )}>
+                <RadioGroupItem value="motorcycle" id="motorcycle" className="hidden" />
+                <Label htmlFor="motorcycle" className="flex flex-col items-center gap-2 cursor-pointer">
+                  <Bike className={cn("h-8 w-8", vehicleType === "motorcycle" ? "text-accent" : "text-muted-foreground")} />
+                  <span className={cn("font-medium", vehicleType === "motorcycle" && "text-accent")}>Motorcycle</span>
                 </Label>
               </div>
             </RadioGroup>
           </div>
 
-          <div className="space-y-2">
-            <Label>Duration</Label>
-            <RadioGroup value={duration} onValueChange={(v) => setDuration(v as "morning" | "afternoon" | "full")}>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted transition-smooth cursor-pointer">
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Duration</Label>
+            <RadioGroup value={duration} onValueChange={(v) => setDuration(v as "morning" | "afternoon" | "full")} className="space-y-2">
+              <div className={cn(
+                "flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all",
+                duration === "full" 
+                  ? "border-primary bg-primary/10 shadow-md" 
+                  : "border-border hover:border-primary/50 hover:bg-muted/50"
+              )}>
                 <RadioGroupItem value="full" id="full" />
-                <Label htmlFor="full" className="cursor-pointer flex-1">Full Day</Label>
+                <Label htmlFor="full" className="cursor-pointer flex-1 flex items-center gap-3">
+                  <Clock className={cn("h-5 w-5", duration === "full" ? "text-primary" : "text-muted-foreground")} />
+                  <div>
+                    <div className="font-medium">Full Day</div>
+                    <div className="text-xs text-muted-foreground">8:00 AM - 6:00 PM</div>
+                  </div>
+                </Label>
               </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted transition-smooth cursor-pointer">
+              <div className={cn(
+                "flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all",
+                duration === "morning" 
+                  ? "border-info bg-info/10 shadow-md" 
+                  : "border-border hover:border-info/50 hover:bg-muted/50"
+              )}>
                 <RadioGroupItem value="morning" id="morning" />
-                <Label htmlFor="morning" className="cursor-pointer flex-1">Morning (Half Day)</Label>
+                <Label htmlFor="morning" className="cursor-pointer flex-1 flex items-center gap-3">
+                  <Sun className={cn("h-5 w-5", duration === "morning" ? "text-info" : "text-muted-foreground")} />
+                  <div>
+                    <div className="font-medium">Morning</div>
+                    <div className="text-xs text-muted-foreground">8:00 AM - 1:00 PM</div>
+                  </div>
+                </Label>
               </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted transition-smooth cursor-pointer">
+              <div className={cn(
+                "flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all",
+                duration === "afternoon" 
+                  ? "border-warning bg-warning/10 shadow-md" 
+                  : "border-border hover:border-warning/50 hover:bg-muted/50"
+              )}>
                 <RadioGroupItem value="afternoon" id="afternoon" />
-                <Label htmlFor="afternoon" className="cursor-pointer flex-1">Afternoon (Half Day)</Label>
+                <Label htmlFor="afternoon" className="cursor-pointer flex-1 flex items-center gap-3">
+                  <Sunset className={cn("h-5 w-5", duration === "afternoon" ? "text-warning" : "text-muted-foreground")} />
+                  <div>
+                    <div className="font-medium">Afternoon</div>
+                    <div className="text-xs text-muted-foreground">1:00 PM - 6:00 PM</div>
+                  </div>
+                </Label>
               </div>
             </RadioGroup>
           </div>
         </div>
 
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isValidating}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-12" disabled={isValidating}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="flex-1 bg-gradient-primary" disabled={isValidating}>
-            {isValidating ? "Validating..." : "Confirm Booking"}
+          <Button 
+            onClick={handleSubmit} 
+            className="flex-1 h-12 gradient-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all"
+            disabled={isValidating}
+          >
+            {isValidating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Validating...
+              </>
+            ) : (
+              "Confirm Booking"
+            )}
           </Button>
         </div>
       </DialogContent>

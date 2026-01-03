@@ -597,22 +597,30 @@ const Statistics = () => {
                   <CardTitle className="text-base sm:text-lg">
                     {thisMonthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </CardTitle>
-                  <CardDescription>
-                    {thisMonthBookings.length} bookings • Average {monthOccupation.toFixed(1)}% occupancy • Weekdays only (Mon-Fri)
+                  <CardDescription className="flex items-center gap-4 flex-wrap">
+                    <span>{thisMonthBookings.length} bookings</span>
+                    <span>•</span>
+                    <span>Avg {monthOccupation.toFixed(0)}% occupancy</span>
+                    <span>•</span>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-success"></span> Available</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warning"></span> Half</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive"></span> Full</span>
+                    </div>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {/* Calendar Header - Day Names */}
-                  <div className="grid grid-cols-5 gap-2 mb-3">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((dayName) => (
-                      <div key={dayName} className="text-center font-semibold text-sm text-muted-foreground py-2 border-b-2">
+                  <div className="grid grid-cols-5 gap-1 sm:gap-2 mb-2">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((dayName) => (
+                      <div key={dayName} className="text-center font-medium text-xs text-muted-foreground py-1.5 bg-muted/50 rounded-md">
                         {dayName}
                       </div>
                     ))}
                   </div>
                   
                   {/* Calendar Grid - Group by weeks */}
-                  <div className="space-y-2">
+                  <div className="space-y-1 sm:space-y-2">
                     {(() => {
                       // Group days by weeks (Monday-Friday)
                       const weeks: typeof monthlyOccupancy[] = [];
@@ -633,44 +641,51 @@ const Statistics = () => {
                       }
                       
                       return weeks.map((week, weekIndex) => (
-                        <div key={weekIndex} className="grid grid-cols-5 gap-2">
+                        <div key={weekIndex} className="grid grid-cols-5 gap-1 sm:gap-2">
                           {/* Fill empty cells at the start of the week if needed */}
                           {week[0] && Array.from({ length: week[0].dayOfWeek - 1 }).map((_, emptyIndex) => (
-                            <div key={`empty-${emptyIndex}`} className="aspect-square" />
+                            <div key={`empty-${emptyIndex}`} className="aspect-[4/3] sm:aspect-square" />
                           ))}
                           
                           {/* Render actual days */}
-                          {week.map((day, dayIndex) => (
-                            <div 
-                              key={dayIndex}
-                              className="aspect-square flex flex-col items-center justify-center p-3 rounded-lg border transition-all hover:shadow-md hover:scale-105"
-                              style={{
-                                backgroundColor: day.occupancy >= 75 ? 'rgba(239, 68, 68, 0.1)' : 
-                                               day.occupancy >= 50 ? 'rgba(249, 115, 22, 0.1)' : 
-                                               day.occupancy > 0 ? 'rgba(34, 197, 94, 0.1)' : 
-                                               'rgba(156, 163, 175, 0.05)',
-                                borderColor: day.occupancy >= 75 ? 'rgba(239, 68, 68, 0.3)' : 
-                                            day.occupancy >= 50 ? 'rgba(249, 115, 22, 0.3)' : 
-                                            day.occupancy > 0 ? 'rgba(34, 197, 94, 0.3)' : 
-                                            'rgba(156, 163, 175, 0.2)'
-                              }}
-                            >
-                              <div className="text-2xl font-bold">
-                                {day.dayOfMonth}
+                          {week.map((day, dayIndex) => {
+                            const isToday = new Date().toDateString() === new Date(thisMonthStart.getFullYear(), thisMonthStart.getMonth(), day.dayOfMonth).toDateString();
+                            const occupancyClass = day.occupancy >= 100 
+                              ? 'bg-destructive/15 border-destructive/40 dark:bg-destructive/20' 
+                              : day.occupancy >= 50 
+                              ? 'bg-warning/15 border-warning/40 dark:bg-warning/20' 
+                              : day.occupancy > 0 
+                              ? 'bg-success/15 border-success/40 dark:bg-success/20' 
+                              : 'bg-muted/30 border-border/50';
+                            
+                            return (
+                              <div 
+                                key={dayIndex}
+                                className={`aspect-[4/3] sm:aspect-square flex flex-col items-center justify-center p-1 sm:p-2 rounded-lg border-2 transition-all duration-200 hover:scale-[1.02] cursor-default ${occupancyClass} ${isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                              >
+                                <div className={`text-base sm:text-xl font-bold ${isToday ? 'text-primary' : ''}`}>
+                                  {day.dayOfMonth}
+                                </div>
+                                <div className="flex items-center gap-0.5 mt-0.5 sm:mt-1">
+                                  {[0, 1].map((spotIndex) => (
+                                    <div 
+                                      key={spotIndex}
+                                      className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-colors ${
+                                        spotIndex < day.bookings 
+                                          ? day.bookings >= 2 ? 'bg-destructive' : 'bg-warning' 
+                                          : 'bg-muted-foreground/20'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                              <div className="text-xs font-medium text-muted-foreground mt-1">
-                                {day.bookings}/2
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">
-                                {day.occupancy.toFixed(0)}%
-                              </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                           
                           {/* Fill empty cells at the end of the week if needed */}
                           {week.length > 0 && week[week.length - 1] && 
                             Array.from({ length: 5 - week[week.length - 1].dayOfWeek }).map((_, emptyIndex) => (
-                              <div key={`empty-end-${emptyIndex}`} className="aspect-square" />
+                              <div key={`empty-end-${emptyIndex}`} className="aspect-[4/3] sm:aspect-square" />
                             ))
                           }
                         </div>
