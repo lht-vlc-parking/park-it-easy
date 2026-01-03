@@ -821,7 +821,7 @@ const Statistics = () => {
                       </div>
                       <div className="h-2 w-full rounded-full bg-muted">
                         <div
-                          className="gradient-primary h-2 rounded-full transition-all duration-500"
+                          className="h-2 rounded-full bg-info transition-all duration-500"
                           style={{ width: `${(carBookings / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -836,7 +836,7 @@ const Statistics = () => {
                       </div>
                       <div className="h-2 w-full rounded-full bg-muted">
                         <div
-                          className="gradient-accent h-2 rounded-full transition-all duration-500"
+                          className="h-2 rounded-full bg-warning transition-all duration-500"
                           style={{ width: `${(motorcycleBookings / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -856,7 +856,7 @@ const Statistics = () => {
                       </div>
                       <div className="h-2 w-full rounded-full bg-muted">
                         <div
-                          className="gradient-success h-2 rounded-full transition-all duration-500"
+                          className="h-2 rounded-full bg-success transition-all duration-500"
                           style={{ width: `${(spot84Count / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -868,7 +868,7 @@ const Statistics = () => {
                       </div>
                       <div className="h-2 w-full rounded-full bg-muted">
                         <div
-                          className="gradient-accent h-2 rounded-full transition-all duration-500"
+                          className="h-2 rounded-full bg-primary transition-all duration-500"
                           style={{ width: `${(spot85Count / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
