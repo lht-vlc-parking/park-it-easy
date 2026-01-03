@@ -15,8 +15,6 @@ import {
   Scale,
   Target,
   Flame,
-  Leaf,
-  PieChart,
   Lightbulb,
   MapPin,
   Zap,
@@ -384,12 +382,10 @@ const Statistics = () => {
 
   const streakData = calculateStreak();
 
-  // --- Environmental Impact ---
-  // Assumption: Sharing parking reduces car trips, saving ~2.3kg CO2 per avoided trip
-  // For fun/gamification
-  const sharedTrips = Math.max(0, totalBookings - uniqueUsers.length * 10); // Trips "saved" by sharing
-  const co2Saved = (sharedTrips * 2.3).toFixed(1); // kg CO2
-  const treesEquivalent = (parseFloat(co2Saved) / 21).toFixed(1); // A tree absorbs ~21kg CO2/year
+  // --- Environmental Impact (kept for potential future use) ---
+  const _sharedTrips = Math.max(0, totalBookings - uniqueUsers.length * 10);
+  const _co2Saved = (_sharedTrips * 2.3).toFixed(1);
+  const _treesEquivalent = (parseFloat(_co2Saved) / 21).toFixed(1);
 
   // --- Monthly Capacity Report ---
   // Calculate workdays in current month (Mon-Fri)
@@ -407,11 +403,11 @@ const Statistics = () => {
   const workdaysThisMonth = getWorkdaysInMonth(today.getFullYear(), today.getMonth());
   const totalCapacityThisMonth = workdaysThisMonth * 2; // 2 spots per workday
   const usedCapacityThisMonth = thisMonthBookings.length;
-  const availableCapacityThisMonth = totalCapacityThisMonth - usedCapacityThisMonth;
-  const capacityUsedPercent = ((usedCapacityThisMonth / totalCapacityThisMonth) * 100).toFixed(0);
+  const _availableCapacityThisMonth = totalCapacityThisMonth - usedCapacityThisMonth;
+  const _capacityUsedPercent = ((usedCapacityThisMonth / totalCapacityThisMonth) * 100).toFixed(0);
 
   // Demand vs Supply ratio (estimate demand as users who wanted to book)
-  const demandRatio =
+  const _demandRatio =
     activeUsersThisMonth.length > 0
       ? (activeUsersThisMonth.length / (totalCapacityThisMonth / workdaysThisMonth)).toFixed(1)
       : '0';
@@ -1279,114 +1275,6 @@ const Statistics = () => {
                         ) : (
                           <p className="text-sm text-muted-foreground">No bookings yet</p>
                         )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            {/* Capacity Report & Environmental Impact - NEW */}
-            <section className="animate-fade-in-up stagger-7">
-              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold md:text-2xl">
-                <div className="gradient-primary h-1 w-8 rounded-full"></div>
-                Capacity & Impact
-              </h2>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-                {/* Monthly Capacity Report */}
-                <Card className="glass-card hover-lift">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                      <PieChart className="h-5 w-5 text-primary" />
-                      Monthly Capacity Report
-                    </CardTitle>
-                    <CardDescription>
-                      {thisMonthStart.toLocaleDateString('en-US', {
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Total Capacity</span>
-                        <span className="font-semibold">{totalCapacityThisMonth} slots</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-success">Used</span>
-                        <span className="font-semibold text-success">
-                          {usedCapacityThisMonth} slots
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Available</span>
-                        <span className="font-semibold text-muted-foreground">
-                          {availableCapacityThisMonth} slots
-                        </span>
-                      </div>
-                      <div className="h-4 w-full rounded-full bg-muted">
-                        <div
-                          className="gradient-primary h-4 rounded-full transition-all duration-500"
-                          style={{ width: `${capacityUsedPercent}%` }}
-                        />
-                      </div>
-                      <div className="text-center text-2xl font-bold">
-                        {capacityUsedPercent}% Used
-                      </div>
-                      <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Demand vs Supply Ratio</span>
-                          <span
-                            className={`font-bold ${parseFloat(demandRatio) > 1 ? 'text-warning' : 'text-success'}`}
-                          >
-                            {demandRatio}x
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {parseFloat(demandRatio) > 1
-                            ? '⚠️ More demand than available spots'
-                            : '✅ Demand is within capacity'}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Environmental Impact */}
-                <Card className="glass-card hover-lift border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                      <Leaf className="h-5 w-5 text-green-500" />
-                      Environmental Impact
-                    </CardTitle>
-                    <CardDescription>By sharing parking, the team has helped</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-around">
-                        <div className="text-center">
-                          <div className="mb-1 text-3xl font-bold text-green-500">
-                            {co2Saved} kg
-                          </div>
-                          <div className="text-sm text-muted-foreground">CO₂ Saved</div>
-                        </div>
-                        <div className="h-16 w-px bg-border"></div>
-                        <div className="text-center">
-                          <div className="mb-1 text-3xl font-bold text-green-600">
-                            🌳 {treesEquivalent}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Trees Equivalent</div>
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-center">
-                        <p className="text-sm">
-                          <span className="font-semibold text-green-600">{sharedTrips}</span> shared
-                          trips this month
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Every shared trip helps reduce traffic and emissions
-                        </p>
                       </div>
                     </div>
                   </CardContent>
