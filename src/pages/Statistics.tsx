@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useStatistics, useMyStats } from "@/hooks/useStatistics";
 import { ThemeToggle } from "@/components/v2/ThemeToggle";
 
 interface Booking {
@@ -23,6 +24,10 @@ const Statistics = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // V2: Use new statistics hooks for database views
+  const { userStats, dailyOccupancy, fairness, weeklyTrends, loading: statsLoading } = useStatistics();
+  const { stats: myDbStats } = useMyStats(user?.id);
 
   useEffect(() => {
     fetchBookings();
@@ -270,7 +275,14 @@ const Statistics = () => {
   ];
 
   // Calculate fairness score (lower variance = more fair)
+  // V2: Use database view if available, fallback to client calculation
   const calculateFairnessScore = () => {
+    // Use database fairness score if available
+    if (fairness?.fairness_score !== null && fairness?.fairness_score !== undefined) {
+      return fairness.fairness_score;
+    }
+    
+    // Fallback to client-side calculation
     if (userBookingCounts.length === 0) return 100;
     const counts = userBookingCounts.map(u => u.thisMonth);
     const avg = counts.reduce((a, b) => a + b, 0) / counts.length;
@@ -283,16 +295,27 @@ const Statistics = () => {
 
   const fairnessScore = calculateFairnessScore();
 
-  // Get current user's stats
+  // Get current user's stats - use database stats if available
   const currentUserName = user?.user_metadata?.user_name || user?.email;
   const myStats = userBookingCounts.find(u => u.name === currentUserName);
-  const myMonthBookings = myStats?.thisMonth || 0;
+  const myMonthBookings = myDbStats?.this_month ?? myStats?.thisMonth ?? 0;
   const avgMonthBookings = activeUsersThisMonth.length > 0 
     ? thisMonthBookings.length / activeUsersThisMonth.length 
     : 0;
   const mySharePercent = thisMonthBookings.length > 0 
     ? (myMonthBookings / thisMonthBookings.length * 100).toFixed(1) 
     : '0';
+
+  // V2: Merge database user stats with client-calculated stats
+  const enhancedUserBookingCounts = userStats.length > 0 
+    ? userStats.map(dbStat => ({
+        name: dbStat.display_name || 'Unknown',
+        count: dbStat.total_bookings || 0,
+        thisWeek: dbStat.this_week || 0,
+        thisMonth: dbStat.this_month || 0,
+        department: dbStat.department,
+      }))
+    : userBookingCounts;
 
   return (
     <div className="min-h-screen bg-background mesh-gradient">
@@ -709,7 +732,7 @@ const Statistics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {userBookingCounts.map((user, index) => (
+                    {(enhancedUserBookingCounts.length > 0 ? enhancedUserBookingCounts : userBookingCounts).map((user, index) => (
                       <div key={user.name} className={currentUserName && user.name === currentUserName ? "p-2 rounded-lg bg-primary/10 border border-primary/20" : ""}>
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
@@ -725,6 +748,11 @@ const Statistics = () => {
                               {user.name}
                               {currentUserName && user.name === currentUserName && <span className="text-xs text-primary ml-1">(You)</span>}
                             </span>
+                            {'department' in user && user.department && (
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                {user.department}
+                              </span>
+                            )}
                           </div>
                           <div className="text-right">
                             <div className="text-sm font-bold">{user.count} total</div>
@@ -741,7 +769,7 @@ const Statistics = () => {
                               index === 2 ? 'bg-gradient-to-r from-orange-600 to-orange-700' :
                               'gradient-primary'
                             }`}
-                            style={{ width: `${(user.count / userBookingCounts[0].count) * 100}%` }}
+                            style={{ width: `${(user.count / (enhancedUserBookingCounts[0]?.count || userBookingCounts[0]?.count || 1)) * 100}%` }}
                           />
                         </div>
                       </div>
