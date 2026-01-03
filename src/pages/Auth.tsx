@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Car, Loader2, Mail, Lock, User, KeyRound } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ThemeToggle } from "@/components/v2/ThemeToggle";
 
 const ALLOWED_EMAIL_DOMAIN = "@lht.dlh.de";
 
@@ -170,17 +171,36 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
-      <Card className="w-full max-w-md shadow-glow animate-fade-in">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">ParkEasy</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to manage your parking bookings
-          </CardDescription>
+    <div className="min-h-screen flex items-center justify-center mesh-gradient p-4 relative">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+      
+      {/* Theme toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle variant="minimal" />
+      </div>
+
+      <Card className="w-full max-w-md glass-card border-2 shadow-2xl animate-fade-in-up relative overflow-hidden">
+        {/* Card decorative gradient */}
+        <div className="absolute top-0 right-0 w-32 h-32 gradient-primary opacity-10 blur-2xl" />
+        
+        <CardHeader className="space-y-4 text-center relative">
+          <div className="mx-auto w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30 animate-scale-in">
+            <Car className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Park It Easy
+            </CardTitle>
+            <CardDescription className="text-base mt-2">
+              Sign in to manage your parking bookings
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           {!isSupabaseConfigured ? (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border-2">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Configuration Required</AlertTitle>
               <AlertDescription>
@@ -189,112 +209,165 @@ export default function Auth() {
             </Alert>
           ) : (
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="reset">Reset</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50">
+                <TabsTrigger value="login" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Login</TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Sign Up</TabsTrigger>
+                <TabsTrigger value="reset" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Reset</TabsTrigger>
               </TabsList>
 
-            <TabsContent value="login">
+            <TabsContent value="login" className="mt-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="your@lht.dlh.de"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
+                  <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="your@lht.dlh.de"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="pl-10 h-12 border-2 focus:border-primary transition-colors"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    minLength={6}
-                  />
+                  <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      minLength={6}
+                      className="pl-10 h-12 border-2 focus:border-primary transition-colors"
+                    />
+                  </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Log In"}
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 gradient-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all hover:scale-[1.02]" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : "Log In"}
                 </Button>
               </form>
             </TabsContent>
 
-            <TabsContent value="signup">
+            <TabsContent value="signup" className="mt-6">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Paco Clavel"
-                    value={signupName}
-                    onChange={(e) => setSignupName(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
+                  <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="Your Name"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="pl-10 h-12 border-2 focus:border-primary transition-colors"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="your@lht.dlh.de"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                  <p className="text-xs text-muted-foreground">
+                  <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@lht.dlh.de"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="pl-10 h-12 border-2 focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-info"></span>
                     Only @lht.dlh.de email addresses are allowed
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    minLength={6}
-                  />
+                  <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      minLength={6}
+                      className="pl-10 h-12 border-2 focus:border-primary transition-colors"
+                    />
+                  </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Sign Up"}
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 gradient-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all hover:scale-[1.02]" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : "Sign Up"}
                 </Button>
               </form>
             </TabsContent>
 
-            <TabsContent value="reset">
+            <TabsContent value="reset" className="mt-6">
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reset-email">Email</Label>
-                  <Input
-                    id="reset-email"
-                    type="email"
-                    placeholder="your@lht.dlh.de"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                  <p className="text-xs text-muted-foreground">
+                  <Label htmlFor="reset-email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="your@lht.dlh.de"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="pl-10 h-12 border-2 focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-info"></span>
                     Enter your email to receive a password reset link
                   </p>
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send Reset Link"}
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 gradient-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all hover:scale-[1.02]" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : "Send Reset Link"}
                 </Button>
               </form>
             </TabsContent>

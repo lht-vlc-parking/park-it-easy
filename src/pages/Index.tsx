@@ -255,12 +255,12 @@ const Index = () => {
             </section>
 
             {/* All Users' Bookings Section */}
-            <section className="scale-in">
+            <section className="animate-fade-in-up stagger-1">
               <div className="mb-4">
                 <h2 className="text-xl md:text-2xl font-bold mb-2 flex items-center gap-2 flex-wrap">
-                  <div className="h-1 w-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full"></div>
+                  <div className="h-1 w-8 gradient-success rounded-full"></div>
                   All Upcoming Bookings
-                  <Badge variant="outline" className="text-xs font-normal">
+                  <Badge variant="outline" className="text-xs font-normal border-success/30 bg-success/10">
                     Team-wide visibility
                   </Badge>
                 </h2>
@@ -276,40 +276,31 @@ const Index = () => {
                       // Check if booking is today
                       const isToday = booking.date === today;
                       
-                      // COLOR SCHEME:
-                      // Blue = Future bookings (not today)
-                      // Orange = Today's bookings
-                      const cardColor = isToday
-                        ? "bg-orange-500/10 border-orange-500/30" 
-                        : "bg-blue-500/10 border-blue-500/30";
-                      
-                      const dateBadgeColor = isToday
-                        ? "bg-orange-500/20"
-                        : "bg-blue-500/20";
-                      
-                      const dateTextColor = isToday
-                        ? "text-orange-600"
-                        : "text-blue-600";
-                      
-                      const durationBadgeColor = isToday
-                        ? "bg-orange-500"
-                        : "bg-blue-500";
-                      
-                      const todayRing = isToday 
-                        ? "ring-2 ring-orange-500/50 shadow-lg" 
-                        : "";
-                      
                       const isMyBooking = booking.userName === (user?.user_metadata?.user_name || user?.email);
                       
                       return (
                         <div
                           key={booking.id}
-                          className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 ${cardColor} border rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-[1.02] animate-scale-in ${todayRing}`}
+                          className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 glass-card border-2 rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-[1.01] animate-fade-in-up ${
+                            isToday 
+                              ? "border-warning/50 bg-warning/5" 
+                              : isMyBooking 
+                              ? "border-primary/50 bg-primary/5" 
+                              : "border-border/50"
+                          } ${isToday ? "ring-2 ring-warning/30 ring-offset-2 ring-offset-background" : ""}`}
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-0">
-                            <div className={`text-center min-w-[50px] sm:min-w-[60px] ${dateBadgeColor} rounded-lg p-2 ${isToday ? "ring-2 ring-orange-500" : ""}`}>
-                              <div className={`text-xl sm:text-2xl font-bold ${dateTextColor}`}>
+                            <div className={`text-center min-w-[50px] sm:min-w-[60px] rounded-xl p-2 ${
+                              isToday 
+                                ? "bg-warning/20 ring-2 ring-warning" 
+                                : isMyBooking 
+                                ? "bg-primary/20" 
+                                : "bg-muted/50"
+                            }`}>
+                              <div className={`text-xl sm:text-2xl font-bold ${
+                                isToday ? "text-warning" : isMyBooking ? "text-primary" : "text-foreground"
+                              }`}>
                                 {new Date(booking.date).getDate()}
                               </div>
                               <div className="text-xs text-muted-foreground uppercase">
@@ -317,47 +308,39 @@ const Index = () => {
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold truncate flex items-center gap-2">
+                              <div className="font-semibold truncate flex items-center gap-2 flex-wrap">
                                 {booking.userName}
-                                {isToday && <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">Today</span>}
-                                {isMyBooking && <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">You</span>}
+                                {isToday && <span className="text-xs bg-warning text-white px-2 py-0.5 rounded-full shadow-sm">Today</span>}
+                                {isMyBooking && <span className="text-xs bg-success text-white px-2 py-0.5 rounded-full shadow-sm">You</span>}
                               </div>
-                              <div className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
-                                <span>Spot {booking.spotNumber}</span>
-                                <span>•</span>
-                                <span className={isToday ? "text-orange-600 font-medium" : "text-blue-600 font-medium"}>
-                                  {booking.vehicleType === "car" ? "🚗 Car" : "🏍️ Motorcycle"}
+                              <div className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap mt-1">
+                                <span className="font-medium">Spot {booking.spotNumber}</span>
+                                <span className="text-muted-foreground/50">•</span>
+                                <span className={`font-medium ${booking.vehicleType === "car" ? "text-info" : "text-accent"}`}>
+                                  {booking.vehicleType === "car" ? "🚗 Car" : "🏍️ Moto"}
                                 </span>
-                                {booking.createdAt && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="text-xs">
-                                      📅 {new Date(booking.createdAt).toLocaleDateString('en-US', { 
-                                        month: 'short', 
-                                        day: 'numeric'
-                                      })} {new Date(booking.createdAt).toLocaleTimeString('en-US', { 
-                                        hour: '2-digit', 
-                                        minute: '2-digit'
-                                      })}
-                                    </span>
-                                  </>
-                                )}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
-                            <div className={`text-xs sm:text-sm font-medium px-3 py-1.5 ${durationBadgeColor} text-white rounded-full shadow-sm`}>
+                            <Badge className={`text-xs sm:text-sm font-medium px-3 py-1.5 shadow-sm ${
+                              booking.duration === "full" 
+                                ? "gradient-primary text-white" 
+                                : booking.duration === "morning" 
+                                ? "bg-info text-white" 
+                                : "bg-warning text-white"
+                            }`}>
                               {booking.duration === "full" ? "All Day" : 
-                               booking.duration === "morning" ? "Morning" : "Afternoon"}
-                            </div>
+                               booking.duration === "morning" ? "AM" : "PM"}
+                            </Badge>
                             {isMyBooking && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleUnbook(booking.id)}
-                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all"
+                                className="text-destructive border-destructive/30 hover:bg-destructive hover:text-white hover:border-destructive transition-all"
                               >
-                                Unbook
+                                Cancel
                               </Button>
                             )}
                           </div>
@@ -366,9 +349,9 @@ const Index = () => {
                     })}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-card rounded-xl border border-dashed">
+                <div className="text-center py-12 glass-card rounded-xl border-2 border-dashed border-muted-foreground/20">
                   <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">No upcoming bookings</p>
+                  <p className="text-muted-foreground font-medium">No upcoming bookings</p>
                   <p className="text-sm text-muted-foreground mt-1">Book a spot to get started!</p>
                 </div>
               )}
@@ -376,68 +359,76 @@ const Index = () => {
 
             {/* Personal Statistics Section */}
             {myBookings.length > 0 && (
-              <section className="scale-in">
+              <section className="animate-fade-in-up stagger-2">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                  <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
+                  <div className="h-1 w-8 gradient-accent rounded-full"></div>
                   My Parking Stats
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+                  <Card className="glass-card hover-lift border-2 border-info/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Booking Frequency</p>
-                          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{avgBookingsPerWeek}</p>
+                          <p className="text-3xl font-bold text-info">{avgBookingsPerWeek}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             bookings/week average
                           </p>
                         </div>
-                        <Calendar className="h-10 w-10 text-blue-500 opacity-50" />
+                        <div className="p-3 rounded-xl bg-info/10">
+                          <Calendar className="h-8 w-8 text-info" />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+                  <Card className="glass-card hover-lift border-2 border-success/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">This Week</p>
-                          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{myWeekBookings.length}</p>
+                          <p className="text-3xl font-bold text-success">{myWeekBookings.length}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {myBookings.length} all-time total
                           </p>
                         </div>
-                        <BarChart3 className="h-10 w-10 text-green-500 opacity-50" />
+                        <div className="p-3 rounded-xl bg-success/10">
+                          <BarChart3 className="h-8 w-8 text-success" />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
+                  <Card className="glass-card hover-lift border-2 border-warning/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Preferred Time</p>
-                          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{myPreferredTime}</p>
+                          <p className="text-3xl font-bold text-warning">{myPreferredTime}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             most common choice
                           </p>
                         </div>
-                        <Clock className="h-10 w-10 text-orange-500 opacity-50" />
+                        <div className="p-3 rounded-xl bg-warning/10">
+                          <Clock className="h-8 w-8 text-warning" />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
+                  <Card className="glass-card hover-lift border-2 border-accent/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Favorite Spot</p>
-                          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">Spot {myMostUsedSpot}</p>
+                          <p className="text-3xl font-bold text-accent">Spot {myMostUsedSpot}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {Math.max(mySpot84Count, mySpot85Count)} times booked
                           </p>
                         </div>
-                        <Activity className="h-10 w-10 text-purple-500 opacity-50" />
+                        <div className="p-3 rounded-xl bg-accent/10">
+                          <Activity className="h-8 w-8 text-accent" />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
