@@ -149,14 +149,21 @@ const Statistics = () => {
       ? (thisMonthBookings.length / activeUsersThisMonth.length).toFixed(1)
       : '0';
 
-  // Peak booking day of the week
+  // Peak booking day of the week (weekdays only)
   const dayOfWeekCounts = [0, 0, 0, 0, 0, 0, 0]; // Sun to Sat
   bookings.forEach(b => {
     const date = new Date(b.date);
-    dayOfWeekCounts[date.getDay()]++;
+    const dayOfWeek = date.getDay();
+    // Only count weekdays (Mon-Fri)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      dayOfWeekCounts[dayOfWeek]++;
+    }
   });
+  // Only consider weekdays for peak day (indices 1-5)
+  const weekdayCounts = dayOfWeekCounts.slice(1, 6);
+  const peakDayIndex = weekdayCounts.indexOf(Math.max(...weekdayCounts)) + 1;
   const peakDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
-    dayOfWeekCounts.indexOf(Math.max(...dayOfWeekCounts))
+    peakDayIndex
   ];
 
   // Average booking lead time (days in advance)
@@ -226,7 +233,9 @@ const Statistics = () => {
     return dailyData;
   };
 
-  const weeklyOccupancy = getDailyOccupancy(thisWeekStart, 7);
+  const weeklyOccupancy = getDailyOccupancy(thisWeekStart, 7).filter(
+    day => day.dayOfWeek >= 1 && day.dayOfWeek <= 5
+  ); // Only weekdays (Mon-Fri)
   // Get monthly occupancy only for weekdays (Monday-Friday)
   const allMonthlyDays = getDailyOccupancy(
     thisMonthStart,
@@ -471,19 +480,23 @@ const Statistics = () => {
     .map((dayName, idx) => {
       const dayIndex = idx + 1; // Mon=1, Tue=2, etc.
       const daysInRange = monthlyOccupancy.filter(d => d.dayOfWeek === dayIndex);
-      const availableDays = daysInRange.filter(d => d.bookings < 2).length;
-      const successRate = daysInRange.length > 0 ? (availableDays / daysInRange.length) * 100 : 100;
+      const totalSpots = daysInRange.length * 2; // 2 spots per day
+      const bookedSpots = daysInRange.reduce((sum, d) => sum + d.bookings, 0);
+      const freeSpots = totalSpots - bookedSpots;
+      const occupancyRate = totalSpots > 0 ? (bookedSpots / totalSpots) * 100 : 0;
       return {
         day: dayName,
-        successRate: successRate.toFixed(0),
-        available: availableDays,
+        occupancyRate: occupancyRate.toFixed(0),
+        freeSpots,
+        bookedSpots,
+        totalSpots,
         total: daysInRange.length,
       };
     })
-    .sort((a, b) => parseFloat(b.successRate) - parseFloat(a.successRate));
+    .sort((a, b) => parseFloat(a.occupancyRate) - parseFloat(b.occupancyRate)); // Lowest occupancy = best day
 
-  const bestDayToBook = daySuccessRates[0];
-  const worstDayToBook = daySuccessRates[daySuccessRates.length - 1];
+  const bestDayToBook = daySuccessRates[0]; // Lowest occupancy
+  const worstDayToBook = daySuccessRates[daySuccessRates.length - 1]; // Highest occupancy
 
   const stats = [
     {
@@ -888,7 +901,7 @@ const Statistics = () => {
                     - {thisWeekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
                   </CardTitle>
                   <CardDescription>
-                    Daily capacity usage • Max: 2 spots/day (Spot 84 & Spot 85)
+                    Weekday capacity usage • Max: 2 spots/day (Spot 84 & Spot 85)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1342,7 +1355,7 @@ const Statistics = () => {
                       <Lightbulb className="h-5 w-5 text-yellow-500" />
                       Best Time to Book
                     </CardTitle>
-                    <CardDescription>Based on historical availability</CardDescription>
+                    <CardDescription>Based on historical occupancy this month</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -1352,20 +1365,22 @@ const Statistics = () => {
                           <span className="font-bold text-success">{bestDayToBook?.day}</span>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {bestDayToBook?.successRate}% availability rate
+                          {bestDayToBook?.freeSpots} free spots out of {bestDayToBook?.totalSpots} (
+                          {100 - parseInt(bestDayToBook?.occupancyRate || '0')}% free)
                         </p>
                       </div>
                       <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">⚠️ Hardest Day</span>
+                          <span className="text-sm font-medium">⚠️ Busiest Day</span>
                           <span className="font-bold text-destructive">{worstDayToBook?.day}</span>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Only {worstDayToBook?.successRate}% availability rate
+                          {worstDayToBook?.bookedSpots} of {worstDayToBook?.totalSpots} spots booked
+                          ({worstDayToBook?.occupancyRate}% occupied)
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium">All Days:</p>
+                        <p className="text-sm font-medium">Occupancy by Day:</p>
                         {daySuccessRates.map((day, idx) => (
                           <div key={day.day} className="flex items-center justify-between text-sm">
                             <span>{day.day}</span>
@@ -1379,13 +1394,16 @@ const Statistics = () => {
                                         ? 'bg-destructive'
                                         : 'bg-info'
                                   }`}
-                                  style={{ width: `${day.successRate}%` }}
+                                  style={{ width: `${day.occupancyRate}%` }}
                                 />
                               </div>
-                              <span className="w-10 text-right text-xs">{day.successRate}%</span>
+                              <span className="w-10 text-right text-xs">{day.occupancyRate}%</span>
                             </div>
                           </div>
                         ))}
+                        <p className="mt-2 text-center text-xs text-muted-foreground">
+                          Lower % = more spots available
+                        </p>
                       </div>
                     </div>
                   </CardContent>
