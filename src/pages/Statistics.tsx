@@ -942,15 +942,18 @@ const Statistics = () => {
                     <span>•</span>
                     <span>Avg {monthOccupation.toFixed(0)}% occupancy</span>
                     <span>•</span>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-success"></span> Available
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3 w-3 rounded-full bg-success shadow-[0_0_6px_rgba(34,197,94,0.5)] ring-1 ring-success/50"></span>{' '}
+                        Available
                       </span>
-                      <span className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-warning"></span> Half
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3 w-3 rounded-full bg-warning shadow-[0_0_6px_rgba(245,158,11,0.6)]"></span>{' '}
+                        Half
                       </span>
-                      <span className="flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-destructive"></span> Full
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3 w-3 rounded-full bg-destructive shadow-[0_0_6px_rgba(239,68,68,0.6)]"></span>{' '}
+                        Full
                       </span>
                     </div>
                   </CardDescription>
@@ -1028,16 +1031,16 @@ const Statistics = () => {
                                 >
                                   {day.dayOfMonth}
                                 </div>
-                                <div className="mt-0.5 flex items-center gap-0.5 sm:mt-1">
+                                <div className="mt-1 flex items-center gap-1 sm:mt-1.5 sm:gap-1.5">
                                   {[0, 1].map(spotIndex => (
                                     <div
                                       key={spotIndex}
-                                      className={`h-2 w-2 rounded-full transition-colors sm:h-2.5 sm:w-2.5 ${
+                                      className={`h-3 w-3 rounded-full transition-all sm:h-4 sm:w-4 ${
                                         spotIndex < day.bookings
                                           ? day.bookings >= 2
-                                            ? 'bg-destructive'
-                                            : 'bg-warning'
-                                          : 'bg-muted-foreground/20'
+                                            ? 'bg-destructive shadow-[0_0_6px_rgba(239,68,68,0.6)]'
+                                            : 'bg-warning shadow-[0_0_6px_rgba(245,158,11,0.6)]'
+                                          : 'bg-success shadow-[0_0_6px_rgba(34,197,94,0.5)] ring-1 ring-success/50'
                                       }`}
                                     />
                                   ))}
