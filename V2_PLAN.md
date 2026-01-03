@@ -329,6 +329,281 @@ src/services/
 
 ---
 
+## 📊 Phase 6: Meaningful Statistics Dashboard
+
+### Context
+- **2 parking spots** (Spot 84 & Spot 85)
+- **~20 employees** sharing these spots
+- Goal: Fair distribution, transparency, and insights
+
+---
+
+### 6.1 Fairness & Distribution Metrics
+
+#### **Booking Equity Score**
+Shows how fairly spots are distributed among employees.
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Booking Equity Score: 78/100  ████████░░ "Good"           │
+│                                                             │
+│  Perfect equity = 100 (everyone books equally)              │
+│  Shows if some users are "hogging" spots                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **Your Share vs Team Average**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  📊 Your Monthly Share                                      │
+│                                                             │
+│  You: 4 bookings (8%)     ████░░░░░░                       │
+│  Team Avg: 2.5 bookings   ██▌░░░░░░░                       │
+│                                                             │
+│  Status: Above average (+60%)                               │
+│  💡 Consider carpooling to balance usage                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **Booking Distribution Chart**
+Pie/bar chart showing bookings per employee this month.
+- Highlights top 5 users
+- Shows "Others" grouped
+- Color-coded: Green (fair), Yellow (above avg), Red (excessive)
+
+---
+
+### 6.2 Availability & Demand Analytics
+
+#### **Demand Heatmap**
+Visual calendar showing booking pressure by day.
+```
+         Mon   Tue   Wed   Thu   Fri
+Week 1   🟢    🟡    🔴    🔴    🟡
+Week 2   🟡    🔴    🔴    🟡    🟢
+Week 3   🟢    🟡    🟡    🔴    🟢
+Week 4   🟡    🔴    🔴    🔴    🟡
+
+🟢 Available  🟡 1 spot taken  🔴 Both spots full
+```
+
+#### **Peak Demand Times**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🔥 Highest Demand Days                                     │
+│                                                             │
+│  1. Wednesday (92% full)                                    │
+│  2. Thursday (88% full)                                     │
+│  3. Tuesday (75% full)                                      │
+│                                                             │
+│  💡 Best days to book: Monday & Friday                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **Success Rate**
+% of booking attempts that succeed vs fail (spot already taken).
+```
+This Month: 85% success rate
+- 42 successful bookings
+- 8 failed attempts (spot was full)
+```
+
+---
+
+### 6.3 Personal Statistics
+
+#### **Your Parking Profile**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  👤 Miguel's Parking Profile                                │
+│                                                             │
+│  🚗 Primary Vehicle: Car                                    │
+│  📍 Favorite Spot: 84 (used 70% of time)                   │
+│  ⏰ Preferred Time: Full Day (65%)                          │
+│  📅 Booking Pattern: Mon & Wed                              │
+│                                                             │
+│  This Month          All Time                               │
+│  ──────────          ────────                               │
+│  4 bookings          47 bookings                            │
+│  8% of total         12% of total                           │
+│  Rank: #3            Rank: #5                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **Booking Streak**
+- Current streak: 3 consecutive weeks with parking
+- Longest streak: 8 weeks
+- Days since last booking: 2 days
+
+#### **Environmental Impact** (Fun metric)
+```
+🌱 By sharing parking, you've helped:
+   - Save 45 kg CO2 this month (equivalent to 3 trees)
+   - Reduce traffic: 12 fewer cars on peak days
+```
+
+---
+
+### 6.4 Team Insights
+
+#### **Active Users This Month**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  👥 Team Activity (20 employees)                            │
+│                                                             │
+│  Active this month: 15/20 (75%)                             │
+│  Never booked: 3 employees                                  │
+│  Inactive (30+ days): 2 employees                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **Booking Leaderboard**
+```
+🏆 This Month's Top Bookers
+
+1. 🥇 Ana García      - 6 bookings (12%)
+2. 🥈 Carlos López    - 5 bookings (10%)
+3. 🥉 Miguel Ruiz     - 4 bookings (8%)
+4.    Laura Martín    - 4 bookings (8%)
+5.    Pedro Sánchez   - 3 bookings (6%)
+   ...
+   You are ranked #3
+```
+
+#### **Vehicle Mix**
+```
+🚗 Cars: 75% (38 bookings)
+🏍️ Motorcycles: 25% (12 bookings)
+
+Motorcycle efficiency: 4 motos can share 1 spot!
+```
+
+---
+
+### 6.5 Capacity & Utilization
+
+#### **Monthly Capacity Report**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  📈 January 2026 Capacity Report                            │
+│                                                             │
+│  Total Capacity: 44 slots (22 workdays × 2 spots)          │
+│  Used: 38 slots (86%)                                       │
+│  Available: 6 slots (14%)                                   │
+│                                                             │
+│  ████████████████████░░░░ 86%                              │
+│                                                             │
+│  Demand vs Supply Ratio: 1.4x                               │
+│  (More demand than spots available)                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **Unmet Demand**
+```
+📊 Times people couldn't book (both spots full):
+   - 8 instances this month
+   - Most common: Wednesday afternoon
+   - Affected users: 5 different people
+```
+
+---
+
+### 6.6 Trends & Predictions
+
+#### **Booking Trends**
+```
+📈 3-Month Trend
+
+Nov 2025: ████████░░ 80% utilization
+Dec 2025: ██████░░░░ 60% utilization (holidays)
+Jan 2026: █████████░ 86% utilization ↑
+
+Prediction: February will be 90%+ (high demand expected)
+```
+
+#### **Best Time to Book**
+AI-powered suggestion based on historical data:
+```
+💡 Recommended booking times for you:
+   - Friday morning (85% success rate)
+   - Monday afternoon (78% success rate)
+   
+   Avoid: Wednesday all day (only 45% success)
+```
+
+---
+
+### 6.7 Statistics Components
+
+```typescript
+src/components/v2/statistics/
+├── FairnessScore.tsx        # Equity score gauge
+├── BookingDistribution.tsx  # Pie chart of user bookings
+├── DemandHeatmap.tsx        # Calendar heatmap
+├── PersonalProfile.tsx      # User's parking profile
+├── TeamLeaderboard.tsx      # Top bookers ranking
+├── CapacityReport.tsx       # Monthly utilization
+├── TrendChart.tsx           # Historical trends line chart
+├── VehicleMix.tsx           # Cars vs motorcycles breakdown
+├── SuccessRate.tsx          # Booking success/failure rate
+└── RecommendationCard.tsx   # AI suggestions
+```
+
+---
+
+### 6.8 Database Views for Statistics
+
+```sql
+-- Fairness score calculation
+CREATE VIEW v_booking_fairness AS
+SELECT 
+  DATE_TRUNC('month', date) as month,
+  COUNT(DISTINCT user_id) as active_users,
+  COUNT(*) as total_bookings,
+  STDDEV(user_booking_count) as booking_variance,
+  -- Lower variance = more fair distribution
+  100 - (STDDEV(user_booking_count) / AVG(user_booking_count) * 100) as fairness_score
+FROM (
+  SELECT user_id, DATE_TRUNC('month', date) as month, COUNT(*) as user_booking_count
+  FROM bookings
+  GROUP BY user_id, DATE_TRUNC('month', date)
+) sub
+GROUP BY DATE_TRUNC('month', date);
+
+-- Daily demand analysis
+CREATE VIEW v_daily_demand AS
+SELECT 
+  date,
+  EXTRACT(DOW FROM date) as day_of_week,
+  COUNT(*) as bookings,
+  COUNT(DISTINCT spot_number) as spots_used,
+  CASE 
+    WHEN COUNT(DISTINCT spot_number) = 2 THEN 'full'
+    WHEN COUNT(DISTINCT spot_number) = 1 THEN 'partial'
+    ELSE 'available'
+  END as availability_status
+FROM bookings
+WHERE date >= CURRENT_DATE - INTERVAL '90 days'
+GROUP BY date;
+
+-- User ranking
+CREATE VIEW v_user_rankings AS
+SELECT 
+  user_id,
+  user_name,
+  COUNT(*) as total_bookings,
+  COUNT(*) FILTER (WHERE date >= DATE_TRUNC('month', CURRENT_DATE)) as month_bookings,
+  COUNT(*) FILTER (WHERE date >= DATE_TRUNC('week', CURRENT_DATE)) as week_bookings,
+  RANK() OVER (ORDER BY COUNT(*) DESC) as all_time_rank,
+  RANK() OVER (
+    PARTITION BY DATE_TRUNC('month', CURRENT_DATE) 
+    ORDER BY COUNT(*) FILTER (WHERE date >= DATE_TRUNC('month', CURRENT_DATE)) DESC
+  ) as month_rank
+FROM bookings
+GROUP BY user_id, user_name;
+```
+
+---
+
 ## ✅ Success Metrics
 
 1. **User Experience**
@@ -345,6 +620,11 @@ src/services/
    - Test coverage: > 80%
    - Zero critical accessibility issues
    - TypeScript strict mode enabled
+
+4. **Fairness Goals**
+   - Booking equity score > 70
+   - No user with > 20% of monthly bookings
+   - 90%+ of employees booking at least once/month
 
 ---
 
