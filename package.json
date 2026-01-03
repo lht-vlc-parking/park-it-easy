@@ -1,7 +1,7 @@
 {
   "name": "park-it-easy-office",
-  "version": "1.0.0",
-  "description": "A modern parking management system for office environments",
+  "version": "2.0.0",
+  "description": "A modern parking management system for office environments with dark mode, statistics, and enterprise features",
   "author": "Park It Easy Team",
   "license": "MIT",
   "repository": {
