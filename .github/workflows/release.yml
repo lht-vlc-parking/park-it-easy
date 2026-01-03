@@ -133,6 +133,7 @@ jobs:
     with:
       base64-subjects: '${{ needs.build.outputs.hashes }}'
       upload-assets: true
+      compile-generator: true
 
   # Artifact Attestation (Sigstore)
   attest:
