@@ -26,12 +26,14 @@ All releases are built with [SLSA Level 3](https://slsa.dev/spec/v1.0/levels) pr
 ### Software Bill of Materials (SBOM)
 
 Each release includes:
+
 - **CycloneDX SBOM** (`sbom.json`) - Machine-readable dependency inventory
 - **SPDX SBOM** (`sbom-spdx.json`) - Alternative format for compliance
 
 ### Artifact Signing
 
 All release artifacts are:
+
 - Signed using [Sigstore](https://www.sigstore.dev/) for keyless signing
 - Attested with build provenance via GitHub's artifact attestation
 - Verified with SHA256 checksums
@@ -184,4 +186,4 @@ If you have suggestions on how this process could be improved, please submit a p
 
 ---
 
-Last updated: November 17, 2025
+Last updated: January 3, 2026

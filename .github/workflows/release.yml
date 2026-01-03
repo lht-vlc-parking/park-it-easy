@@ -24,7 +24,7 @@ jobs:
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
       version: ${{ steps.version.outputs.version }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -104,7 +104,7 @@ jobs:
           sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz > checksums.txt
           sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.zip >> checksums.txt
           sha256sum sbom.json >> checksums.txt
-          
+
           # Output hashes for SLSA provenance
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> $GITHUB_OUTPUT
 
@@ -131,7 +131,7 @@ jobs:
       contents: write
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
-      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      base64-subjects: '${{ needs.build.outputs.hashes }}'
       upload-assets: true
 
   # Artifact Attestation (Sigstore)
@@ -143,7 +143,7 @@ jobs:
       id-token: write
       contents: read
       attestations: write
-    
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -173,7 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -190,7 +190,7 @@ jobs:
         run: |
           # Get previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
+
           if [ -n "$PREV_TAG" ]; then
             echo "## Changes since $PREV_TAG" > CHANGELOG.md
             git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
@@ -198,7 +198,7 @@ jobs:
             echo "## Initial Release" > CHANGELOG.md
             git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
           fi
-          
+
           echo "" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "## Security & Compliance" >> CHANGELOG.md
@@ -229,7 +229,7 @@ jobs:
   # Deploy to GitHub Pages (optional, on release)
   deploy:
     name: Deploy to GitHub Pages
-    needs: [release]
+    needs: [build, release]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -238,7 +238,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4

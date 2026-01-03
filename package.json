@@ -27,6 +27,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -36,7 +39,8 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "generate:favicons": "node scripts/generate-favicons.mjs",
-    "delete:deployments": "node scripts/delete-deployments.mjs"
+    "delete:deployments": "node scripts/delete-deployments.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -94,6 +98,10 @@
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.56.1",
     "@tailwindcss/typography": "^0.5.16",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
