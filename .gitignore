@@ -43,12 +43,14 @@ coverage
 .temp
 .cache
 
+# Supabase local temp files
+supabase/.temp/
+
 # OS files
 Thumbs.db
 .DS_Store
 
-# Lock files (keep one)
-# Uncomment the package manager you're NOT using
-# yarn.lock
-# pnpm-lock.yaml
-# bun.lockb
+# Lock files (using pnpm)
+yarn.lock
+bun.lockb
+package-lock.json
