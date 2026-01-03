@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '../integrations/supabase/client';
 
 vi.mock('../integrations/supabase/client');
 
@@ -113,8 +112,8 @@ describe('Booking Service', () => {
         return a === b;
       };
 
-      const hasConflict = existingBookings.some(
-        b => overlaps(afternoonBooking.duration, b.duration)
+      const hasConflict = existingBookings.some(b =>
+        overlaps(afternoonBooking.duration, b.duration)
       );
 
       expect(hasConflict).toBe(false);
@@ -136,7 +135,7 @@ describe('Booking Service', () => {
 
       const cars = bookings.filter(b => b.vehicleType === 'car');
       const hasCarFullDay = cars.some(b => b.duration === 'full');
-      
+
       const status = hasCarFullDay ? 'full' : 'available';
 
       expect(status).toBe('full');
@@ -192,7 +191,7 @@ describe('Booking Service', () => {
       const cars = bookings.filter(b => b.vehicleType === 'car');
       const carsFull = cars.some(b => b.duration === 'full');
 
-      const status = carsFull ? 'full' : (hasmotorcycles ? 'partial' : 'available');
+      const status = carsFull ? 'full' : hasmotorcycles ? 'partial' : 'available';
 
       expect(status).toBe('partial');
     });
@@ -229,20 +228,20 @@ describe('Booking Service', () => {
   describe('Race Conditions', () => {
     it('should document potential race condition in booking process', async () => {
       // This test documents the bug where two users can book simultaneously
-      
+
       // User 1 fetches bookings
       const bookingsUser1 = [];
-      
+
       // User 2 fetches bookings (same time)
       const bookingsUser2 = [];
-      
+
       // Both see no conflicts
       expect(bookingsUser1).toEqual(bookingsUser2);
-      
+
       // Both insert - RACE CONDITION!
       // The second insert should fail with a database constraint
       // but currently there's no unique constraint
-      
+
       // TODO: Add unique constraint: (spot_number, date, duration, vehicle_type)
       // where vehicle_type = 'car'
     });

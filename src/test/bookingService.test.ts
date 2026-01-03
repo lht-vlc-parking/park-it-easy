@@ -22,7 +22,7 @@ const createChainableMock = (finalValue: unknown) => {
 // Mock Supabase client
 vi.mock('../integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn((table: string) => {
+    from: vi.fn((_table: string) => {
       const selectChain = createChainableMock({ data: [], error: null });
       const insertChain = createChainableMock({
         data: {

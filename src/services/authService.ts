@@ -2,23 +2,24 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
 // Validation Schemas
-export const emailSchema = z.string()
-  .email("Please enter a valid email address")
+export const emailSchema = z
+  .string()
+  .email('Please enter a valid email address')
   .max(255)
-  .refine((email) => email.endsWith('@lht.dlh.de'), {
+  .refine(email => email.endsWith('@lht.dlh.de'), {
     message: 'Only @lht.dlh.de email addresses are allowed',
   });
 
 export const passwordSchema = z
   .string()
-  .min(6, "Password must be at least 6 characters")
-  .max(72, "Password must be less than 72 characters");
+  .min(6, 'Password must be at least 6 characters')
+  .max(72, 'Password must be less than 72 characters');
 
 export const nameSchema = z
   .string()
   .trim()
-  .min(1, "Name is required")
-  .max(100, "Name must be less than 100 characters");
+  .min(1, 'Name is required')
+  .max(100, 'Name must be less than 100 characters');
 
 // Types
 export interface AuthCredentials {
@@ -39,14 +40,14 @@ export interface AuthResult {
 export function getAuthRedirectUrl(path: string = 'auth'): string {
   const origin = window.location.origin;
   const baseUrl = import.meta.env.BASE_URL || '/';
-  
+
   // Ensure base URL starts and ends correctly
   const normalizedBase = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
   const pathWithSlash = path.startsWith('/') ? path : `/${path}`;
-  
+
   // Construct URL and remove double slashes (except after protocol)
   const url = `${origin}${normalizedBase}${pathWithSlash}`;
-  return url.replace(/([^:]\/)\/+/g, "$1");
+  return url.replace(/([^:]\/)\/+/g, '$1');
 }
 
 /**
@@ -66,15 +67,15 @@ export class AuthService {
       const { error } = await supabase.auth.signInWithPassword(credentials);
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
+        if (error.message.includes('Invalid login credentials')) {
           return {
             success: false,
-            error: "Invalid email or password. Please try again.",
+            error: 'Invalid email or password. Please try again.',
           };
         }
         return {
           success: false,
-          error: "An error occurred. Please try again later.",
+          error: 'An error occurred. Please try again later.',
         };
       }
 
@@ -88,7 +89,7 @@ export class AuthService {
       }
       return {
         success: false,
-        error: "An unexpected error occurred.",
+        error: 'An unexpected error occurred.',
       };
     }
   }
@@ -115,15 +116,15 @@ export class AuthService {
       });
 
       if (error) {
-        if (error.message.includes("already registered")) {
+        if (error.message.includes('already registered')) {
           return {
             success: false,
-            error: "This email is already registered. Please log in instead.",
+            error: 'This email is already registered. Please log in instead.',
           };
         }
         return {
           success: false,
-          error: "An error occurred. Please try again later.",
+          error: 'An error occurred. Please try again later.',
         };
       }
 
@@ -137,7 +138,7 @@ export class AuthService {
       }
       return {
         success: false,
-        error: "An unexpected error occurred.",
+        error: 'An unexpected error occurred.',
       };
     }
   }
@@ -160,7 +161,7 @@ export class AuthService {
         console.error('Password reset error:', error);
         return {
           success: false,
-          error: "An error occurred. Please try again later.",
+          error: 'An error occurred. Please try again later.',
         };
       }
 
@@ -175,7 +176,7 @@ export class AuthService {
       console.error('Password reset unexpected error:', error);
       return {
         success: false,
-        error: "An unexpected error occurred.",
+        error: 'An unexpected error occurred.',
       };
     }
   }
@@ -195,7 +196,7 @@ export class AuthService {
       if (error) {
         return {
           success: false,
-          error: "An error occurred. Please try again.",
+          error: 'An error occurred. Please try again.',
         };
       }
 
@@ -209,7 +210,7 @@ export class AuthService {
       }
       return {
         success: false,
-        error: "An unexpected error occurred.",
+        error: 'An unexpected error occurred.',
       };
     }
   }
@@ -224,15 +225,15 @@ export class AuthService {
       if (error) {
         return {
           success: false,
-          error: "Failed to sign out.",
+          error: 'Failed to sign out.',
         };
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        error: "An unexpected error occurred.",
+        error: 'An unexpected error occurred.',
       };
     }
   }

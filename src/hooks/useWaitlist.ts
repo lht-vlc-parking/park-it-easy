@@ -1,16 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
-import { toast } from "sonner";
-import type { Tables, TablesInsert, Enums } from "@/integrations/supabase/types";
+import { useEffect, useState, useCallback } from 'react';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { toast } from 'sonner';
+import type { Tables, Enums } from '@/integrations/supabase/types';
 
-type BookingWaitlist = Tables<"booking_waitlist">;
+type BookingWaitlist = Tables<'booking_waitlist'>;
 
 interface JoinWaitlistParams {
   spot_number: number;
   date: string;
-  duration: Enums<"booking_duration">;
-  vehicle_type: Enums<"vehicle_type">;
+  duration: Enums<'booking_duration'>;
+  vehicle_type: Enums<'vehicle_type'>;
 }
 
 export const useWaitlist = () => {
@@ -26,19 +26,19 @@ export const useWaitlist = () => {
 
     try {
       const { data, error } = await supabase
-        .from("booking_waitlist")
-        .select("*")
-        .eq("user_id", user.id)
-        .in("status", ["waiting", "notified"])
-        .order("date", { ascending: true });
+        .from('booking_waitlist')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['waiting', 'notified'])
+        .order('date', { ascending: true });
 
       if (error) {
-        console.warn("Error fetching waitlist:", error);
+        console.warn('Error fetching waitlist:', error);
       } else {
         setMyWaitlistEntries(data || []);
       }
     } catch (err) {
-      console.error("Error fetching waitlist:", err);
+      console.error('Error fetching waitlist:', err);
     } finally {
       setLoading(false);
     }
@@ -50,12 +50,12 @@ export const useWaitlist = () => {
 
   const joinWaitlist = async (params: JoinWaitlistParams) => {
     if (!user) {
-      toast.error("You must be logged in to join the waitlist");
+      toast.error('You must be logged in to join the waitlist');
       return false;
     }
 
     try {
-      const { error } = await supabase.from("booking_waitlist").insert({
+      const { error } = await supabase.from('booking_waitlist').insert({
         user_id: user.id,
         spot_number: params.spot_number,
         date: params.date,
@@ -64,7 +64,7 @@ export const useWaitlist = () => {
       });
 
       if (error) {
-        if (error.code === "23505") {
+        if (error.code === '23505') {
           toast.error("You're already on the waitlist for this spot and time");
         } else {
           throw error;
@@ -76,33 +76,33 @@ export const useWaitlist = () => {
       await fetchMyWaitlist();
       return true;
     } catch (err) {
-      console.error("Error joining waitlist:", err);
-      toast.error("Failed to join waitlist");
+      console.error('Error joining waitlist:', err);
+      toast.error('Failed to join waitlist');
       return false;
     }
   };
 
   const leaveWaitlist = async (id: string) => {
     if (!user) {
-      toast.error("You must be logged in");
+      toast.error('You must be logged in');
       return false;
     }
 
     try {
       const { error } = await supabase
-        .from("booking_waitlist")
+        .from('booking_waitlist')
         .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      toast.success("Removed from waitlist");
+      toast.success('Removed from waitlist');
       await fetchMyWaitlist();
       return true;
     } catch (err) {
-      console.error("Error leaving waitlist:", err);
-      toast.error("Failed to leave waitlist");
+      console.error('Error leaving waitlist:', err);
+      toast.error('Failed to leave waitlist');
       return false;
     }
   };
@@ -114,12 +114,12 @@ export const useWaitlist = () => {
         entry.spot_number === spotNumber &&
         entry.date === date &&
         entry.duration === duration &&
-        (entry.status === "waiting" || entry.status === "notified")
+        (entry.status === 'waiting' || entry.status === 'notified')
     );
   };
 
   // Get notified entries (spot became available)
-  const notifiedEntries = myWaitlistEntries.filter(e => e.status === "notified");
+  const notifiedEntries = myWaitlistEntries.filter(e => e.status === 'notified');
 
   return {
     myWaitlistEntries,
