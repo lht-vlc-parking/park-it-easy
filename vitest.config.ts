@@ -9,6 +9,16 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+    // Performance optimizations (Vitest 4+)
+    pool: 'forks',
+    forks: {
+      singleFork: true,
+    },
+    isolate: false,
+    fileParallelism: false,
+    // Faster test feedback
+    testTimeout: 5000,
+    hookTimeout: 5000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
