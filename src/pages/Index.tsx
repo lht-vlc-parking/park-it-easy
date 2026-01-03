@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { ParkingSpotCard } from "@/components/ParkingSpotCard";
 import { BookingDialogWithValidation } from "@/components/BookingDialogWithValidation";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, Calendar, LogOut, User, Car, Bike, Clock, Activity } from "lucide-react";
+import { BarChart3, Calendar, LogOut, User, Clock, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/v2/ThemeToggle";
 
 interface Booking {
   id: string;
@@ -185,13 +185,13 @@ const Index = () => {
   const avgBookingsPerWeek = weeksActive > 0 ? (myBookings.length / weeksActive).toFixed(1) : '0';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background mesh-gradient">
       {/* Hero Section with liquid glass effect */}
       <div className="liquid-gradient text-white py-8 md:py-12 px-4 shadow-xl relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="animate-fade-in flex-1">
+            <div className="animate-fade-in-up flex-1">
               <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4 tracking-tight">Park it easy office</h1>
               <p className="text-base md:text-xl opacity-90 font-light">
                 Easy parking spot management for our team
@@ -203,7 +203,8 @@ const Index = () => {
                 </div>
               )}
             </div>
-            <div className="flex gap-2 self-start md:self-auto">
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              <ThemeToggle variant="minimal" className="text-white hover:bg-white/20" />
               <Button
                 onClick={() => navigate('/statistics')}
                 className="glass-button text-white border-white/30 transition-all hover:scale-105 shadow-lg"
@@ -234,9 +235,9 @@ const Index = () => {
         ) : (
           <>
             {/* Parking Spots Section with glass cards */}
-            <section className="scale-in">
+            <section className="animate-fade-in-up">
               <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
+                <div className="h-1 w-8 gradient-primary rounded-full"></div>
                 Available Parking Spots
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

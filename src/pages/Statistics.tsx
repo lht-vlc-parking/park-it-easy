@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, Calendar, Car, Bike, Percent, Clock, BarChart3, Users, Activity } from "lucide-react";
+import { ArrowLeft, TrendingUp, Calendar, Car, Bike, Percent, Clock, BarChart3, Users, Activity, Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/v2/ThemeToggle";
 
 interface Booking {
   id: string;
@@ -268,20 +269,49 @@ const Statistics = () => {
     },
   ];
 
+  // Calculate fairness score (lower variance = more fair)
+  const calculateFairnessScore = () => {
+    if (userBookingCounts.length === 0) return 100;
+    const counts = userBookingCounts.map(u => u.thisMonth);
+    const avg = counts.reduce((a, b) => a + b, 0) / counts.length;
+    if (avg === 0) return 100;
+    const variance = counts.reduce((sum, c) => sum + Math.pow(c - avg, 2), 0) / counts.length;
+    const stdDev = Math.sqrt(variance);
+    const cv = (stdDev / avg) * 100; // Coefficient of variation
+    return Math.max(0, Math.min(100, 100 - cv));
+  };
+
+  const fairnessScore = calculateFairnessScore();
+
+  // Get current user's stats
+  const currentUserName = user?.user_metadata?.user_name || user?.email;
+  const myStats = userBookingCounts.find(u => u.name === currentUserName);
+  const myMonthBookings = myStats?.thisMonth || 0;
+  const avgMonthBookings = activeUsersThisMonth.length > 0 
+    ? thisMonthBookings.length / activeUsersThisMonth.length 
+    : 0;
+  const mySharePercent = thisMonthBookings.length > 0 
+    ? (myMonthBookings / thisMonthBookings.length * 100).toFixed(1) 
+    : '0';
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background mesh-gradient">
       {/* Hero Section */}
-      <div className="bg-gradient-hero text-primary-foreground py-8 md:py-12 px-4 shadow-lg">
-        <div className="container mx-auto max-w-6xl">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="mb-4 text-primary-foreground hover:bg-white/10 animate-fade-in"
+      <div className="gradient-hero text-white py-8 md:py-12 px-4 shadow-lg relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="text-white hover:bg-white/10 animate-fade-in"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Bookings
           </Button>
-          <div className="animate-fade-in">
+            <ThemeToggle variant="minimal" className="text-white hover:bg-white/20" />
+          </div>
+          <div className="animate-fade-in-up">
             <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4">Statistics</h1>
             <p className="text-base md:text-xl opacity-90">
               Detailed insights and usage metrics
@@ -298,17 +328,125 @@ const Statistics = () => {
           </div>
         ) : (
           <div className="space-y-6 md:space-y-8">
-            {/* Main Stats Grid */}
-            <section className="animate-fade-in">
+            {/* Fairness & Your Stats Section - NEW */}
+            <section className="animate-fade-in-up">
               <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-primary rounded"></div>
+                <div className="h-1 w-8 gradient-primary rounded-full"></div>
+                Fairness & Your Share
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                {/* Fairness Score */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <Scale className="h-5 w-5 text-primary" />
+                      Booking Equity Score
+                    </CardTitle>
+                    <CardDescription>
+                      How fairly parking is distributed among all {uniqueUsers.length} team members
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative w-24 h-24">
+                        <svg className="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            className="text-muted/30"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeDasharray={`${fairnessScore}, 100`}
+                            className={fairnessScore >= 70 ? "text-success" : fairnessScore >= 40 ? "text-warning" : "text-destructive"}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-2xl font-bold">{fairnessScore.toFixed(0)}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className={`text-lg font-semibold ${fairnessScore >= 70 ? "text-success" : fairnessScore >= 40 ? "text-warning" : "text-destructive"}`}>
+                          {fairnessScore >= 70 ? "Good" : fairnessScore >= 40 ? "Fair" : "Needs Improvement"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {fairnessScore >= 70 
+                            ? "Parking is well distributed among team members" 
+                            : "Some users may be booking more than their fair share"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Your Share */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Your Monthly Share
+                    </CardTitle>
+                    <CardDescription>
+                      Your parking usage compared to team average
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium">You: {myMonthBookings} bookings ({mySharePercent}%)</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3">
+                          <div
+                            className="gradient-primary h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(parseFloat(mySharePercent) * 2, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-muted-foreground">
+                            Team Average: {avgMonthBookings.toFixed(1)} bookings
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3">
+                          <div
+                            className="bg-muted-foreground/50 h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min((avgMonthBookings / thisMonthBookings.length) * 100 * 2, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className={`text-sm font-medium ${myMonthBookings > avgMonthBookings * 1.5 ? "text-warning" : myMonthBookings < avgMonthBookings * 0.5 ? "text-info" : "text-success"}`}>
+                        {myMonthBookings > avgMonthBookings * 1.5 
+                          ? "⚠️ You're booking more than average. Consider sharing!" 
+                          : myMonthBookings < avgMonthBookings * 0.5 && myMonthBookings > 0
+                          ? "📉 You're booking less than average"
+                          : myMonthBookings === 0
+                          ? "📭 You haven't booked this month"
+                          : "✅ Your usage is balanced with the team"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            {/* Main Stats Grid */}
+            <section className="animate-fade-in-up stagger-1">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
+                <div className="h-1 w-8 gradient-primary rounded-full"></div>
                 Overview
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 {stats.map((stat, index) => (
                   <Card 
                     key={stat.title} 
-                    className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-scale-in"
+                    className="glass-card hover-lift animate-scale-in"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <CardHeader className="pb-2">
@@ -333,13 +471,13 @@ const Statistics = () => {
             </section>
 
             {/* Detailed Breakdown */}
-            <section className="animate-fade-in">
+            <section className="animate-fade-in-up stagger-2">
               <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-success rounded"></div>
+                <div className="h-1 w-8 gradient-success rounded-full"></div>
                 Breakdown
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <Card className="transition-all hover:shadow-xl">
+                <Card className="glass-card hover-lift">
                   <CardHeader>
                     <CardTitle className="text-base sm:text-lg">Vehicle Type Distribution</CardTitle>
                   </CardHeader>
@@ -354,7 +492,7 @@ const Statistics = () => {
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
-                          className="bg-gradient-primary h-2 rounded-full transition-all duration-500"
+                          className="gradient-primary h-2 rounded-full transition-all duration-500"
                           style={{ width: `${(carBookings / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -369,7 +507,7 @@ const Statistics = () => {
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
-                          className="bg-gradient-accent h-2 rounded-full transition-all duration-500"
+                          className="gradient-accent h-2 rounded-full transition-all duration-500"
                           style={{ width: `${(motorcycleBookings / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -377,7 +515,7 @@ const Statistics = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="transition-all hover:shadow-xl">
+                <Card className="glass-card hover-lift">
                   <CardHeader>
                     <CardTitle className="text-base sm:text-lg">Spot Usage</CardTitle>
                   </CardHeader>
@@ -389,7 +527,7 @@ const Statistics = () => {
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
-                          className="bg-gradient-success h-2 rounded-full transition-all duration-500"
+                          className="gradient-success h-2 rounded-full transition-all duration-500"
                           style={{ width: `${(spot84Count / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -401,7 +539,7 @@ const Statistics = () => {
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
-                          className="bg-gradient-accent h-2 rounded-full transition-all duration-500"
+                          className="gradient-accent h-2 rounded-full transition-all duration-500"
                           style={{ width: `${(spot85Count / totalBookings) * 100 || 0}%` }}
                         />
                       </div>
@@ -412,12 +550,12 @@ const Statistics = () => {
             </section>
 
             {/* Weekly Occupancy Details */}
-            <section className="animate-fade-in">
+            <section className="animate-fade-in-up stagger-3">
               <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-accent rounded"></div>
+                <div className="h-1 w-8 gradient-accent rounded-full"></div>
                 Weekly Occupancy
               </h2>
-              <Card className="transition-all hover:shadow-xl">
+              <Card className="glass-card hover-lift">
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg">This Week ({thisWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {thisWeekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</CardTitle>
                   <CardDescription>Daily capacity usage • Max: 2 spots/day (Spot 84 & Spot 85)</CardDescription>
@@ -433,10 +571,10 @@ const Statistics = () => {
                         <div className="w-full bg-muted rounded-full h-2.5">
                           <div
                             className={`h-2.5 rounded-full transition-all duration-500 ${
-                              day.occupancy >= 100 ? 'bg-red-500' : 
-                              day.occupancy >= 50 ? 'bg-orange-500' : 
-                              day.occupancy > 0 ? 'bg-green-500' :
-                              'bg-gray-300'
+                              day.occupancy >= 100 ? 'bg-destructive' : 
+                              day.occupancy >= 50 ? 'bg-warning' : 
+                              day.occupancy > 0 ? 'bg-success' :
+                              'bg-muted-foreground/30'
                             }`}
                             style={{ width: `${day.occupancy}%` }}
                           />
@@ -449,12 +587,12 @@ const Statistics = () => {
             </section>
 
             {/* Monthly Occupancy Overview */}
-            <section className="animate-fade-in">
+            <section className="animate-fade-in-up stagger-4">
               <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-primary rounded"></div>
+                <div className="h-1 w-8 gradient-primary rounded-full"></div>
                 Monthly Occupancy
               </h2>
-              <Card className="transition-all hover:shadow-xl">
+              <Card className="glass-card hover-lift">
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg">
                     {thisMonthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -544,12 +682,12 @@ const Statistics = () => {
             </section>
 
             {/* User Booking Statistics */}
-            <section className="animate-fade-in">
+            <section className="animate-fade-in-up stagger-5">
               <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-gradient-success rounded"></div>
+                <div className="h-1 w-8 gradient-success rounded-full"></div>
                 Booking Leaders
               </h2>
-              <Card className="transition-all hover:shadow-xl">
+              <Card className="glass-card hover-lift">
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg">Who Books the Most</CardTitle>
                   <CardDescription>User ranking by total bookings</CardDescription>
@@ -557,18 +695,21 @@ const Statistics = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {userBookingCounts.map((user, index) => (
-                      <div key={user.name}>
+                      <div key={user.name} className={currentUserName && user.name === currentUserName ? "p-2 rounded-lg bg-primary/10 border border-primary/20" : ""}>
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
                               index === 0 ? 'bg-yellow-500' :
                               index === 1 ? 'bg-gray-400' :
                               index === 2 ? 'bg-orange-600' :
-                              'bg-blue-500'
+                              'bg-primary'
                             }`}>
                               {index + 1}
                             </div>
-                            <span className="text-sm font-medium">{user.name}</span>
+                            <span className="text-sm font-medium">
+                              {user.name}
+                              {currentUserName && user.name === currentUserName && <span className="text-xs text-primary ml-1">(You)</span>}
+                            </span>
                           </div>
                           <div className="text-right">
                             <div className="text-sm font-bold">{user.count} total</div>
@@ -583,7 +724,7 @@ const Statistics = () => {
                               index === 0 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
                               index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
                               index === 2 ? 'bg-gradient-to-r from-orange-600 to-orange-700' :
-                              'bg-gradient-primary'
+                              'gradient-primary'
                             }`}
                             style={{ width: `${(user.count / userBookingCounts[0].count) * 100}%` }}
                           />
