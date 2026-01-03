@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Car, Bike, Calendar } from "lucide-react";
+import { Car, Bike, Calendar, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Booking {
@@ -52,73 +52,89 @@ export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: Parking
   };
 
   const status = getAvailabilityStatus();
-  
-  const statusConfig = {
-    available: {
-      badge: "Available",
-      badgeClass: "bg-success text-success-foreground",
-      cardClass: "border-success/50 hover:border-success transition-smooth"
-    },
-    partial: {
-      badge: "Partially Booked",
-      badgeClass: "bg-accent text-accent-foreground",
-      cardClass: "border-accent/50 hover:border-accent transition-smooth"
-    },
-    full: {
-      badge: "Fully Booked",
-      badgeClass: "bg-destructive text-destructive-foreground",
-      cardClass: "border-destructive/50"
-    }
-  };
 
   return (
     <Card className={cn(
-      "glass-card transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 scale-in border-2",
-      status === "available" && "border-green-200 hover:border-green-300 bg-white",
-      status === "partial" && "border-blue-200 hover:border-blue-300 bg-white",
-      status === "full" && "border-orange-200 hover:border-orange-300 bg-orange-50"
+      "glass-card hover-lift border-2 animate-fade-in-up relative overflow-hidden",
+      status === "available" && "border-success/30 hover:border-success/50",
+      status === "partial" && "border-info/30 hover:border-info/50",
+      status === "full" && "border-warning/30 hover:border-warning/50 bg-warning/5"
     )}>
-      <CardHeader className="pb-3">
+      {/* Decorative corner gradient */}
+      <div className={cn(
+        "absolute top-0 right-0 w-24 h-24 opacity-20 blur-2xl",
+        status === "available" && "bg-success",
+        status === "partial" && "bg-info",
+        status === "full" && "bg-warning"
+      )} />
+      
+      <CardHeader className="pb-3 relative">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
-            <div className="flex gap-1">
-              <Car className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-              <Bike className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+            <div className={cn(
+              "flex gap-1 p-1.5 rounded-lg",
+              status === "available" && "bg-success/10",
+              status === "partial" && "bg-info/10",
+              status === "full" && "bg-warning/10"
+            )}>
+              <Car className={cn(
+                "h-4 w-4 sm:h-5 sm:w-5",
+                status === "available" && "text-success",
+                status === "partial" && "text-info",
+                status === "full" && "text-warning"
+              )} />
+              <Bike className={cn(
+                "h-4 w-4 sm:h-5 sm:w-5",
+                status === "available" && "text-success",
+                status === "partial" && "text-info",
+                status === "full" && "text-warning"
+              )} />
             </div>
-            <span className="truncate">Parking Spot {spotNumber}</span>
+            <span className="truncate">Spot {spotNumber}</span>
           </CardTitle>
           <Badge className={cn(
-            "whitespace-nowrap text-xs font-medium backdrop-blur-sm",
-            status === "available" && "bg-green-500/90 text-white shadow-lg shadow-green-500/30",
-            status === "partial" && "bg-blue-500/90 text-white shadow-lg shadow-blue-500/30",
-            status === "full" && "bg-orange-500/90 text-white shadow-lg shadow-orange-500/30"
+            "whitespace-nowrap text-xs font-semibold shadow-lg",
+            status === "available" && "bg-success text-white shadow-success/30",
+            status === "partial" && "bg-info text-white shadow-info/30",
+            status === "full" && "bg-warning text-white shadow-warning/30"
           )}>
-            {statusConfig[status].badge}
+            {status === "available" && "✓ Available"}
+            {status === "partial" && "◐ Partial"}
+            {status === "full" && "✕ Full"}
           </Badge>
         </div>
         <CardDescription className="text-xs sm:text-sm font-medium text-muted-foreground">
           Cars & Motorcycles (Max 4 motorcycles)
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3 sm:space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4 relative">
         {todayBookings.length > 0 ? (
           <div className="space-y-2">
             <div className="text-xs sm:text-sm font-medium flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-              Today's Bookings
+              Today's Bookings ({todayBookings.length})
             </div>
             <div className="space-y-1.5 max-h-32 overflow-y-auto">
-              {todayBookings.map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-2 bg-gradient-to-r from-muted to-transparent rounded-md">
+              {todayBookings.map((booking, index) => (
+                <div 
+                  key={booking.id} 
+                  className="flex items-center justify-between p-2 bg-muted/50 rounded-lg border border-border/50 animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {booking.vehicleType === "car" ? (
-                      <Car className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <Car className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
                     ) : (
-                      <Bike className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <Bike className="h-3 w-3 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
                     )}
-                    <span className="text-xs sm:text-sm truncate">{booking.userName}</span>
+                    <span className="text-xs sm:text-sm truncate font-medium">{booking.userName}</span>
                   </div>
-                  <Badge variant="outline" className="text-[10px] sm:text-xs whitespace-nowrap ml-2">
+                  <Badge variant="outline" className={cn(
+                    "text-[10px] sm:text-xs whitespace-nowrap ml-2 font-medium",
+                    booking.duration === "full" && "border-primary/50 bg-primary/10 text-primary",
+                    booking.duration === "morning" && "border-info/50 bg-info/10 text-info",
+                    booking.duration === "afternoon" && "border-warning/50 bg-warning/10 text-warning"
+                  )}>
                     {booking.duration === "full" ? "All Day" : 
                      booking.duration === "morning" ? "AM" : "PM"}
                   </Badge>
@@ -127,20 +143,21 @@ export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: Parking
             </div>
           </div>
         ) : (
-          <div className="text-center py-4">
-            <p className="text-xs sm:text-sm text-muted-foreground">No bookings for today</p>
+          <div className="text-center py-6">
+            <Sparkles className="h-8 w-8 mx-auto text-success/50 mb-2" />
+            <p className="text-sm text-muted-foreground font-medium">Available all day!</p>
           </div>
         )}
         <Button 
           onClick={onBook} 
           className={cn(
-            "w-full transition-all hover:scale-105 text-sm sm:text-base font-semibold shadow-lg text-white",
+            "w-full transition-all duration-300 hover:scale-[1.02] text-sm sm:text-base font-semibold shadow-lg text-white",
             status === "full" 
-              ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-orange-500/50"
-              : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-blue-500/50"
+              ? "gradient-warning shadow-warning/30 hover:shadow-warning/50"
+              : "gradient-primary shadow-primary/30 hover:shadow-primary/50"
           )}
         >
-          Book This Spot
+          {status === "full" ? "View Options" : "Book This Spot"}
         </Button>
       </CardContent>
     </Card>

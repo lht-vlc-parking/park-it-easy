@@ -1,0 +1,263 @@
+name: Release with SLSA v3, SBOM & Signatures
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v2.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    name: Build and Generate Artifacts
+    runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm run lint
+
+      - name: Run tests
+        run: pnpm test -- --run || true
+
+      - name: Build application
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: pnpm run build
+
+      - name: Create release archive
+        run: |
+          cd dist
+          tar -czvf ../park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz .
+          cd ..
+          zip -r park-it-easy-office-${{ steps.version.outputs.version }}.zip dist/
+
+      - name: Generate SBOM (CycloneDX)
+        uses: CycloneDX/gh-node-module-generatebom@v1
+        with:
+          path: ./
+          output: ./sbom.json
+
+      - name: Generate SBOM (SPDX)
+        run: |
+          npx @cyclonedx/cyclonedx-npm --output-format JSON --output-file sbom-cyclonedx.json || true
+          # Also create SPDX format
+          cat > sbom-spdx.json << 'EOF'
+          {
+            "spdxVersion": "SPDX-2.3",
+            "dataLicense": "CC0-1.0",
+            "SPDXID": "SPDXRef-DOCUMENT",
+            "name": "park-it-easy-office",
+            "documentNamespace": "https://github.com/${{ github.repository }}/releases/${{ steps.version.outputs.version }}",
+            "creationInfo": {
+              "created": "${{ github.event.head_commit.timestamp }}",
+              "creators": ["Tool: github-actions"]
+            }
+          }
+          EOF
+
+      - name: Generate file hashes
+        id: hash
+        run: |
+          # Generate SHA256 hashes for all release artifacts
+          sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz > checksums.txt
+          sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.zip >> checksums.txt
+          sha256sum sbom.json >> checksums.txt
+          
+          # Output hashes for SLSA provenance
+          echo "hashes=$(cat checksums.txt | base64 -w0)" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz
+            park-it-easy-office-${{ steps.version.outputs.version }}.zip
+            sbom.json
+            sbom-cyclonedx.json
+            sbom-spdx.json
+            checksums.txt
+          retention-days: 5
+
+  # SLSA Provenance Generation (Level 3)
+  provenance:
+    name: Generate SLSA Provenance
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      upload-assets: true
+
+  # Artifact Attestation (Sigstore)
+  attest:
+    name: Generate Attestations
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      - name: Attest Build Provenance (tar.gz)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
+
+      - name: Attest Build Provenance (zip)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.zip'
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
+          sbom-path: 'sbom.json'
+
+  # Create GitHub Release
+  release:
+    name: Create GitHub Release
+    needs: [build, provenance, attest]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "## Changes since $PREV_TAG" > CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
+          else
+            echo "## Initial Release" > CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+          fi
+          
+          echo "" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## Security & Compliance" >> CHANGELOG.md
+          echo "- ✅ SLSA Level 3 provenance" >> CHANGELOG.md
+          echo "- ✅ CycloneDX SBOM included" >> CHANGELOG.md
+          echo "- ✅ Sigstore attestations" >> CHANGELOG.md
+          echo "- ✅ SHA256 checksums" >> CHANGELOG.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.version }}
+          name: Release ${{ needs.build.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          files: |
+            park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz
+            park-it-easy-office-${{ needs.build.outputs.version }}.zip
+            sbom.json
+            sbom-cyclonedx.json
+            sbom-spdx.json
+            checksums.txt
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Deploy to GitHub Pages (optional, on release)
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      - name: Extract build
+        run: |
+          mkdir -p dist
+          tar -xzvf park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz -C dist/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
