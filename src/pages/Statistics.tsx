@@ -13,6 +13,13 @@ import {
   Users,
   Activity,
   Scale,
+  Target,
+  Flame,
+  Leaf,
+  PieChart,
+  Lightbulb,
+  MapPin,
+  Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -246,6 +253,242 @@ const Statistics = () => {
   ).length;
   const _mostPopularTime = morningCount >= afternoonCount ? 'Morning' : 'Afternoon';
 
+  // ============ NEW V2 STATISTICS ============
+
+  // Get current user's bookings
+  const currentUserName = user?.user_metadata?.user_name || user?.email;
+  const myBookings = bookings.filter(b => b.user_name === currentUserName);
+  const myBookingsSorted = [...myBookings].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  // --- Personal Parking Profile ---
+  const myPrimaryVehicle =
+    myBookings.length > 0
+      ? myBookings.filter(b => b.vehicle_type === 'car').length >=
+        myBookings.filter(b => b.vehicle_type === 'motorcycle').length
+        ? 'Car'
+        : 'Motorcycle'
+      : 'N/A';
+
+  const myFavoriteSpot =
+    myBookings.length > 0
+      ? myBookings.filter(b => b.spot_number === 84).length >=
+        myBookings.filter(b => b.spot_number === 85).length
+        ? 84
+        : 85
+      : null;
+
+  const myFavoriteSpotPercent =
+    myBookings.length > 0 && myFavoriteSpot
+      ? (
+          (myBookings.filter(b => b.spot_number === myFavoriteSpot).length / myBookings.length) *
+          100
+        ).toFixed(0)
+      : '0';
+
+  const myPreferredDuration = (() => {
+    if (myBookings.length === 0) return 'N/A';
+    const fullCount = myBookings.filter(b => b.duration === 'full').length;
+    const morningCount = myBookings.filter(b => b.duration === 'morning').length;
+    const afternoonCount = myBookings.filter(b => b.duration === 'afternoon').length;
+    if (fullCount >= morningCount && fullCount >= afternoonCount) return 'Full Day';
+    if (morningCount >= afternoonCount) return 'Morning';
+    return 'Afternoon';
+  })();
+
+  const myPreferredDurationPercent = (() => {
+    if (myBookings.length === 0) return '0';
+    const duration =
+      myPreferredDuration === 'Full Day'
+        ? 'full'
+        : myPreferredDuration === 'Morning'
+          ? 'morning'
+          : 'afternoon';
+    return (
+      (myBookings.filter(b => b.duration === duration).length / myBookings.length) *
+      100
+    ).toFixed(0);
+  })();
+
+  // Booking pattern (most common days)
+  const myDayCounts = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+  myBookings.forEach(b => {
+    const dayOfWeek = new Date(b.date).getDay();
+    myDayCounts[dayOfWeek]++;
+  });
+  const myTopDays = myDayCounts
+    .map((count, idx) => ({ day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][idx], count }))
+    .filter(d => d.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 2);
+
+  // --- Booking Streak ---
+  const calculateStreak = () => {
+    if (myBookingsSorted.length === 0)
+      return { current: 0, longest: 0, daysSinceLast: null as number | null };
+
+    const lastBookingDate = myBookingsSorted[myBookingsSorted.length - 1]?.date;
+    const daysSinceLast = lastBookingDate
+      ? Math.floor((today.getTime() - new Date(lastBookingDate).getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    // Calculate weekly streaks (consecutive weeks with at least one booking)
+    const weeklyBookings = new Set<string>();
+    myBookingsSorted.forEach(b => {
+      const d = new Date(b.date);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      weeklyBookings.add(weekStart.toISOString().split('T')[0]);
+    });
+
+    const weeks = Array.from(weeklyBookings).sort();
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 1;
+
+    for (let i = 1; i < weeks.length; i++) {
+      const prev = new Date(weeks[i - 1]);
+      const curr = new Date(weeks[i]);
+      const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays === 7) {
+        tempStreak++;
+      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    }
+    longestStreak = Math.max(longestStreak, tempStreak);
+
+    // Check if current week has a booking
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - today.getDay());
+    const hasCurrentWeekBooking = weeklyBookings.has(currentWeekStart.toISOString().split('T')[0]);
+
+    if (hasCurrentWeekBooking && weeks.length > 0) {
+      currentStreak = 1;
+      for (let i = weeks.length - 2; i >= 0; i--) {
+        const curr = new Date(weeks[i + 1]);
+        const prev = new Date(weeks[i]);
+        const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays === 7) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return { current: currentStreak, longest: longestStreak, daysSinceLast };
+  };
+
+  const streakData = calculateStreak();
+
+  // --- Environmental Impact ---
+  // Assumption: Sharing parking reduces car trips, saving ~2.3kg CO2 per avoided trip
+  // For fun/gamification
+  const sharedTrips = Math.max(0, totalBookings - uniqueUsers.length * 10); // Trips "saved" by sharing
+  const co2Saved = (sharedTrips * 2.3).toFixed(1); // kg CO2
+  const treesEquivalent = (parseFloat(co2Saved) / 21).toFixed(1); // A tree absorbs ~21kg CO2/year
+
+  // --- Monthly Capacity Report ---
+  // Calculate workdays in current month (Mon-Fri)
+  const getWorkdaysInMonth = (year: number, month: number) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    let workdays = 0;
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) workdays++;
+    }
+    return workdays;
+  };
+
+  const workdaysThisMonth = getWorkdaysInMonth(today.getFullYear(), today.getMonth());
+  const totalCapacityThisMonth = workdaysThisMonth * 2; // 2 spots per workday
+  const usedCapacityThisMonth = thisMonthBookings.length;
+  const availableCapacityThisMonth = totalCapacityThisMonth - usedCapacityThisMonth;
+  const capacityUsedPercent = ((usedCapacityThisMonth / totalCapacityThisMonth) * 100).toFixed(0);
+
+  // Demand vs Supply ratio (estimate demand as users who wanted to book)
+  const demandRatio =
+    activeUsersThisMonth.length > 0
+      ? (activeUsersThisMonth.length / (totalCapacityThisMonth / workdaysThisMonth)).toFixed(1)
+      : '0';
+
+  // --- Unmet Demand (days when both spots were full) ---
+  const fullDays = monthlyOccupancy.filter(day => day.bookings >= 2).length;
+  const fullDaysPercent =
+    monthlyOccupancy.length > 0 ? ((fullDays / monthlyOccupancy.length) * 100).toFixed(0) : '0';
+
+  // Find which days are most commonly full
+  const fullDaysByWeekday = [0, 0, 0, 0, 0, 0, 0];
+  monthlyOccupancy.forEach(day => {
+    if (day.bookings >= 2) {
+      fullDaysByWeekday[day.dayOfWeek]++;
+    }
+  });
+  const mostFullDay = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ][fullDaysByWeekday.indexOf(Math.max(...fullDaysByWeekday))];
+
+  // --- 3-Month Trends ---
+  const getMonthData = (monthsAgo: number) => {
+    const targetDate = new Date(today.getFullYear(), today.getMonth() - monthsAgo, 1);
+    const monthStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    const monthEnd = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
+    const monthBookings = filterByDateRange(monthStart, monthEnd);
+    const workdays = getWorkdaysInMonth(targetDate.getFullYear(), targetDate.getMonth());
+    const capacity = workdays * 2;
+    const utilization = capacity > 0 ? (monthBookings.length / capacity) * 100 : 0;
+    return {
+      name: targetDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+      bookings: monthBookings.length,
+      utilization: utilization.toFixed(0),
+      capacity,
+    };
+  };
+
+  const threeMonthTrend = [getMonthData(2), getMonthData(1), getMonthData(0)];
+
+  // Predict next month (simple linear projection)
+  const utilizationTrend = threeMonthTrend.map(m => parseFloat(m.utilization));
+  const avgGrowth =
+    utilizationTrend.length >= 2
+      ? (utilizationTrend[utilizationTrend.length - 1] - utilizationTrend[0]) /
+        (utilizationTrend.length - 1)
+      : 0;
+  const predictedUtilization = Math.min(
+    100,
+    Math.max(0, parseFloat(threeMonthTrend[2].utilization) + avgGrowth)
+  ).toFixed(0);
+
+  // --- Best Time to Book (Success Rate by Day/Time) ---
+  // Analyze which days/times have more availability
+  const daySuccessRates = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    .map((dayName, idx) => {
+      const dayIndex = idx + 1; // Mon=1, Tue=2, etc.
+      const daysInRange = monthlyOccupancy.filter(d => d.dayOfWeek === dayIndex);
+      const availableDays = daysInRange.filter(d => d.bookings < 2).length;
+      const successRate = daysInRange.length > 0 ? (availableDays / daysInRange.length) * 100 : 100;
+      return {
+        day: dayName,
+        successRate: successRate.toFixed(0),
+        available: availableDays,
+        total: daysInRange.length,
+      };
+    })
+    .sort((a, b) => parseFloat(b.successRate) - parseFloat(a.successRate));
+
+  const bestDayToBook = daySuccessRates[0];
+  const worstDayToBook = daySuccessRates[daySuccessRates.length - 1];
+
   const stats = [
     {
       title: "This Week's Bookings",
@@ -342,8 +585,7 @@ const Statistics = () => {
 
   const fairnessScore = calculateFairnessScore();
 
-  // Get current user's stats - use database stats if available
-  const currentUserName = user?.user_metadata?.user_name || user?.email;
+  // Get current user's stats - use database stats if available (currentUserName defined above)
   const myStats = userBookingCounts.find(u => u.name === currentUserName);
   const myMonthBookings = myDbStats?.this_month ?? myStats?.thisMonth ?? 0;
   const avgMonthBookings =
@@ -705,7 +947,7 @@ const Statistics = () => {
                         <span className="h-2 w-2 rounded-full bg-success"></span> Available
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="bg-warning h-2 w-2 rounded-full"></span> Half
+                        <span className="h-2 w-2 rounded-full bg-warning"></span> Half
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="h-2 w-2 rounded-full bg-destructive"></span> Full
@@ -901,6 +1143,406 @@ const Statistics = () => {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Personal Parking Profile - NEW */}
+            <section className="animate-fade-in-up stagger-6">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold md:text-2xl">
+                <div className="gradient-accent h-1 w-8 rounded-full"></div>
+                Your Parking Profile
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                {/* Profile Overview */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Target className="h-5 w-5 text-primary" />
+                      Your Preferences
+                    </CardTitle>
+                    <CardDescription>Based on your booking history</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {myPrimaryVehicle === 'Car' ? (
+                            <Car className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Bike className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="text-sm">Primary Vehicle</span>
+                        </div>
+                        <span className="font-semibold">{myPrimaryVehicle}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Favorite Spot</span>
+                        </div>
+                        <span className="font-semibold">
+                          {myFavoriteSpot ? `Spot ${myFavoriteSpot}` : 'N/A'}
+                          {myFavoriteSpot && (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({myFavoriteSpotPercent}%)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Preferred Time</span>
+                        </div>
+                        <span className="font-semibold">
+                          {myPreferredDuration}
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            ({myPreferredDurationPercent}%)
+                          </span>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Booking Pattern</span>
+                        </div>
+                        <span className="font-semibold">
+                          {myTopDays.length > 0
+                            ? myTopDays.map(d => d.day).join(' & ')
+                            : 'No pattern'}
+                        </span>
+                      </div>
+                      <div className="mt-4 rounded-lg border border-border/50 bg-muted/30 p-3">
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                          <div>
+                            <div className="text-2xl font-bold">{myBookings.length}</div>
+                            <div className="text-xs text-muted-foreground">All Time</div>
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold">{myMonthBookings}</div>
+                            <div className="text-xs text-muted-foreground">This Month</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Booking Streak */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Flame className="h-5 w-5 text-orange-500" />
+                      Booking Streak
+                    </CardTitle>
+                    <CardDescription>Your weekly booking consistency</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-around">
+                        <div className="text-center">
+                          <div className="mb-1 text-4xl font-bold text-orange-500">
+                            {streakData.current}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Current Streak</div>
+                          <div className="text-xs text-muted-foreground">(weeks)</div>
+                        </div>
+                        <div className="h-16 w-px bg-border"></div>
+                        <div className="text-center">
+                          <div className="mb-1 text-4xl font-bold text-primary">
+                            {streakData.longest}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Longest Streak</div>
+                          <div className="text-xs text-muted-foreground">(weeks)</div>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
+                        {streakData.daysSinceLast !== null ? (
+                          streakData.daysSinceLast === 0 ? (
+                            <p className="text-success">🎉 You have a booking today!</p>
+                          ) : streakData.daysSinceLast <= 7 ? (
+                            <p className="text-sm">
+                              Last booking:{' '}
+                              <span className="font-semibold">
+                                {streakData.daysSinceLast} days ago
+                              </span>
+                            </p>
+                          ) : (
+                            <p className="text-sm text-warning">
+                              ⚠️ It's been {streakData.daysSinceLast} days since your last booking
+                            </p>
+                          )
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No bookings yet</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            {/* Capacity Report & Environmental Impact - NEW */}
+            <section className="animate-fade-in-up stagger-7">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold md:text-2xl">
+                <div className="gradient-primary h-1 w-8 rounded-full"></div>
+                Capacity & Impact
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                {/* Monthly Capacity Report */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <PieChart className="h-5 w-5 text-primary" />
+                      Monthly Capacity Report
+                    </CardTitle>
+                    <CardDescription>
+                      {thisMonthStart.toLocaleDateString('en-US', {
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Total Capacity</span>
+                        <span className="font-semibold">{totalCapacityThisMonth} slots</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-success">Used</span>
+                        <span className="font-semibold text-success">
+                          {usedCapacityThisMonth} slots
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Available</span>
+                        <span className="font-semibold text-muted-foreground">
+                          {availableCapacityThisMonth} slots
+                        </span>
+                      </div>
+                      <div className="h-4 w-full rounded-full bg-muted">
+                        <div
+                          className="gradient-primary h-4 rounded-full transition-all duration-500"
+                          style={{ width: `${capacityUsedPercent}%` }}
+                        />
+                      </div>
+                      <div className="text-center text-2xl font-bold">
+                        {capacityUsedPercent}% Used
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Demand vs Supply Ratio</span>
+                          <span
+                            className={`font-bold ${parseFloat(demandRatio) > 1 ? 'text-warning' : 'text-success'}`}
+                          >
+                            {demandRatio}x
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {parseFloat(demandRatio) > 1
+                            ? '⚠️ More demand than available spots'
+                            : '✅ Demand is within capacity'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Environmental Impact */}
+                <Card className="glass-card hover-lift border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Leaf className="h-5 w-5 text-green-500" />
+                      Environmental Impact
+                    </CardTitle>
+                    <CardDescription>By sharing parking, the team has helped</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-around">
+                        <div className="text-center">
+                          <div className="mb-1 text-3xl font-bold text-green-500">
+                            {co2Saved} kg
+                          </div>
+                          <div className="text-sm text-muted-foreground">CO₂ Saved</div>
+                        </div>
+                        <div className="h-16 w-px bg-border"></div>
+                        <div className="text-center">
+                          <div className="mb-1 text-3xl font-bold text-green-600">
+                            🌳 {treesEquivalent}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Trees Equivalent</div>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-center">
+                        <p className="text-sm">
+                          <span className="font-semibold text-green-600">{sharedTrips}</span> shared
+                          trips this month
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Every shared trip helps reduce traffic and emissions
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            {/* Trends & Predictions - NEW */}
+            <section className="animate-fade-in-up stagger-8">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold md:text-2xl">
+                <div className="gradient-success h-1 w-8 rounded-full"></div>
+                Trends & Predictions
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                {/* 3-Month Trend */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      3-Month Trend
+                    </CardTitle>
+                    <CardDescription>Historical utilization comparison</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {threeMonthTrend.map((month, index) => (
+                        <div key={month.name}>
+                          <div className="mb-1 flex justify-between">
+                            <span className="text-sm font-medium">{month.name}</span>
+                            <span className="text-sm">
+                              {month.utilization}% ({month.bookings}/{month.capacity})
+                            </span>
+                          </div>
+                          <div className="h-3 w-full rounded-full bg-muted">
+                            <div
+                              className={`h-3 rounded-full transition-all duration-500 ${
+                                index === 2 ? 'gradient-primary' : 'bg-muted-foreground/50'
+                              }`}
+                              style={{ width: `${month.utilization}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="mt-4 rounded-lg border border-info/30 bg-info/10 p-3">
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-info" />
+                          <span className="font-semibold text-info">Prediction</span>
+                        </div>
+                        <p className="mt-1 text-sm">
+                          Next month estimated at{' '}
+                          <span className="font-bold">{predictedUtilization}%</span> utilization
+                          {parseFloat(predictedUtilization) >= 90 && (
+                            <span className="text-warning"> (High demand expected!)</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Best Time to Book */}
+                <Card className="glass-card hover-lift">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Lightbulb className="h-5 w-5 text-yellow-500" />
+                      Best Time to Book
+                    </CardTitle>
+                    <CardDescription>Based on historical availability</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="rounded-lg border border-success/30 bg-success/10 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">✅ Best Day</span>
+                          <span className="font-bold text-success">{bestDayToBook?.day}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {bestDayToBook?.successRate}% availability rate
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">⚠️ Hardest Day</span>
+                          <span className="font-bold text-destructive">{worstDayToBook?.day}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Only {worstDayToBook?.successRate}% availability rate
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">All Days:</p>
+                        {daySuccessRates.map((day, idx) => (
+                          <div key={day.day} className="flex items-center justify-between text-sm">
+                            <span>{day.day}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-20 rounded-full bg-muted">
+                                <div
+                                  className={`h-2 rounded-full transition-all ${
+                                    idx === 0
+                                      ? 'bg-success'
+                                      : idx === daySuccessRates.length - 1
+                                        ? 'bg-destructive'
+                                        : 'bg-info'
+                                  }`}
+                                  style={{ width: `${day.successRate}%` }}
+                                />
+                              </div>
+                              <span className="w-10 text-right text-xs">{day.successRate}%</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            {/* Unmet Demand - NEW */}
+            <section className="animate-fade-in-up stagger-9">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold md:text-2xl">
+                <div className="gradient-accent h-1 w-8 rounded-full"></div>
+                Unmet Demand
+              </h2>
+              <Card className="glass-card hover-lift">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Activity className="h-5 w-5 text-warning" />
+                    Days When Both Spots Were Full
+                  </CardTitle>
+                  <CardDescription>Times when demand exceeded available parking</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    <div className="text-center">
+                      <div className="mb-1 text-4xl font-bold text-warning">{fullDays}</div>
+                      <div className="text-sm text-muted-foreground">Full Days</div>
+                      <div className="text-xs text-muted-foreground">This Month</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="mb-1 text-4xl font-bold">{fullDaysPercent}%</div>
+                      <div className="text-sm text-muted-foreground">Of Workdays</div>
+                      <div className="text-xs text-muted-foreground">Were Full</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="mb-1 text-4xl font-bold text-destructive">{mostFullDay}</div>
+                      <div className="text-sm text-muted-foreground">Most Common</div>
+                      <div className="text-xs text-muted-foreground">Full Day</div>
+                    </div>
+                  </div>
+                  {fullDays > 0 && (
+                    <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-3 text-center">
+                      <p className="text-sm">
+                        💡 Tip: Try booking on{' '}
+                        <span className="font-semibold">{bestDayToBook?.day}</span> for better
+                        availability
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </section>
