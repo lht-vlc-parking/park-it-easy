@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -46,7 +46,7 @@ jobs:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -109,7 +109,7 @@ jobs:
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> $GITHUB_OUTPUT
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-artifacts
           path: |
@@ -129,7 +129,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
       base64-subjects: '${{ needs.build.outputs.hashes }}'
       upload-assets: true
@@ -147,22 +147,22 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: release-artifacts
 
       - name: Attest Build Provenance (tar.gz)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
 
       - name: Attest Build Provenance (zip)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.zip'
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
           sbom-path: 'sbom.json'
@@ -177,12 +177,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: release-artifacts
 
@@ -223,7 +223,7 @@ jobs:
             echo "| Requirement | Status | Details |"
             echo "|:------------|:------:|:--------|"
             echo "| 🏗️ **Build as Code** | ✅ | Workflow defined in version control |"
-            echo "| 🔐 **Verified Builder** | ✅ | Official SLSA GitHub Generator v2.0.0 |"
+            echo "| 🔐 **Verified Builder** | ✅ | Official SLSA GitHub Generator v2.1.0 |"
             echo "| 📦 **Hermetic Build** | ✅ | Source pinned to specific commit |"
             echo "| 🔒 **Isolated Build** | ✅ | Ephemeral GitHub-hosted runner |"
             echo "| ⚙️ **Parameterless** | ✅ | No user-defined build parameters |"
@@ -307,7 +307,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: release-artifacts
 
@@ -317,10 +317,10 @@ jobs:
           tar -xzvf park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz -C dist/
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Upload to Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: './dist'
 
