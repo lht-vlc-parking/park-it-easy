@@ -16,6 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-01-04
+
+### Added
+
+- Booking creation timestamp display in All Upcoming Bookings section
+- Shows when each booking was created with date and time
+- Improved transparency and visibility of booking history for team-wide collaboration
+
+### Changed
+
+- Enhanced booking card UI to include creation metadata
+- Better visual organization of booking information
+
+---
+
 ## [2.1.1] - 2026-01-04
 
 ### Fixed
