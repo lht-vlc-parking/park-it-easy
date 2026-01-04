@@ -140,6 +140,11 @@ jobs:
     name: Generate Attestations
     needs: [build]
     runs-on: ubuntu-latest
+    outputs:
+      rekor-url-tar: ${{ steps.attest-tar.outputs.bundle-path }}
+      rekor-url-zip: ${{ steps.attest-zip.outputs.bundle-path }}
+      attestation-url-tar: ${{ steps.attest-tar.outputs.attestation-url }}
+      attestation-url-zip: ${{ steps.attest-zip.outputs.attestation-url }}
     permissions:
       id-token: write
       contents: read
@@ -152,20 +157,33 @@ jobs:
           name: release-artifacts
 
       - name: Attest Build Provenance (tar.gz)
+        id: attest-tar
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
 
       - name: Attest Build Provenance (zip)
+        id: attest-zip
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.zip'
 
       - name: Attest SBOM
+        id: attest-sbom
         uses: actions/attest-sbom@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
           sbom-path: 'sbom.json'
+
+      - name: Extract Rekor Log Info
+        id: rekor-info
+        run: |
+          echo "Attestation URLs:"
+          echo "TAR: ${{ steps.attest-tar.outputs.attestation-url }}"
+          echo "ZIP: ${{ steps.attest-zip.outputs.attestation-url }}"
+          echo "Bundle paths:"
+          echo "TAR: ${{ steps.attest-tar.outputs.bundle-path }}"
+          echo "ZIP: ${{ steps.attest-zip.outputs.bundle-path }}"
 
   # Create GitHub Release
   release:
@@ -206,6 +224,43 @@ jobs:
           SBOM_HASH=$(sha256sum sbom.json | cut -d' ' -f1)
           VERSION="${{ needs.build.outputs.version }}"
           REPO="${{ github.repository }}"
+
+          # Extract attestation information
+          ATTESTATION_TAR="${{ needs.attest.outputs.attestation-url-tar }}"
+          ATTESTATION_ZIP="${{ needs.attest.outputs.attestation-url-zip }}"
+
+          # Build attestation section
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 🔐 Attestation & Transparency"
+            echo ""
+            echo "### ✅ Attestation Signatures"
+            echo ""
+            echo "Cryptographic attestations have been generated and uploaded to the Rekor transparency log:"
+            echo ""
+            if [ -n "$ATTESTATION_TAR" ]; then
+              echo "**tar.gz attestation:**"
+              echo "- 📄 Attestation uploaded to repository: ${ATTESTATION_TAR}"
+              # Extract Rekor log index from bundle if available
+              echo "- 🔍 Verify in Rekor transparency log"
+              echo ""
+            fi
+            if [ -n "$ATTESTATION_ZIP" ]; then
+              echo "**zip attestation:**"
+              echo "- 📄 Attestation uploaded to repository: ${ATTESTATION_ZIP}"
+              echo ""
+            fi
+            echo "### 🔍 How to Verify"
+            echo ""
+            echo "\`\`\`bash"
+            echo "# Verify attestations using GitHub CLI"
+            echo "gh attestation verify park-it-easy-office-${VERSION}.tar.gz -R ${REPO}"
+            echo "gh attestation verify park-it-easy-office-${VERSION}.zip -R ${REPO}"
+            echo "\`\`\`"
+            echo ""
+          } >> CHANGELOG.md
 
           # Build SLSA compliance section
           {
