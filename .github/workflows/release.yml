@@ -141,8 +141,8 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     outputs:
-      rekor-url-tar: ${{ steps.attest-tar.outputs.bundle-path }}
-      rekor-url-zip: ${{ steps.attest-zip.outputs.bundle-path }}
+      rekor-log-index-tar: ${{ steps.extract-rekor.outputs.log-index-tar }}
+      rekor-log-index-zip: ${{ steps.extract-rekor.outputs.log-index-zip }}
       attestation-url-tar: ${{ steps.attest-tar.outputs.attestation-url }}
       attestation-url-zip: ${{ steps.attest-zip.outputs.attestation-url }}
     permissions:
@@ -175,15 +175,31 @@ jobs:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
           sbom-path: 'sbom.json'
 
-      - name: Extract Rekor Log Info
-        id: rekor-info
+      - name: Extract Rekor Log Index
+        id: extract-rekor
         run: |
-          echo "Attestation URLs:"
-          echo "TAR: ${{ steps.attest-tar.outputs.attestation-url }}"
-          echo "ZIP: ${{ steps.attest-zip.outputs.attestation-url }}"
-          echo "Bundle paths:"
-          echo "TAR: ${{ steps.attest-tar.outputs.bundle-path }}"
-          echo "ZIP: ${{ steps.attest-zip.outputs.bundle-path }}"
+          # Install jq if not available
+          which jq || sudo apt-get update && sudo apt-get install -y jq
+
+          # Extract Rekor log index from the bundle files
+          if [ -f "${{ steps.attest-tar.outputs.bundle-path }}" ]; then
+            LOG_INDEX_TAR=$(cat "${{ steps.attest-tar.outputs.bundle-path }}" | jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty')
+            echo "log-index-tar=$LOG_INDEX_TAR" >> $GITHUB_OUTPUT
+            echo "✅ Attestation signature uploaded to Rekor transparency log (tar.gz)"
+            echo "   https://search.sigstore.dev?logIndex=$LOG_INDEX_TAR"
+          fi
+
+          if [ -f "${{ steps.attest-zip.outputs.bundle-path }}" ]; then
+            LOG_INDEX_ZIP=$(cat "${{ steps.attest-zip.outputs.bundle-path }}" | jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty')
+            echo "log-index-zip=$LOG_INDEX_ZIP" >> $GITHUB_OUTPUT
+            echo "✅ Attestation signature uploaded to Rekor transparency log (zip)"
+            echo "   https://search.sigstore.dev?logIndex=$LOG_INDEX_ZIP"
+          fi
+
+          echo ""
+          echo "📄 Attestation URLs:"
+          echo "   TAR: ${{ steps.attest-tar.outputs.attestation-url }}"
+          echo "   ZIP: ${{ steps.attest-zip.outputs.attestation-url }}"
 
   # Create GitHub Release
   release:
@@ -228,6 +244,8 @@ jobs:
           # Extract attestation information
           ATTESTATION_TAR="${{ needs.attest.outputs.attestation-url-tar }}"
           ATTESTATION_ZIP="${{ needs.attest.outputs.attestation-url-zip }}"
+          REKOR_INDEX_TAR="${{ needs.attest.outputs.rekor-log-index-tar }}"
+          REKOR_INDEX_ZIP="${{ needs.attest.outputs.rekor-log-index-zip }}"
 
           # Build attestation section
           {
@@ -242,13 +260,19 @@ jobs:
             echo ""
             if [ -n "$ATTESTATION_TAR" ]; then
               echo "**tar.gz attestation:**"
+              if [ -n "$REKOR_INDEX_TAR" ]; then
+                echo "- 🔍 **Attestation signature uploaded to Rekor transparency log**"
+                echo "  https://search.sigstore.dev?logIndex=${REKOR_INDEX_TAR}"
+              fi
               echo "- 📄 Attestation uploaded to repository: ${ATTESTATION_TAR}"
-              # Extract Rekor log index from bundle if available
-              echo "- 🔍 Verify in Rekor transparency log"
               echo ""
             fi
             if [ -n "$ATTESTATION_ZIP" ]; then
               echo "**zip attestation:**"
+              if [ -n "$REKOR_INDEX_ZIP" ]; then
+                echo "- 🔍 **Attestation signature uploaded to Rekor transparency log**"
+                echo "  https://search.sigstore.dev?logIndex=${REKOR_INDEX_ZIP}"
+              fi
               echo "- 📄 Attestation uploaded to repository: ${ATTESTATION_ZIP}"
               echo ""
             fi
