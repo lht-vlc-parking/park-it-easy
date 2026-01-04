@@ -1,0 +1,182 @@
+name: Daily Security Scan
+
+on:
+  schedule:
+    # Run every day at 8:00 AM UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to scan (leave empty for latest)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-scan:
+    name: Scan SBOM for Vulnerabilities
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get latest release tag
+        id: get-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ inputs.release_tag }}" ]; then
+            echo "tag=${{ inputs.release_tag }}" >> $GITHUB_OUTPUT
+          else
+            LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+            echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          fi
+          echo "Using release: $(cat $GITHUB_OUTPUT | grep tag | cut -d= -f2)"
+
+      - name: Download SBOM from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Downloading SBOM from release ${{ steps.get-release.outputs.tag }}..."
+          gh release download ${{ steps.get-release.outputs.tag }} --pattern 'sbom*.json' --dir ./sbom-files || {
+            echo "No SBOM files found in release, generating from package-lock..."
+            mkdir -p ./sbom-files
+          }
+          
+          # List downloaded files
+          echo "Downloaded SBOM files:"
+          ls -la ./sbom-files/ || echo "No files downloaded"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate SBOM if not found
+        run: |
+          if [ ! -f ./sbom-files/sbom.json ] && [ ! -f ./sbom-files/sbom-cyclonedx.json ]; then
+            echo "Generating SBOM from current package.json..."
+            npm install -g @cyclonedx/cyclonedx-npm
+            cyclonedx-npm --output-file ./sbom-files/sbom-cyclonedx.json || true
+          fi
+
+      - name: Install Grype for vulnerability scanning
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Scan SBOM for vulnerabilities
+        id: scan
+        continue-on-error: true
+        run: |
+          echo "Scanning for vulnerabilities..."
+          
+          SBOM_FILE=""
+          if [ -f ./sbom-files/sbom-cyclonedx.json ]; then
+            SBOM_FILE="./sbom-files/sbom-cyclonedx.json"
+          elif [ -f ./sbom-files/sbom.json ]; then
+            SBOM_FILE="./sbom-files/sbom.json"
+          fi
+          
+          if [ -n "$SBOM_FILE" ]; then
+            echo "Scanning $SBOM_FILE..."
+            grype sbom:$SBOM_FILE -o json > vulnerability-report.json 2>&1 || true
+            grype sbom:$SBOM_FILE -o table > vulnerability-report.txt 2>&1 || true
+            
+            # Count vulnerabilities by severity
+            CRITICAL=$(cat vulnerability-report.json | jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' 2>/dev/null || echo "0")
+            HIGH=$(cat vulnerability-report.json | jq '[.matches[] | select(.vulnerability.severity == "High")] | length' 2>/dev/null || echo "0")
+            MEDIUM=$(cat vulnerability-report.json | jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' 2>/dev/null || echo "0")
+            LOW=$(cat vulnerability-report.json | jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' 2>/dev/null || echo "0")
+            TOTAL=$((CRITICAL + HIGH + MEDIUM + LOW))
+            
+            echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "high=$HIGH" >> $GITHUB_OUTPUT
+            echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+            echo "low=$LOW" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            
+            echo "## Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
+            echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔴 Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟠 High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟡 Medium | $MEDIUM |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟢 Low | $LOW |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Total** | **$TOTAL** |" >> $GITHUB_STEP_SUMMARY
+            
+            # Set has_vulnerabilities flag
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+              echo "has_critical_or_high=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_critical_or_high=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No SBOM file found to scan"
+            echo "has_critical_or_high=false" >> $GITHUB_OUTPUT
+            echo "total=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: |
+            vulnerability-report.json
+            vulnerability-report.txt
+          retention-days: 30
+
+      - name: Create issue for critical vulnerabilities
+        if: steps.scan.outputs.has_critical_or_high == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if there's already an open security issue
+          EXISTING_ISSUE=$(gh issue list --label "security" --state open --json number -q '.[0].number' 2>/dev/null || echo "")
+          
+          if [ -z "$EXISTING_ISSUE" ]; then
+            gh issue create \
+              --title "🚨 Security: ${{ steps.scan.outputs.critical }} Critical, ${{ steps.scan.outputs.high }} High vulnerabilities found" \
+              --body "## Automated Security Scan Report
+
+            **Release:** ${{ steps.get-release.outputs.tag }}
+            **Scan Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+            ### Vulnerability Summary
+
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | ${{ steps.scan.outputs.critical }} |
+            | 🟠 High | ${{ steps.scan.outputs.high }} |
+            | 🟡 Medium | ${{ steps.scan.outputs.medium }} |
+            | 🟢 Low | ${{ steps.scan.outputs.low }} |
+
+            ### Action Required
+
+            Please review the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed vulnerability information.
+
+            ---
+            *This issue was automatically created by the security scanner workflow.*" \
+              --label "security,automated"
+          else
+            echo "Existing security issue found: #$EXISTING_ISSUE"
+            gh issue comment $EXISTING_ISSUE --body "## Updated Security Scan - $(date -u +"%Y-%m-%d")
+
+            New scan detected vulnerabilities:
+            - 🔴 Critical: ${{ steps.scan.outputs.critical }}
+            - 🟠 High: ${{ steps.scan.outputs.high }}
+
+            [View latest scan](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          fi
+
+      - name: Fail if critical or high vulnerabilities found
+        if: steps.scan.outputs.has_critical_or_high == 'true'
+        run: |
+          echo "❌ Critical or High vulnerabilities found!"
+          echo "Critical: ${{ steps.scan.outputs.critical }}"
+          echo "High: ${{ steps.scan.outputs.high }}"
+          exit 1
