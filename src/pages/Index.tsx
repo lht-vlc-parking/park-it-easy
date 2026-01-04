@@ -300,14 +300,14 @@ const Index = () => {
                               : isMyBooking
                                 ? 'border-primary/50 bg-primary/5'
                                 : 'border-border/50'
-                          } ${isToday ? 'ring-warning/30 ring-2 ring-offset-2 ring-offset-background' : ''}`}
+                          } ${isToday ? 'ring-2 ring-warning/30 ring-offset-2 ring-offset-background' : ''}`}
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <div className="mb-3 flex items-center gap-3 sm:mb-0 sm:gap-4">
                             <div
                               className={`min-w-[50px] rounded-xl p-2 text-center sm:min-w-[60px] ${
                                 isToday
-                                  ? 'bg-warning/20 ring-warning ring-2'
+                                  ? 'bg-warning/20 ring-2 ring-warning'
                                   : isMyBooking
                                     ? 'bg-primary/20'
                                     : 'bg-muted/50'
@@ -334,7 +334,7 @@ const Index = () => {
                               <div className="flex flex-wrap items-center gap-2 truncate font-semibold">
                                 {booking.userName}
                                 {isToday && (
-                                  <span className="bg-warning rounded-full px-2 py-0.5 text-xs text-white shadow-sm">
+                                  <span className="rounded-full bg-warning px-2 py-0.5 text-xs text-white shadow-sm">
                                     Today
                                   </span>
                                 )}
@@ -353,6 +353,24 @@ const Index = () => {
                                   {booking.vehicleType === 'car' ? '🚗 Car' : '🏍️ Moto'}
                                 </span>
                               </div>
+                              {booking.createdAt && (
+                                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground/75">
+                                  <Clock className="h-3 w-3" />
+                                  <span>
+                                    Created{' '}
+                                    {new Date(booking.createdAt).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                    })}{' '}
+                                    at{' '}
+                                    {new Date(booking.createdAt).toLocaleTimeString('en-US', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3">
@@ -403,20 +421,20 @@ const Index = () => {
                   My Parking Stats
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <Card className="glass-card hover-lift border-info/20 border-2">
+                  <Card className="glass-card hover-lift border-2 border-info/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">
                             Booking Frequency
                           </p>
-                          <p className="text-info text-3xl font-bold">{avgBookingsPerWeek}</p>
+                          <p className="text-3xl font-bold text-info">{avgBookingsPerWeek}</p>
                           <p className="mt-1 text-xs text-muted-foreground">
                             bookings/week average
                           </p>
                         </div>
-                        <div className="bg-info/10 rounded-xl p-3">
-                          <Calendar className="text-info h-8 w-8" />
+                        <div className="rounded-xl bg-info/10 p-3">
+                          <Calendar className="h-8 w-8 text-info" />
                         </div>
                       </div>
                     </CardContent>
@@ -439,18 +457,18 @@ const Index = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="glass-card hover-lift border-warning/20 border-2">
+                  <Card className="glass-card hover-lift border-2 border-warning/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">
                             Preferred Time
                           </p>
-                          <p className="text-warning text-3xl font-bold">{myPreferredTime}</p>
+                          <p className="text-3xl font-bold text-warning">{myPreferredTime}</p>
                           <p className="mt-1 text-xs text-muted-foreground">most common choice</p>
                         </div>
-                        <div className="bg-warning/10 rounded-xl p-3">
-                          <Clock className="text-warning h-8 w-8" />
+                        <div className="rounded-xl bg-warning/10 p-3">
+                          <Clock className="h-8 w-8 text-warning" />
                         </div>
                       </div>
                     </CardContent>
