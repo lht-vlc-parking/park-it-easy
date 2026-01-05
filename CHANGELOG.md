@@ -16,6 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.1] - 2026-01-05
+
+### Dependencies
+
+- Updated prettier-plugin-tailwindcss from 0.6.14 to 0.7.2
+- Updated lucide-react from 0.554.0 to 0.562.0
+- Updated sonner from 1.7.4 to 2.0.7
+- Updated react-router-dom from 6.30.2 to 7.11.0
+- Updated tailwind-merge from 2.6.0 to 3.4.0
+
+---
+
 ## [2.3.0] - 2026-01-05
 
 ### Changed
