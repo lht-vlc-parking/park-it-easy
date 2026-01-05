@@ -210,7 +210,7 @@ const Statistics = () => {
     for (let i = 0; i < days; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
       const dayBookings = bookings.filter(b => b.date === dateStr);
       // Count unique spots (max 2 per day)
       const uniqueSpots = new Set(dayBookings.map(b => b.spot_number));

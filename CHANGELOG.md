@@ -16,6 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-01-05
+
+### Changed
+
+- Repositioned duration badge (All Day/AM/PM) and Cancel button to top right of booking cards
+- Improved layout of ParkingSpotCard booking items with badge at top right
+
+### Fixed
+
+- Fixed calendar date bug in Statistics page where bookings appeared on wrong day due to UTC timezone conversion
+- Now using local timezone for date calculations to ensure correct day display
+
+---
+
 ## [2.2.0] - 2026-01-04
 
 ### Added

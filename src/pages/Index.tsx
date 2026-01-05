@@ -294,7 +294,7 @@ const Index = () => {
                       return (
                         <div
                           key={booking.id}
-                          className={`glass-card animate-fade-in-up flex flex-col justify-between rounded-xl border-2 p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg sm:flex-row sm:items-center ${
+                          className={`glass-card animate-fade-in-up relative flex flex-col justify-between rounded-xl border-2 p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg sm:flex-row sm:items-center ${
                             isToday
                               ? 'border-warning/50 bg-warning/5'
                               : isMyBooking
@@ -303,6 +303,33 @@ const Index = () => {
                           } ${isToday ? 'ring-2 ring-warning/30 ring-offset-2 ring-offset-background' : ''}`}
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
+                          <div className="absolute right-3 top-3 flex items-center gap-2">
+                            <Badge
+                              className={`px-3 py-1.5 text-xs font-medium shadow-sm sm:text-sm ${
+                                booking.duration === 'full'
+                                  ? 'gradient-primary text-white'
+                                  : booking.duration === 'morning'
+                                    ? 'bg-info text-white'
+                                    : 'bg-warning text-white'
+                              }`}
+                            >
+                              {booking.duration === 'full'
+                                ? 'All Day'
+                                : booking.duration === 'morning'
+                                  ? 'AM'
+                                  : 'PM'}
+                            </Badge>
+                            {isMyBooking && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnbook(booking.id)}
+                                className="border-destructive/30 text-destructive transition-all hover:border-destructive hover:bg-destructive hover:text-white"
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
                           <div className="mb-3 flex items-center gap-3 sm:mb-0 sm:gap-4">
                             <div
                               className={`min-w-[50px] rounded-xl p-2 text-center sm:min-w-[60px] ${
@@ -372,33 +399,6 @@ const Index = () => {
                                 </div>
                               )}
                             </div>
-                          </div>
-                          <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3">
-                            <Badge
-                              className={`px-3 py-1.5 text-xs font-medium shadow-sm sm:text-sm ${
-                                booking.duration === 'full'
-                                  ? 'gradient-primary text-white'
-                                  : booking.duration === 'morning'
-                                    ? 'bg-info text-white'
-                                    : 'bg-warning text-white'
-                              }`}
-                            >
-                              {booking.duration === 'full'
-                                ? 'All Day'
-                                : booking.duration === 'morning'
-                                  ? 'AM'
-                                  : 'PM'}
-                            </Badge>
-                            {isMyBooking && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUnbook(booking.id)}
-                                className="border-destructive/30 text-destructive transition-all hover:border-destructive hover:bg-destructive hover:text-white"
-                              >
-                                Cancel
-                              </Button>
-                            )}
                           </div>
                         </div>
                       );

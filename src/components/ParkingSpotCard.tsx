@@ -118,19 +118,11 @@ export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: Parking
               {todayBookings.map((booking, index) => (
                 <div 
                   key={booking.id} 
-                  className="flex items-center justify-between p-2 bg-muted/50 rounded-lg border border-border/50 animate-fade-in"
+                  className="relative p-2 bg-muted/50 rounded-lg border border-border/50 animate-fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {booking.vehicleType === "car" ? (
-                      <Car className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                    ) : (
-                      <Bike className="h-3 w-3 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
-                    )}
-                    <span className="text-xs sm:text-sm truncate font-medium">{booking.userName}</span>
-                  </div>
                   <Badge variant="outline" className={cn(
-                    "text-[10px] sm:text-xs whitespace-nowrap ml-2 font-medium",
+                    "absolute top-1 right-1 text-[10px] sm:text-xs whitespace-nowrap font-medium",
                     booking.duration === "full" && "border-primary/50 bg-primary/10 text-primary",
                     booking.duration === "morning" && "border-info/50 bg-info/10 text-info",
                     booking.duration === "afternoon" && "border-warning/50 bg-warning/10 text-warning"
@@ -138,6 +130,14 @@ export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: Parking
                     {booking.duration === "full" ? "All Day" : 
                      booking.duration === "morning" ? "AM" : "PM"}
                   </Badge>
+                  <div className="flex items-center gap-2 min-w-0 pr-12">
+                    {booking.vehicleType === "car" ? (
+                      <Car className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
+                    ) : (
+                      <Bike className="h-3 w-3 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
+                    )}
+                    <span className="text-xs sm:text-sm truncate font-medium">{booking.userName}</span>
+                  </div>
                 </div>
               ))}
             </div>
