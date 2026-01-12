@@ -16,6 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.2] - 2026-01-12
+
+### Security
+
+- Fixed SECURITY DEFINER views (booking_fairness, active_parking_spots, daily_occupancy_stats, weekly_booking_trends, user_booking_stats, waitlist_with_users, spot_popularity) to use SECURITY INVOKER for proper RLS enforcement
+- Removed direct API access to booking_summary_mv materialized view
+- Added secure get_booking_summary() function wrapper for authenticated access only
+
+### Fixed
+
+- Fixed idempotency issue in booking policies migration
+
+---
+
 ## [2.3.1] - 2026-01-05
 
 ### Dependencies
