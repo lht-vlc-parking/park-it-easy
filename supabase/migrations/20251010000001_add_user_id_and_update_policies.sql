@@ -9,10 +9,14 @@ ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCAD
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON public.bookings(user_id);
 
 -- Update RLS policies to be more specific
--- Drop old policies
+-- Drop old policies (including new policy names for idempotency)
 DROP POLICY IF EXISTS "Anyone can view bookings" ON public.bookings;
 DROP POLICY IF EXISTS "Anyone can create bookings" ON public.bookings;
 DROP POLICY IF EXISTS "Anyone can delete bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Authenticated users can view all bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Authenticated users can create bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Users can delete their own bookings" ON public.bookings;
+DROP POLICY IF EXISTS "Users can update their own bookings" ON public.bookings;
 
 -- Create new policies
 -- Allow authenticated users to view all bookings
