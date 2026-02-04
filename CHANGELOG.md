@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.3] - 2026-02-04
+
+### Dependencies
+
+- Updated lodash from 4.17.21 to 4.17.23
+- Updated globals from 15.15.0 to 17.0.0
+- Updated recharts from 2.15.4 to 3.6.0
+- Updated react-day-picker from 8.10.1 to 9.13.0
+- Updated typescript-eslint from 8.51.0 to 8.53.0
+- Updated zod from 3.25.76 to 4.3.5
+
 ## [2.3.2] - 2026-01-12
 
 ### Security
