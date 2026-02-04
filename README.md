@@ -107,8 +107,11 @@ Open [http://localhost:5173](http://localhost:5173) 🎉
 | **Styling**  | Tailwind CSS 3.4, shadcn/ui           |
 | **Backend**  | Supabase (PostgreSQL, Auth, Realtime) |
 | **State**    | TanStack Query, React Hook Form       |
+| **Charts**   | Recharts 3                             |
+| **Dates**    | react-day-picker 9                     |
 | **Testing**  | Vitest, Playwright, Testing Library   |
 | **Quality**  | ESLint 9, Prettier, Husky             |
+| **Validation** | Zod 4                                |
 
 ---
 
