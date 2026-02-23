@@ -209,7 +209,7 @@ export const BookingDialogWithValidation = ({
                   selected={date}
                   onSelect={setDate}
                   disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  initialFocus
+                  autoFocus
                   className="pointer-events-auto"
                 />
               </PopoverContent>
@@ -307,7 +307,7 @@ export const BookingDialogWithValidation = ({
                   'flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-all',
                   duration === 'morning'
                     ? 'border-info bg-info/10 shadow-md'
-                    : 'hover:border-info/50 border-border hover:bg-muted/50'
+                    : 'border-border hover:border-info/50 hover:bg-muted/50'
                 )}
               >
                 <RadioGroupItem value="morning" id="morning" />
@@ -329,7 +329,7 @@ export const BookingDialogWithValidation = ({
                   'flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-all',
                   duration === 'afternoon'
                     ? 'border-warning bg-warning/10 shadow-md'
-                    : 'hover:border-warning/50 border-border hover:bg-muted/50'
+                    : 'border-border hover:border-warning/50 hover:bg-muted/50'
                 )}
               >
                 <RadioGroupItem value="afternoon" id="afternoon" />
