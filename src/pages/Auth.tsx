@@ -11,6 +11,7 @@ import { AlertCircle, Car, Loader2, Mail, Lock, User, KeyRound } from 'lucide-re
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
 import { getUserErrorMessage } from '@/lib/errorMessages';
+import { signupPasswordSchema, loginPasswordSchema } from '@/lib/passwordValidation';
 
 const ALLOWED_EMAIL_DOMAIN = '@lht.dlh.de';
 
@@ -67,21 +68,19 @@ export default function Auth() {
     return true;
   };
 
-  const validatePassword = (password: string): boolean => {
-    if (!password || password.length < 12) {
-      toast.error('Password must be at least 12 characters');
+  const validateSignupPassword = (password: string): boolean => {
+    const result = signupPasswordSchema.safeParse(password);
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return false;
     }
-    if (!/[A-Z]/.test(password)) {
-      toast.error('Password must contain at least one uppercase letter');
-      return false;
-    }
-    if (!/[a-z]/.test(password)) {
-      toast.error('Password must contain at least one lowercase letter');
-      return false;
-    }
-    if (!/\d/.test(password)) {
-      toast.error('Password must contain at least one digit');
+    return true;
+  };
+
+  const validateLoginPassword = (password: string): boolean => {
+    const result = loginPasswordSchema.safeParse(password);
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return false;
     }
     return true;
@@ -106,7 +105,7 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateEmail(loginEmail) || !validatePassword(loginPassword)) {
+    if (!validateEmail(loginEmail) || !validateLoginPassword(loginPassword)) {
       return;
     }
 
@@ -137,7 +136,7 @@ export default function Auth() {
     if (
       !validateName(signupName) ||
       !validateEmail(signupEmail) ||
-      !validatePassword(signupPassword)
+      !validateSignupPassword(signupPassword)
     ) {
       return;
     }
@@ -294,7 +293,6 @@ export default function Auth() {
                         onChange={e => setLoginPassword(e.target.value)}
                         required
                         disabled={isLoading}
-                        minLength={12}
                         className="h-12 border-2 pl-10 transition-colors focus:border-primary"
                       />
                     </div>
