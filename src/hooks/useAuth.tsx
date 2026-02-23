@@ -37,8 +37,13 @@ export const useAuth = () => {
   const signOut = async () => {
     if (!isSupabaseConfigured) return;
 
-    await supabase.auth.signOut();
-    // Redirect to auth page after logout
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
+    // Always redirect to auth page, even if signOut fails
+    // (clears local state regardless of server-side result)
     window.location.href = `${window.location.origin}${import.meta.env.BASE_URL}auth`;
   };
 
