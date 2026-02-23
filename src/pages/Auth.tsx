@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { AlertCircle, Car, Loader2, Mail, Lock, User, KeyRound } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
+import { getUserErrorMessage } from '@/lib/errorMessages';
 
 const ALLOWED_EMAIL_DOMAIN = '@lht.dlh.de';
 
@@ -67,8 +68,20 @@ export default function Auth() {
   };
 
   const validatePassword = (password: string): boolean => {
-    if (!password || password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (!password || password.length < 12) {
+      toast.error('Password must be at least 12 characters');
+      return false;
+    }
+    if (!/[A-Z]/.test(password)) {
+      toast.error('Password must contain at least one uppercase letter');
+      return false;
+    }
+    if (!/[a-z]/.test(password)) {
+      toast.error('Password must contain at least one lowercase letter');
+      return false;
+    }
+    if (!/\d/.test(password)) {
+      toast.error('Password must contain at least one digit');
       return false;
     }
     return true;
@@ -77,6 +90,14 @@ export default function Auth() {
   const validateName = (name: string): boolean => {
     if (!name || name.trim() === '') {
       toast.error('Name is required');
+      return false;
+    }
+    if (name.trim().length > 100) {
+      toast.error('Name must be 100 characters or fewer');
+      return false;
+    }
+    if (!/^[\p{L}\p{M}\s.'-]+$/u.test(name.trim())) {
+      toast.error('Name contains invalid characters');
       return false;
     }
     return true;
@@ -98,7 +119,7 @@ export default function Auth() {
       });
 
       if (error) {
-        toast.error(error.message || 'Invalid email or password');
+        toast.error(getUserErrorMessage(error, 'auth'));
       } else if (data.session) {
         toast.success('Welcome back!');
         navigate('/');
@@ -135,7 +156,7 @@ export default function Auth() {
       });
 
       if (error) {
-        toast.error(error.message || 'Failed to create account');
+        toast.error(getUserErrorMessage(error, 'auth'));
       } else if (data.user) {
         if (data.session) {
           toast.success('Account created successfully!');
@@ -166,7 +187,7 @@ export default function Auth() {
       });
 
       if (error) {
-        toast.error(error.message || 'Failed to send reset email');
+        toast.error(getUserErrorMessage(error, 'password_reset'));
       } else {
         toast.success('Check your email for a password reset link');
         setResetEmail('');
@@ -273,7 +294,7 @@ export default function Auth() {
                         onChange={e => setLoginPassword(e.target.value)}
                         required
                         disabled={isLoading}
-                        minLength={6}
+                        minLength={12}
                         className="h-12 border-2 pl-10 transition-colors focus:border-primary"
                       />
                     </div>
@@ -333,7 +354,7 @@ export default function Auth() {
                       />
                     </div>
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="bg-info h-1.5 w-1.5 rounded-full"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-info"></span>
                       Only @lht.dlh.de email addresses are allowed
                     </p>
                   </div>
@@ -351,7 +372,7 @@ export default function Auth() {
                         onChange={e => setSignupPassword(e.target.value)}
                         required
                         disabled={isLoading}
-                        minLength={6}
+                        minLength={12}
                         className="h-12 border-2 pl-10 transition-colors focus:border-primary"
                       />
                     </div>
@@ -393,7 +414,7 @@ export default function Auth() {
                       />
                     </div>
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="bg-info h-1.5 w-1.5 rounded-full"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-info"></span>
                       Enter your email to receive a password reset link
                     </p>
                   </div>

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart3, Calendar, LogOut, User, Clock, Activity } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
+import { getUserErrorMessage } from '@/lib/errorMessages';
 
 interface Booking {
   id: string;
@@ -63,7 +64,7 @@ const Index = () => {
       setBookings(transformedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
-      toast.error('Failed to load bookings');
+      toast.error(getUserErrorMessage(error, 'booking_fetch'));
     } finally {
       setLoading(false);
     }
@@ -92,9 +93,7 @@ const Index = () => {
 
       if (error) {
         console.error('Error creating booking:', error);
-        // Show the actual error message from the database
-        const errorMessage = error.message || 'Failed to create booking';
-        toast.error(errorMessage);
+        toast.error(getUserErrorMessage(error, 'booking_create'));
         return;
       }
 
@@ -102,8 +101,7 @@ const Index = () => {
       fetchBookings(); // Refresh the list
     } catch (error: unknown) {
       console.error('Error creating booking:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
-      toast.error(errorMessage);
+      toast.error(getUserErrorMessage(error, 'booking_create'));
     }
   };
 
@@ -113,8 +111,7 @@ const Index = () => {
 
       if (error) {
         console.error('Error cancelling booking:', error);
-        const errorMessage = error.message || 'Failed to cancel booking';
-        toast.error(errorMessage);
+        toast.error(getUserErrorMessage(error, 'booking_cancel'));
         return;
       }
 
@@ -122,8 +119,7 @@ const Index = () => {
       fetchBookings(); // Refresh the list
     } catch (error: unknown) {
       console.error('Error cancelling booking:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel booking';
-      toast.error(errorMessage);
+      toast.error(getUserErrorMessage(error, 'booking_cancel'));
     }
   };
 
