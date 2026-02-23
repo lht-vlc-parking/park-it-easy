@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to error reporting service
     console.error('Error caught by boundary:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -58,25 +58,23 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <Card className="max-w-md w-full">
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+          <Card className="w-full max-w-md">
             <CardHeader>
               <div className="flex items-center gap-2 text-destructive">
                 <AlertTriangle className="h-6 w-6" />
                 <CardTitle>Something went wrong</CardTitle>
               </div>
-              <CardDescription>
-                We're sorry, but something unexpected happened.
-              </CardDescription>
+              <CardDescription>We're sorry, but something unexpected happened.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div className="bg-muted p-4 rounded-md overflow-auto max-h-48">
-                  <p className="text-sm font-mono text-destructive">
+              {import.meta.env.DEV && this.state.error && (
+                <div className="max-h-48 overflow-auto rounded-md bg-muted p-4">
+                  <p className="font-mono text-sm text-destructive">
                     {this.state.error.toString()}
                   </p>
                   {this.state.errorInfo && (
-                    <pre className="text-xs mt-2 text-muted-foreground overflow-auto">
+                    <pre className="mt-2 overflow-auto text-xs text-muted-foreground">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   )}

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,13 +13,16 @@ export const useAuth = () => {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    }).catch((error) => {
-      console.error('Failed to get session:', error);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to get session:', error);
+        setLoading(false);
+      });
 
     const {
       data: { subscription },
@@ -33,10 +36,10 @@ export const useAuth = () => {
 
   const signOut = async () => {
     if (!isSupabaseConfigured) return;
-    
+
     await supabase.auth.signOut();
     // Redirect to auth page after logout
-    window.location.href = 'https://miguel11nines.github.io/park-it-easy-office/auth';
+    window.location.href = `${window.location.origin}${import.meta.env.BASE_URL}auth`;
   };
 
   return { user, loading, signOut };
