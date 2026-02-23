@@ -1,10 +1,12 @@
 # Comprehensive Security Report
 
-**Application:** park-it-easy-office v2.3.3
-**Date:** 2026-02-23
-**Auditor:** Automated Security Audit (Consolidated)
+**Application:** park-it-easy-office v2.4.1 _(originally audited at v2.3.3)_
+**Original Audit Date:** 2026-02-23
+**Last Updated:** 2026-02-23 (post-remediation re-audit at v2.4.1)
+**Auditor:** Automated Security Audit (Consolidated) + 6 parallel re-audit agents
 **Scope:** Full-stack security audit — Vite/React 18/TypeScript 5.8 SPA, Supabase (PostgreSQL + Auth + RLS), GitHub Pages hosting, GitHub Actions CI/CD
 **Domain:** Parking management system for Lufthansa Technik office (`@lht.dlh.de` domain)
+**Delta Report:** See `audits/v2.4.1-delta-report.md` for full v2.3.3 → v2.4.1 comparison
 
 ---
 
@@ -12,17 +14,20 @@
 
 This report consolidates findings from **11 individual security audits** covering authentication, authorization, input validation, database security, session/cookie management, secrets management, API/infrastructure, business logic, file handling, and logging/monitoring, plus 2 code quality audits.
 
-**Overall Risk Score: 5.1 / 10** (weighted average across all audit domains)
+> **v2.4.1 UPDATE:** Phase 1-2 remediation resolved **15 findings** (5 High, 7 Medium, 3 Low). The re-audit also identified **12 new findings** (1 High, 4 Medium, 7 Low). The delta report contains full details.
 
-The application has a **single critical vulnerability** — client-side-only email domain enforcement — that undermines the entire tenant boundary. Six high-severity issues affect authorization bypass, data integrity, and observability. The codebase benefits from strong CI/CD security practices (SLSA L3, Sigstore, SBOM, Grype), properly configured RLS on all tables, and no committed secrets. However, the combination of client-only business rule enforcement, identity based on mutable strings, and zero operational monitoring creates significant risk for a production system.
+**Overall Risk Score: ~~5.1~~ → 3.8 / 10** (weighted average across all audit domains)
 
-**Key Statistics:**
+The application has a **single critical vulnerability** — client-side-only email domain enforcement — that undermines the entire tenant boundary. ~~Six~~ Three remaining high-severity issues affect observability, plus one new high-severity finding (admin role check uses user-writable metadata). The codebase benefits from strong CI/CD security practices (SLSA L3, Sigstore, SBOM, Grype), properly configured RLS on all tables, and no committed secrets. ~~The combination of client-only business rule enforcement, identity based on mutable strings, and zero operational monitoring creates significant risk.~~ Phase 1-2 fixes addressed client-only enforcement gaps (CSP, UNIQUE constraints, WITH CHECK, past-date check, error mapping, admin function restrictions). The remaining risk is concentrated in the **logging/monitoring cluster** (H7-H9, Phase 3) and the **critical tenant boundary** (C1, requires dashboard config).
 
-- **1 Critical** vulnerability (immediate action required)
-- **9 High** vulnerabilities (fix within 2 weeks)
-- **~19 Medium** vulnerabilities (fix within 1-2 months)
-- **~12 Low** vulnerabilities (fix within 3 months)
-- **11 audit reports** consolidated, **0 duplicate findings** in final count (deduplicated)
+**Key Statistics (v2.4.1):**
+
+- **1 Critical** vulnerability (requires Supabase Dashboard config — cannot fix via code)
+- **5 High** vulnerabilities (3 original + 1 new + 1 partially overlapping)
+- **~16 Medium** vulnerabilities (~12 original still open + 4 new)
+- **~16 Low** vulnerabilities (~10 original still open + 6 new from deeper analysis)
+- **15 findings resolved** in v2.4.0-v2.4.1
+- **12 new findings** discovered in re-audit
 
 **Positive Findings:**
 
@@ -32,8 +37,15 @@ The application has a **single critical vulnerability** — client-side-only ema
 - No secrets in git; `.env` properly gitignored
 - Strong CI/CD pipeline: SLSA L3, Sigstore provenance, SBOM generation, Grype vulnerability scanning
 - No file upload/handling attack surface
-- Dependencies clean — zero known CVEs
+- Dependencies clean — zero known CVEs (all 6 Dependabot PRs merged in v2.4.1)
 - Passwords and tokens not logged anywhere
+- **(NEW in v2.4.1)** Content Security Policy (CSP) meta tag deployed
+- **(NEW in v2.4.1)** Server-side UNIQUE(user_id, date) constraint prevents duplicate bookings and race conditions
+- **(NEW in v2.4.1)** WITH CHECK on UPDATE RLS policy prevents booking ownership transfer
+- **(NEW in v2.4.1)** Admin-only restrictions on SECURITY DEFINER functions
+- **(NEW in v2.4.1)** User-facing error messages sanitized (no raw Supabase errors in toasts)
+- **(NEW in v2.4.1)** 12-character password policy with complexity requirements
+- **(NEW in v2.4.1)** Display name sanitization at signup (Unicode-safe)
 
 ---
 
@@ -55,18 +67,22 @@ The application has a **single critical vulnerability** — client-side-only ema
 
 ## Vulnerability Summary by Severity
 
-| Severity | Count | Exploitability                             | Business Impact                                           |
-| -------- | ----- | ------------------------------------------ | --------------------------------------------------------- |
-| Critical | 1     | Trivial — direct API call                  | Complete tenant boundary bypass                           |
-| High     | 9     | Low-to-Moderate — requires API knowledge   | Privilege escalation, data corruption, undetected attacks |
-| Medium   | ~19   | Varies — most require authenticated access | Information disclosure, DoS, compliance gaps              |
-| Low      | ~12   | Low — informational or defense-in-depth    | Reduced security posture, technical debt                  |
+| Severity | v2.3.3 Count | v2.4.1 Count | Resolved | New | Net Change |
+| -------- | ------------ | ------------ | -------- | --- | ---------- |
+| Critical | 1            | 1            | 0        | 0   | —          |
+| High     | 9            | 5            | 5        | 1   | ▼ 4        |
+| Medium   | ~19          | ~16          | 7        | 4   | ▼ 3        |
+| Low      | ~12          | ~16          | 3        | 7   | ▲ 4\*      |
+
+_\*Low count increased due to deeper re-audit coverage, not regression._
 
 ---
 
 ## Critical Vulnerabilities
 
 ### C1 — Client-Side-Only Email Domain Restriction (Tenant Boundary Bypass)
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Requires Supabase Dashboard configuration (Auth Hook or email domain restriction setting). Cannot be fixed via code/migrations.
 
 | Field              | Detail                                                                                                              |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------- |
@@ -133,6 +149,8 @@ Option C — Supabase Dashboard: Authentication > Settings > Restrict email doma
 
 ### H1 — `generate_recurring_bookings()` SECURITY DEFINER Callable by Any Authenticated User
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Added admin role check + 90-day `p_days_ahead` limit in `supabase/migrations/20260223000002_phase2_restrict_functions.sql`. **⚠️ However, see NEW-H1:** the admin check uses `raw_user_meta_data` which is user-writable — privilege escalation still possible.
+
 | Field              | Detail                                                                                |
 | ------------------ | ------------------------------------------------------------------------------------- |
 | **ID**             | H1                                                                                    |
@@ -166,6 +184,8 @@ END IF;
 
 ### H2 — Missing `WITH CHECK` on Bookings UPDATE RLS Policy
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — `WITH CHECK (auth.uid() = user_id)` added in `supabase/migrations/20260223000001_phase1_security_fixes.sql`.
+
 | Field              | Detail                                                                       |
 | ------------------ | ---------------------------------------------------------------------------- |
 | **ID**             | H2                                                                           |
@@ -191,6 +211,8 @@ CREATE POLICY "Users can update own bookings"
 ---
 
 ### H3 — Identity Based on Mutable `user_name` String Instead of `user_id`
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — `UNIQUE(user_id, date)` constraint added. Server-side identity enforcement no longer depends on `user_name`. Client-side code in `BookingDialogWithValidation.tsx` still uses `user_name` for duplicate check (see NEW-M3), but the server constraint is the authoritative control.
 
 | Field              | Detail                                                                                                            |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
@@ -223,6 +245,8 @@ ALTER TABLE public.bookings
 ---
 
 ### H4 — No Server-Side One-Booking-Per-User-Per-Date Constraint
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — `UNIQUE(user_id, date)` constraint added in `supabase/migrations/20260223000001_phase1_security_fixes.sql`.
 
 | Field              | Detail                                                    |
 | ------------------ | --------------------------------------------------------- |
@@ -262,6 +286,8 @@ $$;
 
 ### H5 — TOCTOU Race Condition in Booking Flow
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — `UNIQUE` constraint uses row-level locks, making the booking flow immune to TOCTOU race conditions.
+
 | Field              | Detail                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------- |
 | **ID**             | H5                                                                                           |
@@ -287,6 +313,8 @@ PERFORM pg_advisory_xact_lock(hashtext(NEW.user_id::text || NEW.date::text));
 ---
 
 ### H6 — No Content Security Policy (CSP)
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — CSP `<meta>` tag added in `index.html`. Note: includes `'unsafe-inline'` in `script-src` for SPA redirect support (see NEW-M1 in delta report).
 
 | Field              | Detail                                                                                    |
 | ------------------ | ----------------------------------------------------------------------------------------- |
@@ -323,6 +351,8 @@ The application has no Content Security Policy. Combined with the use of `localS
 ---
 
 ### H7 — No Error Tracking Service (Sentry TODO Never Completed)
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
 
 | Field              | Detail                                                                      |
 | ------------------ | --------------------------------------------------------------------------- |
@@ -363,6 +393,8 @@ export function initErrorReporting() {
 
 ### H8 — No Client-Side Security Event Auditing
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
+
 | Field              | Detail                                                                    |
 | ------------------ | ------------------------------------------------------------------------- |
 | **ID**             | H8                                                                        |
@@ -381,6 +413,8 @@ Create a `logSecurityEvent()` utility and call it at every authentication event.
 ---
 
 ### H9 — No Monitoring, Alerting, or Anomaly Detection
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
 
 | Field              | Detail                                              |
 | ------------------ | --------------------------------------------------- |
@@ -403,6 +437,8 @@ Implement at minimum: (1) Sentry for error alerting, (2) GitHub Actions cron-bas
 
 ### M1 — Weak Password Policy (6-Character Minimum)
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Client-side Zod schema now requires 12+ chars with uppercase, lowercase, and digit. Applied in `src/pages/Auth.tsx`. Note: `authService.ts` still has 6-char minimum (see NEW-M4 in delta report); login form incorrectly applies complexity rules (see NEW-L1).
+
 | Field              | Detail                                                                            |
 | ------------------ | --------------------------------------------------------------------------------- |
 | **ID**             | M1                                                                                |
@@ -416,6 +452,8 @@ Supabase's default minimum password length is 6 characters with no complexity re
 ---
 
 ### M2 — Account Enumeration via Signup Response
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
 
 | Field              | Detail                                                |
 | ------------------ | ----------------------------------------------------- |
@@ -431,6 +469,8 @@ Supabase returns different responses for "email already registered" vs. new sign
 
 ### M3 — Broken Password Reset Flow (PASSWORD_RECOVERY Event Unhandled)
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
+
 | Field              | Detail                                                                   |
 | ------------------ | ------------------------------------------------------------------------ |
 | **ID**             | M3                                                                       |
@@ -444,6 +484,8 @@ The `useAuth` hook subscribes to `onAuthStateChange` but ignores the event type.
 ---
 
 ### M4 — No AuthContext (Stale Auth State Across Components)
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
 
 | Field              | Detail                                                              |
 | ------------------ | ------------------------------------------------------------------- |
@@ -459,6 +501,8 @@ Each component calling `useAuth()` creates its own `onAuthStateChange` subscript
 
 ### M5 — `refresh_booking_summary()` DoS Vector
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Added last-refresh timestamp check with 5-minute cooldown in `supabase/migrations/20260223000002_phase2_restrict_functions.sql`.
+
 | Field              | Detail                                                                                |
 | ------------------ | ------------------------------------------------------------------------------------- |
 | **ID**             | M5                                                                                    |
@@ -472,6 +516,8 @@ The `refresh_booking_summary()` function performs a full table aggregation and c
 ---
 
 ### M6 — `booking_availability` View Exposed to `anon` Role
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — `REVOKE SELECT ON booking_availability FROM anon` in `supabase/migrations/20260223000001_phase1_security_fixes.sql`.
 
 | Field              | Detail                                                          |
 | ------------------ | --------------------------------------------------------------- |
@@ -487,6 +533,8 @@ The `booking_availability` view is granted SELECT to `anon`, meaning unauthentic
 
 ### M7 — Raw Error Messages Leaked to Users
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Created `src/lib/errorMessages.ts` with `getUserErrorMessage()` mapper. All toast messages in `Auth.tsx` and `Index.tsx` now use generic user-facing text.
+
 | Field              | Detail                                                                |
 | ------------------ | --------------------------------------------------------------------- |
 | **ID**             | M7                                                                    |
@@ -500,6 +548,8 @@ Multiple locations pass `error.message` from Supabase directly into user-visible
 ---
 
 ### M8 — No Session Idle Timeout
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
 
 | Field              | Detail                                                |
 | ------------------ | ----------------------------------------------------- |
@@ -515,6 +565,8 @@ There is no idle timeout. A user who walks away from a shared workstation remain
 
 ### M9 — Hardcoded Production URL in signOut
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Replaced with `window.location.origin + import.meta.env.BASE_URL` in `src/hooks/useAuth.tsx`.
+
 | Field              | Detail                                             |
 | ------------------ | -------------------------------------------------- |
 | **ID**             | M9                                                 |
@@ -528,6 +580,8 @@ The `signOut` handler uses a hardcoded URL for redirect instead of a config-driv
 ---
 
 ### M10 — `expire_waitlist_notifications()` Callable by Any Authenticated User
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — Added admin role check in `supabase/migrations/20260223000002_phase2_restrict_functions.sql`. **⚠️ Same caveat as H1:** uses `raw_user_meta_data` (user-writable). See NEW-H1.
 
 | Field              | Detail                                                               |
 | ------------------ | -------------------------------------------------------------------- |
@@ -543,6 +597,8 @@ Similar to H1, this function runs as SECURITY DEFINER and any authenticated user
 
 ### M11 — Unsanitized Display Name
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Unicode-safe sanitization added at signup in `src/pages/Auth.tsx`: strips control characters, HTML tags, limits to 100 chars.
+
 | Field              | Detail                                                         |
 | ------------------ | -------------------------------------------------------------- |
 | **ID**             | M11                                                            |
@@ -556,6 +612,8 @@ The user's `full_name` from signup is stored in `user_metadata` and rendered in 
 ---
 
 ### M12 — No Past-Date Booking Prevention (Server-Side)
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — `CHECK (date >= CURRENT_DATE)` constraint added in `supabase/migrations/20260223000001_phase1_security_fixes.sql`.
 
 | Field              | Detail                                                     |
 | ------------------ | ---------------------------------------------------------- |
@@ -571,6 +629,8 @@ Users can create bookings for past dates by calling the Supabase API directly. *
 
 ### M13 — `user_booking_stats` Exposes All User IDs
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
+
 | Field              | Detail                                                        |
 | ------------------ | ------------------------------------------------------------- |
 | **ID**             | M13                                                           |
@@ -584,6 +644,8 @@ The `user_booking_stats` view returns aggregated data for all users. While `secu
 ---
 
 ### M14 — `console.error` Active in Production
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
 
 | Field              | Detail                                                              |
 | ------------------ | ------------------------------------------------------------------- |
@@ -599,6 +661,8 @@ All console logging is unconditional — raw Supabase error objects (including P
 
 ### M15 — No Query Pagination/Limits
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
+
 | Field              | Detail                                                               |
 | ------------------ | -------------------------------------------------------------------- |
 | **ID**             | M15                                                                  |
@@ -612,6 +676,8 @@ Several Supabase queries fetch all rows with no pagination or limit. As data gro
 ---
 
 ### M16 — Failed Login Attempts Not Logged
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
 
 | Field              | Detail                                              |
 | ------------------ | --------------------------------------------------- |
@@ -627,6 +693,8 @@ When login fails, only a toast is shown. No console output, no structured log, n
 
 ### M17 — No Structured Logging Format
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
+
 | Field              | Detail                                              |
 | ------------------ | --------------------------------------------------- |
 | **ID**             | M17                                                 |
@@ -641,6 +709,8 @@ No consistent log format, no correlation IDs, no severity levels, no timestamps.
 
 ### M18 — `booking_audit` IP/User-Agent Never Populated
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3.
+
 | Field              | Detail                                                                |
 | ------------------ | --------------------------------------------------------------------- |
 | **ID**             | M18                                                                   |
@@ -654,6 +724,8 @@ The `booking_audit` table defines `ip_address INET` and `user_agent TEXT` column
 ---
 
 ### M19 — `process.env.NODE_ENV` Check Never Evaluates in Vite
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — Replaced with `import.meta.env.DEV` in `src/components/ErrorBoundary.tsx`.
 
 | Field              | Detail                                            |
 | ------------------ | ------------------------------------------------- |
@@ -671,6 +743,8 @@ The ErrorBoundary uses `process.env.NODE_ENV === 'development'` to conditionally
 
 ### L1 — Sidebar Cookie Missing Secure/SameSite Attributes
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
+
 | Field              | Detail                                      |
 | ------------------ | ------------------------------------------- |
 | **Source Reports** | session-cookie-security                     |
@@ -681,6 +755,8 @@ The sidebar open/close state uses a cookie without `Secure` or `SameSite` attrib
 ---
 
 ### L2 — signOut Uses `scope: 'local'` Only
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
 
 | Field              | Detail                     |
 | ------------------ | -------------------------- |
@@ -693,6 +769,8 @@ The `signOut` call uses local scope, which only clears the current browser's ses
 
 ### L3 — No Secret Rotation Documentation
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
+
 | Field              | Detail                   |
 | ------------------ | ------------------------ |
 | **Source Reports** | secrets-management-audit |
@@ -702,6 +780,8 @@ There is no documented process for rotating Supabase API keys, GitHub tokens, or
 ---
 
 ### L4 — `process.env.NODE_ENV` Reference in Vite App
+
+> **v2.4.1 STATUS: ✅ RESOLVED** — Duplicate of M19; fixed in same change to `src/components/ErrorBoundary.tsx`.
 
 | Field              | Detail                                           |
 | ------------------ | ------------------------------------------------ |
@@ -714,6 +794,8 @@ Using `process.env.NODE_ENV` in a Vite application is a code smell. Vite does no
 
 ### L5 — JWT-Shaped Test Fixture in Codebase
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
+
 | Field              | Detail                   |
 | ------------------ | ------------------------ |
 | **Source Reports** | secrets-management-audit |
@@ -723,6 +805,8 @@ A test file contains a JWT-shaped string that could be mistaken for a real token
 ---
 
 ### L6 — No Data Retention/Cleanup Policy
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
 
 | Field              | Detail                            |
 | ------------------ | --------------------------------- |
@@ -734,6 +818,8 @@ There is no mechanism to purge old bookings, expired waitlist entries, or old au
 
 ### L7 — Audit Trail Incomplete (IP/User-Agent Never Populated)
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Overlaps with M18. Deferred to Phase 3.
+
 | Field              | Detail                |
 | ------------------ | --------------------- |
 | **Source Reports** | logging-monitoring F9 |
@@ -743,6 +829,8 @@ Partially overlaps with M18. The audit table exists but key forensic columns are
 ---
 
 ### L8 — Type Assertions Without Runtime Validation
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
 
 | Field              | Detail                                                  |
 | ------------------ | ------------------------------------------------------- |
@@ -755,6 +843,8 @@ TypeScript `as` casts are used without runtime validation of Supabase response s
 
 ### L9 — Missing CHECK Constraints on Recurring Bookings / Waitlist Tables
 
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
+
 | Field              | Detail            |
 | ------------------ | ----------------- |
 | **Source Reports** | database-security |
@@ -764,6 +854,8 @@ The `recurring_bookings` and `waitlist` tables lack CHECK constraints for valid 
 ---
 
 ### L10 — Environment Variables Logged in Dev Mode
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 4.
 
 | Field              | Detail                 |
 | ------------------ | ---------------------- |
@@ -776,6 +868,8 @@ The app logs environment config to console when `DEV` is true. Currently does no
 
 ### L11 — 404 Route Logs Unsanitized Path
 
+> **v2.4.1 STATUS: ✅ RESOLVED** — Sanitization regex applied in `src/pages/NotFound.tsx`: `pathname.replace(/[^\w/.\-]/g, '_')`.
+
 | Field              | Detail                      |
 | ------------------ | --------------------------- |
 | **Source Reports** | logging-monitoring F11      |
@@ -786,6 +880,8 @@ The 404 handler logs `location.pathname` without sanitization. A crafted URL wit
 ---
 
 ### L12 — Raw Supabase Errors Logged Unsanitized
+
+> **v2.4.1 STATUS: ⚠️ STILL OPEN** — Deferred to Phase 3 (with M14).
 
 | Field              | Detail                           |
 | ------------------ | -------------------------------- |
@@ -840,61 +936,70 @@ The application processes personal data of Lufthansa Technik employees (names, e
 
 ## Remediation Roadmap
 
-### Phase 1 — Critical & Quick Wins (Week 1-2)
+### Phase 1 — Critical & Quick Wins (Week 1-2) ✅ COMPLETED in v2.4.0
 
-| Priority | Finding                                             | Effort     | Impact                                         |
-| -------- | --------------------------------------------------- | ---------- | ---------------------------------------------- |
-| **P0**   | C1 — Server-side email domain enforcement           | 2 hours    | Closes the only tenant boundary gap            |
-| **P0**   | H2 — Add `WITH CHECK` to UPDATE policy              | 15 minutes | Prevents booking ownership transfer            |
-| **P1**   | H3/H4/H5 — Add `UNIQUE(user_id, date)` constraint   | 1 hour     | Fixes identity, uniqueness, and race condition |
-| **P1**   | H6 — Add CSP meta tag                               | 30 minutes | Blocks XSS-based token theft                   |
-| **P1**   | M6 — Revoke `anon` access to `booking_availability` | 5 minutes  | Closes unauthenticated data access             |
-| **P1**   | M7 — Replace raw error messages with generic ones   | 2 hours    | Stops information leakage via toasts           |
+| Priority | Finding                                             | Effort     | Impact                                         | Status                       |
+| -------- | --------------------------------------------------- | ---------- | ---------------------------------------------- | ---------------------------- |
+| **P0**   | C1 — Server-side email domain enforcement           | 2 hours    | Closes the only tenant boundary gap            | ⚠️ Requires dashboard config |
+| **P0**   | H2 — Add `WITH CHECK` to UPDATE policy              | 15 minutes | Prevents booking ownership transfer            | ✅ Done                      |
+| **P1**   | H3/H4/H5 — Add `UNIQUE(user_id, date)` constraint   | 1 hour     | Fixes identity, uniqueness, and race condition | ✅ Done                      |
+| **P1**   | H6 — Add CSP meta tag                               | 30 minutes | Blocks XSS-based token theft                   | ✅ Done                      |
+| **P1**   | M6 — Revoke `anon` access to `booking_availability` | 5 minutes  | Closes unauthenticated data access             | ✅ Done                      |
+| **P1**   | M7 — Replace raw error messages with generic ones   | 2 hours    | Stops information leakage via toasts           | ✅ Done                      |
 
-**Estimated total: ~1 day of focused work.**
+### Phase 2 — High Severity (Week 2-4) ✅ COMPLETED in v2.4.0-v2.4.1
 
-### Phase 2 — High Severity (Week 2-4)
+| Priority | Finding                                          | Effort     | Impact                            | Status                  |
+| -------- | ------------------------------------------------ | ---------- | --------------------------------- | ----------------------- |
+| **P2**   | H1 — Restrict `generate_recurring_bookings()`    | 1 hour     | Prevents booking injection attack | ✅ Done (⚠️ see NEW-H1) |
+| **P2**   | M10 — Restrict `expire_waitlist_notifications()` | 30 minutes | Prevents waitlist manipulation    | ✅ Done (⚠️ see NEW-H1) |
+| **P2**   | M5 — Rate-limit `refresh_booking_summary()`      | 1 hour     | Prevents DoS                      | ✅ Done                 |
+| **P2**   | M1 — Increase password minimum to 12 chars       | 15 minutes | Stronger auth                     | ✅ Done                 |
+| **P2**   | M3 — Handle `PASSWORD_RECOVERY` event            | 2 hours    | Fix broken password reset         | ⚠️ Deferred to Phase 3  |
+| **P2**   | M4 — Create `AuthProvider` context               | 3 hours    | Consistent auth state             | ⚠️ Deferred to Phase 3  |
+| **P2**   | M8 — Add session idle timeout                    | 1 hour     | Prevent shared-workstation abuse  | ⚠️ Deferred to Phase 3  |
+| **P2**   | M12 — Add `CHECK (date >= CURRENT_DATE)`         | 15 minutes | Prevent past-date bookings        | ✅ Done                 |
+| **P2**   | M9 — Hardcoded production URL in signOut         | 15 minutes | Environment-agnostic redirects    | ✅ Done                 |
+| **P2**   | M11 — Unsanitized display name                   | 30 minutes | XSS defense-in-depth              | ✅ Done                 |
+| **P2**   | M19/L4 — `process.env.NODE_ENV` in Vite app      | 15 minutes | Correct env detection             | ✅ Done                 |
+| **P2**   | L11 — 404 route logs unsanitized path            | 15 minutes | Log injection prevention          | ✅ Done                 |
 
-| Priority | Finding                                          | Effort     | Impact                            |
-| -------- | ------------------------------------------------ | ---------- | --------------------------------- |
-| **P2**   | H1 — Restrict `generate_recurring_bookings()`    | 1 hour     | Prevents booking injection attack |
-| **P2**   | M10 — Restrict `expire_waitlist_notifications()` | 30 minutes | Prevents waitlist manipulation    |
-| **P2**   | M5 — Rate-limit `refresh_booking_summary()`      | 1 hour     | Prevents DoS                      |
-| **P2**   | M1 — Increase password minimum to 12 chars       | 15 minutes | Stronger auth                     |
-| **P2**   | M3 — Handle `PASSWORD_RECOVERY` event            | 2 hours    | Fix broken password reset         |
-| **P2**   | M4 — Create `AuthProvider` context               | 3 hours    | Consistent auth state             |
-| **P2**   | M8 — Add session idle timeout                    | 1 hour     | Prevent shared-workstation abuse  |
-| **P2**   | M12 — Add `CHECK (date >= CURRENT_DATE)`         | 15 minutes | Prevent past-date bookings        |
+### Phase 3 — Observability, Auth Fixes & New Findings (Week 3-6) ⬜ NOT STARTED
 
-**Estimated total: ~1-2 days of focused work.**
+| Priority | Finding                                                 | Effort  | Impact                          |
+| -------- | ------------------------------------------------------- | ------- | ------------------------------- | ------ | ----------------- |
+| **P1**   | **NEW-H1** — Fix admin role check (use `app_metadata`)  | 1 hour  | **Closes privilege escalation** |
+| **P1**   | **NEW-L1** — Remove password complexity from login form | 30 min  | **Unblocks existing users**     |
+| **P2**   | H7 — Integrate Sentry error tracking                    | 4 hours | Production error visibility     |
+| **P2**   | H8 — Add security event logging                         | 4 hours | Forensic capability             |
+| **P2**   | H9 — Add uptime monitoring                              | 2 hours | Detect outages                  |
+| **P2**   | M3 — Handle `PASSWORD_RECOVERY` event                   | 2 hours | Fix broken password reset       |
+| **P2**   | M4 — Create `AuthProvider` context                      | 3 hours | Consistent auth state           |
+| **P2**   | M8 — Add session idle timeout                           | 1 hour  | Shared-workstation safety       |
+| **P2**   | **NEW-M2** — Remove `                                   |         | true` from release.yml          | 15 min | CI test integrity |
+| **P3**   | M14/M17 — Create centralized structured logger          | 4 hours | Replace all 57 console calls    |
+| **P3**   | M16 — Log failed login attempts                         | 1 hour  | Detect brute-force attacks      |
+| **P3**   | M18 — Populate audit IP/user-agent                      | 2 hours | Complete forensic trail         |
 
-### Phase 3 — Observability & Monitoring (Week 3-6)
+**Estimated total: ~3-4 days of focused work.**
 
-| Priority | Finding                                        | Effort  | Impact                       |
-| -------- | ---------------------------------------------- | ------- | ---------------------------- |
-| **P2**   | H7 — Integrate Sentry error tracking           | 4 hours | Production error visibility  |
-| **P2**   | H8 — Add security event logging                | 4 hours | Forensic capability          |
-| **P2**   | H9 — Add uptime monitoring                     | 2 hours | Detect outages               |
-| **P3**   | M14/M17 — Create centralized structured logger | 4 hours | Replace all 57 console calls |
-| **P3**   | M16 — Log failed login attempts                | 1 hour  | Detect brute-force attacks   |
-| **P3**   | M18 — Populate audit IP/user-agent             | 2 hours | Complete forensic trail      |
+### Phase 4 — Compliance, Code Quality & Hardening (Month 2-3) ⬜ NOT STARTED
 
-**Estimated total: ~2-3 days of focused work.**
+| Priority | Finding                                                 | Effort     | Impact                        |
+| -------- | ------------------------------------------------------- | ---------- | ----------------------------- |
+| **P3**   | GDPR — Privacy notice                                   | 4 hours    | Legal compliance              |
+| **P3**   | GDPR — Data retention policy + purge                    | 4 hours    | Storage limitation compliance |
+| **P3**   | GDPR — Right to erasure                                 | 8 hours    | Art. 17 compliance            |
+| **P3**   | GDPR — Record of Processing Activities                  | 4 hours    | Art. 30 compliance            |
+| **P3**   | **NEW-M3** — Fix client duplicate check (use `user_id`) | 30 min     | Correct UX                    |
+| **P3**   | **NEW-M4** — Unify password schema                      | 1 hour     | Consistent validation         |
+| **P3**   | **NEW-L7** — Add tests for security code                | 4 hours    | Automated verification        |
+| **P4**   | L1-L12 — All remaining low-severity items               | 4-8 hours  | Defense-in-depth              |
+| **P4**   | M2 — Account enumeration                                | 30 minutes | Minor auth improvement        |
+| **P4**   | M13/M15 — Stats exposure / pagination                   | 2 hours    | Data access hygiene           |
+| **P4**   | **NEW-L2 through NEW-L6** — New low-severity items      | 2-3 hours  | Re-audit findings             |
 
-### Phase 4 — Compliance & Hardening (Month 2-3)
-
-| Priority | Finding                                | Effort     | Impact                        |
-| -------- | -------------------------------------- | ---------- | ----------------------------- |
-| **P3**   | GDPR — Privacy notice                  | 4 hours    | Legal compliance              |
-| **P3**   | GDPR — Data retention policy + purge   | 4 hours    | Storage limitation compliance |
-| **P3**   | GDPR — Right to erasure                | 8 hours    | Art. 17 compliance            |
-| **P3**   | GDPR — Record of Processing Activities | 4 hours    | Art. 30 compliance            |
-| **P4**   | L1-L12 — All low-severity items        | 4-8 hours  | Defense-in-depth              |
-| **P4**   | M2 — Account enumeration               | 30 minutes | Minor auth improvement        |
-| **P4**   | M11 — Display name sanitization        | 1 hour     | XSS defense-in-depth          |
-| **P4**   | M13/M15 — Stats exposure / pagination  | 2 hours    | Data access hygiene           |
-
-**Estimated total: ~4-5 days of focused work.**
+**Estimated total: ~5-6 days of focused work.**
 
 ---
 
@@ -1082,21 +1187,21 @@ After applying fixes, verify:
 
 ## Risk Score Summary
 
-| Audit Domain              | Risk Score | Key Concern                                        |
-| ------------------------- | ---------- | -------------------------------------------------- |
-| Initial Security Analysis | 4.5 / 10   | Client-only domain check, no CSP                   |
-| Authentication Flow       | 5.2 / 10   | Weak passwords, broken reset, no AuthContext       |
-| Authorization             | 4.8 / 10   | SECURITY DEFINER abuse, missing WITH CHECK         |
-| Input Validation          | 3.5 / 10   | Client-only validation, raw error exposure         |
-| Database Security         | 5.8 / 10   | RLS gaps, mutable identity, missing constraints    |
-| Session & Cookie          | 6.0 / 10   | No idle timeout, no CSP, localStorage tokens       |
-| Secrets Management        | 3.0 / 10   | Clean — no secrets committed, but no rotation docs |
-| API & Infrastructure      | 5.4 / 10   | Anon data exposure, no rate limiting, no CSP       |
-| Business Logic            | 6.4 / 10   | Race conditions, client-only rules, no constraints |
-| File Handling             | 1.0 / 10   | No file handling = no attack surface               |
-| Logging & Monitoring      | 7.0 / 10   | Zero operational visibility, no error tracking     |
+| Audit Domain              | v2.3.3 | v2.4.1  | Change | Key Concern                                              |
+| ------------------------- | ------ | ------- | ------ | -------------------------------------------------------- |
+| Initial Security Analysis | 4.5    | **3.5** | ▼ 1.0  | CSP added; client-only domain check remains (C1)         |
+| Authentication Flow       | 5.2    | **4.5** | ▼ 0.7  | Stronger passwords; broken reset + no AuthContext remain |
+| Authorization             | 4.8    | **3.2** | ▼ 1.6  | WITH CHECK + UNIQUE + admin checks; NEW-H1 caveat        |
+| Input Validation          | 3.5    | **2.8** | ▼ 0.7  | Past-date + sanitization + error mapping done            |
+| Database Security         | 5.8    | **3.8** | ▼ 2.0  | UNIQUE constraint, anon revoked, admin checks            |
+| Session & Cookie          | 6.0    | **5.5** | ▼ 0.5  | CSP added; no idle timeout yet                           |
+| Secrets Management        | 3.0    | **3.0** | —      | No changes in scope                                      |
+| API & Infrastructure      | 5.4    | **4.2** | ▼ 1.2  | Anon access removed, rate limiting, CSP                  |
+| Business Logic            | 6.4    | **4.0** | ▼ 2.4  | UNIQUE + past-date + admin functions restricted          |
+| File Handling             | 1.0    | **1.0** | —      | No file handling = no attack surface                     |
+| Logging & Monitoring      | 7.0    | **7.0** | —      | Zero changes in Phase 1-2 (Phase 3 scope)                |
 
-**Weighted Overall: 5.1 / 10**
+**Weighted Overall: ~~5.1~~ → 3.8 / 10** (▼ 1.3 points)
 
 **Interpretation:**
 
@@ -1105,7 +1210,7 @@ After applying fixes, verify:
 - **7-9:** High risk — critical issues requiring immediate attention
 - **10:** Severe — system should not be in production
 
-The application sits at **medium risk** overall. The strong CI/CD security, clean dependencies, and proper RLS foundation bring the score down. However, the critical tenant boundary issue (C1) and the cluster of logging/monitoring gaps (7.0/10) pull it up. **Fixing C1 alone would drop the weighted score to ~4.5/10.** Completing Phase 1 and Phase 3 of the remediation roadmap would bring it to approximately **3.0/10** (low risk).
+The application has improved from **medium risk (5.1)** to **low-medium risk (3.8)** after Phase 1-2 remediation. The strong CI/CD security, clean dependencies, proper RLS foundation, and now CSP + database constraints bring the score down. The critical tenant boundary issue (C1) and the cluster of logging/monitoring gaps (7.0/10) are the remaining drivers. **Fixing C1 (dashboard config) would drop the score to ~3.3/10.** Completing Phase 3 (Sentry + logging) would bring it to approximately **2.5/10** (low risk).
 
 ---
 
@@ -1129,4 +1234,4 @@ The application sits at **medium risk** overall. The strong CI/CD security, clea
 
 ---
 
-_Report generated: 2026-02-23 | park-it-easy-office v2.3.3 | Comprehensive consolidation of 11 security audits + 2 code quality audits_
+_Report generated: 2026-02-23 | park-it-easy-office v2.3.3 (original) → v2.4.1 (updated) | Comprehensive consolidation of 11 security audits + 2 code quality audits + 6 parallel re-audit agents | See `audits/v2.4.1-delta-report.md` for full delta_
