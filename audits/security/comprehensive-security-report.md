@@ -1,12 +1,12 @@
 # Comprehensive Security Report
 
-**Application:** park-it-easy-office v2.4.1 _(originally audited at v2.3.3)_
+**Application:** park-it-easy-office v2.5.0 _(originally audited at v2.3.3)_
 **Original Audit Date:** 2026-02-23
-**Last Updated:** 2026-02-23 (post-remediation re-audit at v2.4.1)
+**Last Updated:** 2026-02-23 (Phase 3A complete at v2.5.0)
 **Auditor:** Automated Security Audit (Consolidated) + 6 parallel re-audit agents
 **Scope:** Full-stack security audit — Vite/React 18/TypeScript 5.8 SPA, Supabase (PostgreSQL + Auth + RLS), GitHub Pages hosting, GitHub Actions CI/CD
 **Domain:** Parking management system for Lufthansa Technik office (`@lht.dlh.de` domain)
-**Delta Report:** See `audits/v2.4.1-delta-report.md` for full v2.3.3 → v2.4.1 comparison
+**Delta Report:** See `audits/v2.4.1-delta-report.md` for full v2.3.3 → v2.5.0 comparison
 
 ---
 
@@ -14,20 +14,20 @@
 
 This report consolidates findings from **11 individual security audits** covering authentication, authorization, input validation, database security, session/cookie management, secrets management, API/infrastructure, business logic, file handling, and logging/monitoring, plus 2 code quality audits.
 
-> **v2.4.1 UPDATE:** Phase 1-2 remediation resolved **15 findings** (5 High, 7 Medium, 3 Low). The re-audit also identified **12 new findings** (1 High, 4 Medium, 7 Low). The delta report contains full details.
+> **v2.5.0 UPDATE:** Phases 1-3A resolved **20 findings** total: 15 in v2.4.0-v2.4.1 (Phase 1-2) and 5 in v2.5.0 (Phase 3A). The re-audit identified 12 new findings, of which 5 are now resolved. The delta report contains full details.
 
-**Overall Risk Score: ~~5.1~~ → 3.8 / 10** (weighted average across all audit domains)
+**Overall Risk Score: ~~5.1~~ → ~~3.8~~ → ~3.4 / 10** (weighted average across all audit domains)
 
-The application has a **single critical vulnerability** — client-side-only email domain enforcement — that undermines the entire tenant boundary. ~~Six~~ Three remaining high-severity issues affect observability, plus one new high-severity finding (admin role check uses user-writable metadata). The codebase benefits from strong CI/CD security practices (SLSA L3, Sigstore, SBOM, Grype), properly configured RLS on all tables, and no committed secrets. ~~The combination of client-only business rule enforcement, identity based on mutable strings, and zero operational monitoring creates significant risk.~~ Phase 1-2 fixes addressed client-only enforcement gaps (CSP, UNIQUE constraints, WITH CHECK, past-date check, error mapping, admin function restrictions). The remaining risk is concentrated in the **logging/monitoring cluster** (H7-H9, Phase 3) and the **critical tenant boundary** (C1, requires dashboard config).
+The application has a **single critical vulnerability** — client-side-only email domain enforcement — that undermines the entire tenant boundary. Three remaining high-severity issues affect observability (H7-H9). The codebase benefits from strong CI/CD security practices (SLSA L3, Sigstore, SBOM, Grype), properly configured RLS on all tables, and no committed secrets. ~~The combination of client-only business rule enforcement, identity based on mutable strings, and zero operational monitoring creates significant risk.~~ Phase 1-2 fixes addressed client-only enforcement gaps (CSP, UNIQUE constraints, WITH CHECK, past-date check, error mapping, admin function restrictions). The remaining risk is concentrated in the **logging/monitoring cluster** (H7-H9, Phase 3B) and the **critical tenant boundary** (C1, requires dashboard config).
 
-**Key Statistics (v2.4.1):**
+**Key Statistics (v2.5.0):**
 
 - **1 Critical** vulnerability (requires Supabase Dashboard config — cannot fix via code)
-- **5 High** vulnerabilities (3 original + 1 new + 1 partially overlapping)
-- **~16 Medium** vulnerabilities (~12 original still open + 4 new)
-- **~16 Low** vulnerabilities (~10 original still open + 6 new from deeper analysis)
-- **15 findings resolved** in v2.4.0-v2.4.1
-- **12 new findings** discovered in re-audit
+- **4 High** vulnerabilities (3 original still open — H7, H8, H9)
+- **~14 Medium** vulnerabilities (~12 original still open + 2 new)
+- **~14 Low** vulnerabilities (~10 original still open + 4 new still open)
+- **20 findings resolved** total (15 in v2.4.0-v2.4.1, 5 in v2.5.0)
+- **12 new findings** discovered in re-audit (5 now resolved)
 
 **Positive Findings:**
 
@@ -46,6 +46,11 @@ The application has a **single critical vulnerability** — client-side-only ema
 - **(NEW in v2.4.1)** User-facing error messages sanitized (no raw Supabase errors in toasts)
 - **(NEW in v2.4.1)** 12-character password policy with complexity requirements
 - **(NEW in v2.4.1)** Display name sanitization at signup (Unicode-safe)
+- **(NEW in v2.5.0)** Admin role check uses `raw_app_meta_data` (server-only, not user-writable)
+- **(NEW in v2.5.0)** Shared password validation module with signup/login-specific schemas
+- **(NEW in v2.5.0)** Login form no longer blocks legacy users with old passwords
+- **(NEW in v2.5.0)** CI release pipeline properly fails on test failures
+- **(NEW in v2.5.0)** signOut error handling with guaranteed redirect
 
 ---
 
@@ -67,12 +72,12 @@ The application has a **single critical vulnerability** — client-side-only ema
 
 ## Vulnerability Summary by Severity
 
-| Severity | v2.3.3 Count | v2.4.1 Count | Resolved | New | Net Change |
-| -------- | ------------ | ------------ | -------- | --- | ---------- |
-| Critical | 1            | 1            | 0        | 0   | —          |
-| High     | 9            | 5            | 5        | 1   | ▼ 4        |
-| Medium   | ~19          | ~16          | 7        | 4   | ▼ 3        |
-| Low      | ~12          | ~16          | 3        | 7   | ▲ 4\*      |
+| Severity | v2.3.3 Count | v2.4.1 Count | v2.5.0 Count | Resolved (total) | New (still open) | Net Change |
+| -------- | ------------ | ------------ | ------------ | ---------------- | ---------------- | ---------- |
+| Critical | 1            | 1            | 1            | 0                | 0                | —          |
+| High     | 9            | 5            | **4**        | 6                | 0                | ▼ 5        |
+| Medium   | ~19          | ~16          | **~14**      | 9                | 2                | ▼ 5        |
+| Low      | ~12          | ~16          | **~14**      | 5                | 4                | ▲ 2\*      |
 
 _\*Low count increased due to deeper re-audit coverage, not regression._
 
@@ -149,7 +154,7 @@ Option C — Supabase Dashboard: Authentication > Settings > Restrict email doma
 
 ### H1 — `generate_recurring_bookings()` SECURITY DEFINER Callable by Any Authenticated User
 
-> **v2.4.1 STATUS: ✅ RESOLVED** — Added admin role check + 90-day `p_days_ahead` limit in `supabase/migrations/20260223000002_phase2_restrict_functions.sql`. **⚠️ However, see NEW-H1:** the admin check uses `raw_user_meta_data` which is user-writable — privilege escalation still possible.
+> **v2.5.0 STATUS: ✅ RESOLVED** — Added admin role check + 90-day `p_days_ahead` limit in `20260223000002`. Metadata caveat fixed in v2.5.0: admin check now uses `raw_app_meta_data` (server-only) via `20260223000003`.
 
 | Field              | Detail                                                                                |
 | ------------------ | ------------------------------------------------------------------------------------- |
@@ -437,7 +442,7 @@ Implement at minimum: (1) Sentry for error alerting, (2) GitHub Actions cron-bas
 
 ### M1 — Weak Password Policy (6-Character Minimum)
 
-> **v2.4.1 STATUS: ✅ RESOLVED** — Client-side Zod schema now requires 12+ chars with uppercase, lowercase, and digit. Applied in `src/pages/Auth.tsx`. Note: `authService.ts` still has 6-char minimum (see NEW-M4 in delta report); login form incorrectly applies complexity rules (see NEW-L1).
+> **v2.5.0 STATUS: ✅ RESOLVED** — Client-side Zod schema now requires 12+ chars with uppercase, lowercase, and digit. Unified in shared `src/lib/passwordValidation.ts` (v2.5.0). Login form uses lenient schema; signup uses strict schema.
 
 | Field              | Detail                                                                            |
 | ------------------ | --------------------------------------------------------------------------------- |
@@ -581,7 +586,7 @@ The `signOut` handler uses a hardcoded URL for redirect instead of a config-driv
 
 ### M10 — `expire_waitlist_notifications()` Callable by Any Authenticated User
 
-> **v2.4.1 STATUS: ✅ RESOLVED** — Added admin role check in `supabase/migrations/20260223000002_phase2_restrict_functions.sql`. **⚠️ Same caveat as H1:** uses `raw_user_meta_data` (user-writable). See NEW-H1.
+> **v2.5.0 STATUS: ✅ RESOLVED** — Added admin role check in `20260223000002`. Metadata caveat fixed in v2.5.0: now uses `raw_app_meta_data` (server-only) via `20260223000003`.
 
 | Field              | Detail                                                               |
 | ------------------ | -------------------------------------------------------------------- |
@@ -964,22 +969,29 @@ The application processes personal data of Lufthansa Technik employees (names, e
 | **P2**   | M19/L4 — `process.env.NODE_ENV` in Vite app      | 15 minutes | Correct env detection             | ✅ Done                 |
 | **P2**   | L11 — 404 route logs unsanitized path            | 15 minutes | Log injection prevention          | ✅ Done                 |
 
-### Phase 3 — Observability, Auth Fixes & New Findings (Week 3-6) ⬜ NOT STARTED
+### Phase 3A — Quick Wins (v2.5.0) ✅ COMPLETED
 
-| Priority | Finding                                                 | Effort  | Impact                          |
-| -------- | ------------------------------------------------------- | ------- | ------------------------------- | ------ | ----------------- |
-| **P1**   | **NEW-H1** — Fix admin role check (use `app_metadata`)  | 1 hour  | **Closes privilege escalation** |
-| **P1**   | **NEW-L1** — Remove password complexity from login form | 30 min  | **Unblocks existing users**     |
-| **P2**   | H7 — Integrate Sentry error tracking                    | 4 hours | Production error visibility     |
-| **P2**   | H8 — Add security event logging                         | 4 hours | Forensic capability             |
-| **P2**   | H9 — Add uptime monitoring                              | 2 hours | Detect outages                  |
-| **P2**   | M3 — Handle `PASSWORD_RECOVERY` event                   | 2 hours | Fix broken password reset       |
-| **P2**   | M4 — Create `AuthProvider` context                      | 3 hours | Consistent auth state           |
-| **P2**   | M8 — Add session idle timeout                           | 1 hour  | Shared-workstation safety       |
-| **P2**   | **NEW-M2** — Remove `                                   |         | true` from release.yml          | 15 min | CI test integrity |
-| **P3**   | M14/M17 — Create centralized structured logger          | 4 hours | Replace all 57 console calls    |
-| **P3**   | M16 — Log failed login attempts                         | 1 hour  | Detect brute-force attacks      |
-| **P3**   | M18 — Populate audit IP/user-agent                      | 2 hours | Complete forensic trail         |
+| Priority | Finding                                                 | Effort  | Impact                        | Status  |
+| -------- | ------------------------------------------------------- | ------- | ----------------------------- | ------- |
+| **P1**   | **NEW-H1** — Fix admin role check (use `app_metadata`)  | 1 hour  | Closes privilege escalation   | ✅ Done |
+| **P1**   | **NEW-L1** — Remove password complexity from login form | 30 min  | Unblocks existing users       | ✅ Done |
+| **P2**   | **NEW-M2** — Remove `\|\| true` from release.yml        | 15 min  | CI test integrity             | ✅ Done |
+| **P2**   | **NEW-M4** — Unify password schema                      | 2 hours | Consistent validation + tests | ✅ Done |
+| **P2**   | **NEW-L6** — Add try/catch to signOut                   | 15 min  | Error-safe logout             | ✅ Done |
+
+### Phase 3B — Observability & Auth (Week 3-6) ⬜ NOT STARTED
+
+| Priority | Finding                                        | Effort  | Impact                       |
+| -------- | ---------------------------------------------- | ------- | ---------------------------- |
+| **P2**   | H7 — Integrate Sentry error tracking           | 4 hours | Production error visibility  |
+| **P2**   | H8 — Add security event logging                | 4 hours | Forensic capability          |
+| **P2**   | H9 — Add uptime monitoring                     | 2 hours | Detect outages               |
+| **P2**   | M3 — Handle `PASSWORD_RECOVERY` event          | 2 hours | Fix broken password reset    |
+| **P2**   | M4 — Create `AuthProvider` context             | 3 hours | Consistent auth state        |
+| **P2**   | M8 — Add session idle timeout                  | 1 hour  | Shared-workstation safety    |
+| **P3**   | M14/M17 — Create centralized structured logger | 4 hours | Replace all 57 console calls |
+| **P3**   | M16 — Log failed login attempts                | 1 hour  | Detect brute-force attacks   |
+| **P3**   | M18 — Populate audit IP/user-agent             | 2 hours | Complete forensic trail      |
 
 **Estimated total: ~3-4 days of focused work.**
 
@@ -992,12 +1004,11 @@ The application processes personal data of Lufthansa Technik employees (names, e
 | **P3**   | GDPR — Right to erasure                                 | 8 hours    | Art. 17 compliance            |
 | **P3**   | GDPR — Record of Processing Activities                  | 4 hours    | Art. 30 compliance            |
 | **P3**   | **NEW-M3** — Fix client duplicate check (use `user_id`) | 30 min     | Correct UX                    |
-| **P3**   | **NEW-M4** — Unify password schema                      | 1 hour     | Consistent validation         |
 | **P3**   | **NEW-L7** — Add tests for security code                | 4 hours    | Automated verification        |
 | **P4**   | L1-L12 — All remaining low-severity items               | 4-8 hours  | Defense-in-depth              |
 | **P4**   | M2 — Account enumeration                                | 30 minutes | Minor auth improvement        |
 | **P4**   | M13/M15 — Stats exposure / pagination                   | 2 hours    | Data access hygiene           |
-| **P4**   | **NEW-L2 through NEW-L6** — New low-severity items      | 2-3 hours  | Re-audit findings             |
+| **P4**   | **NEW-L2 through NEW-L5** — New low-severity items      | 2-3 hours  | Re-audit findings             |
 
 **Estimated total: ~5-6 days of focused work.**
 
@@ -1187,21 +1198,21 @@ After applying fixes, verify:
 
 ## Risk Score Summary
 
-| Audit Domain              | v2.3.3 | v2.4.1  | Change | Key Concern                                              |
-| ------------------------- | ------ | ------- | ------ | -------------------------------------------------------- |
-| Initial Security Analysis | 4.5    | **3.5** | ▼ 1.0  | CSP added; client-only domain check remains (C1)         |
-| Authentication Flow       | 5.2    | **4.5** | ▼ 0.7  | Stronger passwords; broken reset + no AuthContext remain |
-| Authorization             | 4.8    | **3.2** | ▼ 1.6  | WITH CHECK + UNIQUE + admin checks; NEW-H1 caveat        |
-| Input Validation          | 3.5    | **2.8** | ▼ 0.7  | Past-date + sanitization + error mapping done            |
-| Database Security         | 5.8    | **3.8** | ▼ 2.0  | UNIQUE constraint, anon revoked, admin checks            |
-| Session & Cookie          | 6.0    | **5.5** | ▼ 0.5  | CSP added; no idle timeout yet                           |
-| Secrets Management        | 3.0    | **3.0** | —      | No changes in scope                                      |
-| API & Infrastructure      | 5.4    | **4.2** | ▼ 1.2  | Anon access removed, rate limiting, CSP                  |
-| Business Logic            | 6.4    | **4.0** | ▼ 2.4  | UNIQUE + past-date + admin functions restricted          |
-| File Handling             | 1.0    | **1.0** | —      | No file handling = no attack surface                     |
-| Logging & Monitoring      | 7.0    | **7.0** | —      | Zero changes in Phase 1-2 (Phase 3 scope)                |
+| Audit Domain              | v2.3.3 | v2.4.1 | v2.5.0  | Change (net) | Key Concern                                              |
+| ------------------------- | ------ | ------ | ------- | ------------ | -------------------------------------------------------- |
+| Initial Security Analysis | 4.5    | 3.5    | **3.5** | ▼ 1.0        | CSP added; client-only domain check remains (C1)         |
+| Authentication Flow       | 5.2    | 4.5    | **3.8** | ▼ 1.4        | Unified password schema; login fix; broken reset remains |
+| Authorization             | 4.8    | 3.2    | **2.8** | ▼ 2.0        | Metadata caveat fully resolved in v2.5.0                 |
+| Input Validation          | 3.5    | 2.8    | **2.8** | ▼ 0.7        | Past-date + sanitization + error mapping done            |
+| Database Security         | 5.8    | 3.8    | **3.5** | ▼ 2.3        | Admin checks fully secured with app_metadata             |
+| Session & Cookie          | 6.0    | 5.5    | **5.5** | ▼ 0.5        | CSP added; no idle timeout yet                           |
+| Secrets Management        | 3.0    | 3.0    | **3.0** | —            | No changes in scope                                      |
+| API & Infrastructure      | 5.4    | 4.2    | **4.0** | ▼ 1.4        | CI test integrity fixed in v2.5.0                        |
+| Business Logic            | 6.4    | 4.0    | **3.8** | ▼ 2.6        | Admin functions fully secured in v2.5.0                  |
+| File Handling             | 1.0    | 1.0    | **1.0** | —            | No file handling = no attack surface                     |
+| Logging & Monitoring      | 7.0    | 7.0    | **7.0** | —            | Zero changes yet (Phase 3B scope)                        |
 
-**Weighted Overall: ~~5.1~~ → 3.8 / 10** (▼ 1.3 points)
+**Weighted Overall: ~~5.1~~ → ~~3.8~~ → ~3.4 / 10** (▼ 1.7 points total)
 
 **Interpretation:**
 
@@ -1210,7 +1221,7 @@ After applying fixes, verify:
 - **7-9:** High risk — critical issues requiring immediate attention
 - **10:** Severe — system should not be in production
 
-The application has improved from **medium risk (5.1)** to **low-medium risk (3.8)** after Phase 1-2 remediation. The strong CI/CD security, clean dependencies, proper RLS foundation, and now CSP + database constraints bring the score down. The critical tenant boundary issue (C1) and the cluster of logging/monitoring gaps (7.0/10) are the remaining drivers. **Fixing C1 (dashboard config) would drop the score to ~3.3/10.** Completing Phase 3 (Sentry + logging) would bring it to approximately **2.5/10** (low risk).
+The application has improved from **medium risk (5.1)** to **low-medium risk (~3.4)** after Phases 1-3A. The strong CI/CD security (now with proper test enforcement), clean dependencies, proper RLS foundation, CSP, database constraints, and fully secured admin functions bring the score down. The critical tenant boundary issue (C1) and the cluster of logging/monitoring gaps (7.0/10) are the remaining drivers. **Fixing C1 (dashboard config) would drop the score to ~2.9/10.** Completing Phase 3B (Sentry + logging) would bring it to approximately **2.0-2.5/10** (low risk).
 
 ---
 
@@ -1234,4 +1245,4 @@ The application has improved from **medium risk (5.1)** to **low-medium risk (3.
 
 ---
 
-_Report generated: 2026-02-23 | park-it-easy-office v2.3.3 (original) → v2.4.1 (updated) | Comprehensive consolidation of 11 security audits + 2 code quality audits + 6 parallel re-audit agents | See `audits/v2.4.1-delta-report.md` for full delta_
+_Report generated: 2026-02-23 | park-it-easy-office v2.3.3 (original) → v2.5.0 (updated) | Comprehensive consolidation of 11 security audits + 2 code quality audits + 6 parallel re-audit agents | Updated 2026-02-23 for Phase 3A (v2.5.0) | See `audits/v2.4.1-delta-report.md` for full delta_
