@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { signupPasswordSchema, loginPasswordSchema } from '@/lib/passwordValidation';
 
 // Validation Schemas
 export const emailSchema = z
@@ -10,10 +11,8 @@ export const emailSchema = z
     message: 'Only @lht.dlh.de email addresses are allowed',
   });
 
-export const passwordSchema = z
-  .string()
-  .min(6, 'Password must be at least 6 characters')
-  .max(72, 'Password must be less than 72 characters');
+// Re-export for backward compatibility
+export const passwordSchema = signupPasswordSchema;
 
 export const nameSchema = z
   .string()
@@ -62,7 +61,7 @@ export class AuthService {
     try {
       // Validate inputs
       emailSchema.parse(credentials.email);
-      passwordSchema.parse(credentials.password);
+      loginPasswordSchema.parse(credentials.password);
 
       const { error } = await supabase.auth.signInWithPassword(credentials);
 
