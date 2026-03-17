@@ -4,12 +4,11 @@ import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
 
   useEffect(() => {
     // If Supabase is not configured, skip auth check
     if (!isSupabaseConfigured) {
-      setLoading(false);
       return;
     }
 

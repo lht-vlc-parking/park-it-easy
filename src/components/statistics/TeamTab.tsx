@@ -15,7 +15,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
   Line,
   ReferenceLine,
   Area,
@@ -205,13 +204,6 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
     if (rank === 1) return 'bg-gray-400';
     if (rank === 2) return 'bg-orange-600';
     return 'bg-primary';
-  };
-
-  const medalTextColor = (rank: number) => {
-    if (rank === 0) return 'text-yellow-500';
-    if (rank === 1) return 'text-gray-400';
-    if (rank === 2) return 'text-orange-600';
-    return 'text-muted-foreground';
   };
 
   const podiumIcon = (rank: number) => {
