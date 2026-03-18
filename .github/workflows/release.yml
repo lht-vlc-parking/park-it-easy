@@ -66,7 +66,7 @@ jobs:
           tar -czvf ../park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz .
 
       - name: Generate SBOM
-        run: npx --yes @cyclonedx/cyclonedx-npm --output-file sbom.json
+        run: npx --yes @cyclonedx/cdxgen -o sbom.json
 
       - name: Generate checksums
         id: hash
