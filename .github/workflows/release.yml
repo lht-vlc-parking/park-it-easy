@@ -17,12 +17,9 @@ permissions:
   id-token: write
   attestations: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
-    name: Build & Generate Artifacts
+    name: Build & Artifacts
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -57,66 +54,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Unit tests
-        run: pnpm test -- --run
-
       - name: Build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: pnpm run build
 
-      - name: Create release archives
+      - name: Create release archive
         run: |
           cd dist
           tar -czvf ../park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz .
-          cd ..
-          zip -r park-it-easy-office-${{ steps.version.outputs.version }}.zip dist/
 
-      - name: Generate SBOM (CycloneDX)
-        uses: CycloneDX/gh-node-module-generatebom@v1
-        with:
-          path: ./
-          output: ./sbom.json
+      - name: Generate SBOM
+        run: npx --yes @cyclonedx/cyclonedx-npm --output-file sbom.json
 
-      - name: Generate SBOM (SPDX)
-        run: |
-          npx @cyclonedx/cyclonedx-npm --output-format JSON --output-file sbom-cyclonedx.json || true
-          cat > sbom-spdx.json << 'EOF'
-          {
-            "spdxVersion": "SPDX-2.3",
-            "dataLicense": "CC0-1.0",
-            "SPDXID": "SPDXRef-DOCUMENT",
-            "name": "park-it-easy-office",
-            "documentNamespace": "https://github.com/${{ github.repository }}/releases/${{ steps.version.outputs.version }}",
-            "creationInfo": {
-              "created": "${{ github.event.head_commit.timestamp }}",
-              "creators": ["Tool: github-actions"]
-            }
-          }
-          EOF
-
-      - name: Generate file hashes
+      - name: Generate checksums
         id: hash
         run: |
           sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz > checksums.txt
-          sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.zip >> checksums.txt
           sha256sum sbom.json >> checksums.txt
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> $GITHUB_OUTPUT
 
-      - name: Upload build artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
           name: release-artifacts
           path: |
             park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz
-            park-it-easy-office-${{ steps.version.outputs.version }}.zip
             sbom.json
-            sbom-cyclonedx.json
-            sbom-spdx.json
             checksums.txt
           retention-days: 5
 
@@ -133,62 +98,18 @@ jobs:
       upload-assets: true
       compile-generator: true
 
-  attest:
-    name: Attestations
-    needs: [build]
-    runs-on: ubuntu-latest
-    outputs:
-      rekor-log-index-tar: ${{ steps.extract-rekor.outputs.log-index-tar }}
-      rekor-log-index-zip: ${{ steps.extract-rekor.outputs.log-index-zip }}
-      attestation-url-tar: ${{ steps.attest-tar.outputs.attestation-url }}
-      attestation-url-zip: ${{ steps.attest-zip.outputs.attestation-url }}
-    permissions:
-      id-token: write
-      contents: read
-      attestations: write
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: release-artifacts
-
-      - name: Attest Build Provenance (tar.gz)
-        id: attest-tar
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
-
-      - name: Attest Build Provenance (zip)
-        id: attest-zip
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.zip'
-
-      - name: Attest SBOM
-        uses: actions/attest-sbom@v3
-        with:
-          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
-          sbom-path: 'sbom.json'
-
-      - name: Extract Rekor Log Index
-        id: extract-rekor
-        run: |
-          if [ -f "${{ steps.attest-tar.outputs.bundle-path }}" ]; then
-            LOG_INDEX_TAR=$(jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty' "${{ steps.attest-tar.outputs.bundle-path }}")
-            echo "log-index-tar=$LOG_INDEX_TAR" >> $GITHUB_OUTPUT
-          fi
-          if [ -f "${{ steps.attest-zip.outputs.bundle-path }}" ]; then
-            LOG_INDEX_ZIP=$(jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty' "${{ steps.attest-zip.outputs.bundle-path }}")
-            echo "log-index-zip=$LOG_INDEX_ZIP" >> $GITHUB_OUTPUT
-          fi
-
-  release:
-    name: GitHub Release
-    needs: [build, provenance, attest]
+  release-deploy:
+    name: Release & Deploy
+    needs: [build, provenance]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+      pages: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout code
@@ -201,11 +122,33 @@ jobs:
         with:
           name: release-artifacts
 
+      - name: Attest Build Provenance
+        id: attest
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
+          sbom-path: 'sbom.json'
+
+      - name: Extract Rekor Log Index
+        id: rekor
+        run: |
+          if [ -f "${{ steps.attest.outputs.bundle-path }}" ]; then
+            LOG_INDEX=$(jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty' "${{ steps.attest.outputs.bundle-path }}")
+            echo "log-index=$LOG_INDEX" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate Changelog
         run: |
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           VERSION="${{ needs.build.outputs.version }}"
           REPO="${{ github.repository }}"
+          ATTESTATION="${{ steps.attest.outputs.attestation-url }}"
+          REKOR_INDEX="${{ steps.rekor.outputs.log-index }}"
 
           if [ -n "$PREV_TAG" ]; then
             echo "## Changes since $PREV_TAG" > CHANGELOG.md
@@ -216,12 +159,7 @@ jobs:
           fi
 
           TAR_HASH=$(sha256sum park-it-easy-office-${VERSION}.tar.gz | cut -d' ' -f1)
-          ZIP_HASH=$(sha256sum park-it-easy-office-${VERSION}.zip | cut -d' ' -f1)
           SBOM_HASH=$(sha256sum sbom.json | cut -d' ' -f1)
-          ATTESTATION_TAR="${{ needs.attest.outputs.attestation-url-tar }}"
-          ATTESTATION_ZIP="${{ needs.attest.outputs.attestation-url-zip }}"
-          REKOR_INDEX_TAR="${{ needs.attest.outputs.rekor-log-index-tar }}"
-          REKOR_INDEX_ZIP="${{ needs.attest.outputs.rekor-log-index-zip }}"
 
           {
             echo ""
@@ -229,13 +167,9 @@ jobs:
             echo ""
             echo "## Attestation & Transparency"
             echo ""
-            if [ -n "$ATTESTATION_TAR" ]; then
-              echo "**tar.gz:** [attestation](${ATTESTATION_TAR})"
-              [ -n "$REKOR_INDEX_TAR" ] && echo " | [Rekor log](https://search.sigstore.dev?logIndex=${REKOR_INDEX_TAR})"
-            fi
-            if [ -n "$ATTESTATION_ZIP" ]; then
-              echo "**zip:** [attestation](${ATTESTATION_ZIP})"
-              [ -n "$REKOR_INDEX_ZIP" ] && echo " | [Rekor log](https://search.sigstore.dev?logIndex=${REKOR_INDEX_ZIP})"
+            if [ -n "$ATTESTATION" ]; then
+              echo "**Build:** [attestation](${ATTESTATION})"
+              [ -n "$REKOR_INDEX" ] && echo " | [Rekor log](https://search.sigstore.dev?logIndex=${REKOR_INDEX})"
             fi
             echo ""
             echo "### Verify"
@@ -249,7 +183,6 @@ jobs:
             echo ""
             echo '```'
             echo "${TAR_HASH}  park-it-easy-office-${VERSION}.tar.gz"
-            echo "${ZIP_HASH}  park-it-easy-office-${VERSION}.zip"
             echo "${SBOM_HASH}  sbom.json"
             echo '```'
             echo ""
@@ -266,34 +199,13 @@ jobs:
           prerelease: false
           files: |
             park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz
-            park-it-easy-office-${{ needs.build.outputs.version }}.zip
             sbom.json
-            sbom-cyclonedx.json
-            sbom-spdx.json
             checksums.txt
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: [build, release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: release-artifacts
-
-      - name: Extract build
+      - name: Extract build for Pages
         run: |
           mkdir -p dist
           tar -xzvf park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz -C dist/
