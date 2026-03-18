@@ -23,16 +23,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface Booking {
-  id: string;
-  date: string;
-  duration: 'morning' | 'afternoon' | 'full';
-  vehicle_type: 'car' | 'motorcycle';
-  user_name: string;
-  spot_number: number;
-  created_at?: string;
-}
+import type { Booking } from '@/types/booking';
 
 interface TrendsTabProps {
   bookings: Booking[];
@@ -556,40 +547,41 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
 
       {/* ─── Monthly Heatmap Calendar ─────────────────────────────── */}
       <section className="animate-fade-in-up stagger-3">
-        <Card className="glass-card hover-lift">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Calendar className="h-5 w-5 text-primary" />
-              Monthly Occupancy Calendar
-            </CardTitle>
-            <CardDescription className="flex flex-wrap items-center gap-4">
-              <span>
-                {MONTH_NAMES[calendarData.month]} {calendarData.year}
-              </span>
-              <span>•</span>
-              <div className="flex items-center gap-4 text-xs">
+        <Card className="glass-card hover-lift overflow-hidden">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Monthly Occupancy Calendar
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {MONTH_NAMES[calendarData.month]} {calendarData.year}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-3 rounded-full bg-muted/50 px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-3 w-3 rounded-full bg-success shadow-[0_0_6px_rgba(34,197,94,0.5)] ring-1 ring-success/50" />
-                  Available
+                  <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />
+                  Free
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-3 w-3 rounded-full bg-warning shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+                  <span className="h-2.5 w-2.5 rounded-sm bg-amber-500/80" />
                   Half
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-3 w-3 rounded-full bg-destructive shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                  <span className="h-2.5 w-2.5 rounded-sm bg-rose-500/80" />
                   Full
                 </span>
               </div>
-            </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 pb-4 sm:px-6">
             {/* Day name headers */}
-            <div className="mb-2 grid grid-cols-5 gap-1 sm:gap-2">
+            <div className="mb-1 grid grid-cols-5 gap-1">
               {DAY_NAMES.map(name => (
                 <div
                   key={name}
-                  className="rounded-md bg-muted/50 py-1.5 text-center text-xs font-medium text-muted-foreground"
+                  className="py-2 text-center text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70"
                 >
                   {name}
                 </div>
@@ -597,7 +589,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
             </div>
 
             {/* Calendar grid grouped by weeks */}
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-1">
               {(() => {
                 const weeks: (typeof calendarData.weekdays)[] = [];
                 let currentWeek: typeof calendarData.weekdays = [];
@@ -616,52 +608,56 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
                 const todayStr = formatDateStr(new Date());
 
                 return weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="grid grid-cols-5 gap-1 sm:gap-2">
+                  <div key={weekIndex} className="grid grid-cols-5 gap-1">
                     {/* Empty leading cells */}
                     {week[0] &&
                       Array.from({ length: week[0].dayOfWeek - 1 }).map((_, i) => (
-                        <div key={`empty-start-${i}`} className="aspect-[4/3] sm:aspect-square" />
+                        <div key={`empty-start-${i}`} className="aspect-square" />
                       ))}
 
                     {/* Day cells */}
                     {week.map(day => {
                       const isToday = day.dateStr === todayStr;
-                      const occupancyClass =
+                      const isPast = day.dateStr < todayStr;
+                      const statusColor =
                         day.bookings >= 2
-                          ? 'bg-destructive/15 border-destructive/40 dark:bg-destructive/20'
+                          ? 'bg-rose-500/15 dark:bg-rose-500/20'
                           : day.bookings === 1
-                            ? 'bg-warning/15 border-warning/40 dark:bg-warning/20'
-                            : 'bg-success/15 border-success/40 dark:bg-success/20';
+                            ? 'bg-amber-500/15 dark:bg-amber-500/20'
+                            : 'bg-emerald-500/12 dark:bg-emerald-500/15';
+                      const barColor =
+                        day.bookings >= 2
+                          ? 'bg-rose-500'
+                          : day.bookings === 1
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-500';
+                      const barWidth =
+                        day.bookings >= 2 ? 'w-full' : day.bookings === 1 ? 'w-1/2' : 'w-0';
 
                       return (
                         <div
                           key={day.dayOfMonth}
-                          className={`flex aspect-[4/3] cursor-default flex-col items-center justify-center rounded-lg border-2 p-1 transition-all duration-200 hover:scale-[1.02] sm:aspect-square sm:p-2 ${occupancyClass} ${
+                          className={`group relative flex aspect-square cursor-default flex-col items-center justify-center rounded-xl transition-all duration-200 ${statusColor} ${
                             isToday
-                              ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                              ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
                               : ''
-                          }`}
+                          } ${isPast ? 'opacity-60' : ''} hover:opacity-100 hover:shadow-md`}
                         >
-                          <div
-                            className={`text-base font-bold sm:text-xl ${
-                              isToday ? 'text-primary' : ''
+                          <span
+                            className={`text-sm font-semibold tabular-nums sm:text-base ${
+                              isToday ? 'text-primary' : 'text-foreground/80'
                             }`}
                           >
                             {day.dayOfMonth}
-                          </div>
-                          <div className="mt-1 flex items-center gap-1 sm:mt-1.5 sm:gap-1.5">
-                            {[0, 1].map(spotIndex => (
-                              <div
-                                key={spotIndex}
-                                className={`h-3 w-3 rounded-full transition-all sm:h-4 sm:w-4 ${
-                                  spotIndex < day.bookings
-                                    ? day.bookings >= 2
-                                      ? 'bg-destructive shadow-[0_0_6px_rgba(239,68,68,0.6)]'
-                                      : 'bg-warning shadow-[0_0_6px_rgba(245,158,11,0.6)]'
-                                    : 'bg-success shadow-[0_0_6px_rgba(34,197,94,0.5)] ring-1 ring-success/50'
-                                }`}
-                              />
-                            ))}
+                          </span>
+                          <span className="mt-0.5 text-[10px] tabular-nums text-muted-foreground sm:text-xs">
+                            {day.bookings}/2
+                          </span>
+                          {/* Occupancy bar */}
+                          <div className="mt-1 h-1 w-3/5 overflow-hidden rounded-full bg-muted/60 sm:mt-1.5 sm:h-1.5">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${barColor} ${barWidth}`}
+                            />
                           </div>
                         </div>
                       );
@@ -671,7 +667,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
                     {week.length > 0 &&
                       week[week.length - 1] &&
                       Array.from({ length: 5 - week[week.length - 1].dayOfWeek }).map((_, i) => (
-                        <div key={`empty-end-${i}`} className="aspect-[4/3] sm:aspect-square" />
+                        <div key={`empty-end-${i}`} className="aspect-square" />
                       ))}
                   </div>
                 ));

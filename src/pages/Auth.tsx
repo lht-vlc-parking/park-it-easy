@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/components/v2/ThemeToggle';
 import { getUserErrorMessage } from '@/lib/errorMessages';
 import { signupPasswordSchema, loginPasswordSchema } from '@/lib/passwordValidation';
 
-const ALLOWED_EMAIL_DOMAIN = '@lht.dlh.de';
+const ALLOWED_EMAIL_DOMAIN = import.meta.env.VITE_ALLOWED_EMAIL_DOMAIN || '@lht.dlh.de';
 
 export default function Auth() {
   const navigate = useNavigate();

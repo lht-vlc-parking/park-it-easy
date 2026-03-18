@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.2-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
@@ -101,17 +101,17 @@ Open [http://localhost:5173](http://localhost:5173) 🎉
 
 ## 🛠 Tech Stack
 
-| Category     | Technology                            |
-| ------------ | ------------------------------------- |
-| **Frontend** | React 18.3, TypeScript 5.8, Vite 7.2  |
-| **Styling**  | Tailwind CSS 3.4, shadcn/ui           |
-| **Backend**  | Supabase (PostgreSQL, Auth, Realtime) |
-| **State**    | TanStack Query, React Hook Form       |
-| **Charts**   | Recharts 3                             |
-| **Dates**    | react-day-picker 9                     |
-| **Testing**  | Vitest, Playwright, Testing Library   |
-| **Quality**  | ESLint 9, Prettier, Husky             |
-| **Validation** | Zod 4                                |
+| Category       | Technology                            |
+| -------------- | ------------------------------------- |
+| **Frontend**   | React 18.3, TypeScript 5.8, Vite 8    |
+| **Styling**    | Tailwind CSS 3.4, shadcn/ui           |
+| **Backend**    | Supabase (PostgreSQL, Auth, Realtime) |
+| **Data**       | TanStack React Query, React Hook Form |
+| **Charts**     | Recharts 3                            |
+| **Dates**      | react-day-picker 9                    |
+| **Testing**    | Vitest, Playwright, Testing Library   |
+| **Quality**    | ESLint 9, Prettier, Husky             |
+| **Validation** | Zod 4                                 |
 
 ---
 
@@ -126,9 +126,11 @@ Create a `.env` file with your Supabase credentials:
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
 VITE_SUPABASE_PROJECT_ID=your_project_id
+VITE_ALLOWED_EMAIL_DOMAIN=@lht.dlh.de
 ```
 
-Get these from [Supabase Dashboard](https://app.supabase.com/) → Project Settings → API
+Get the Supabase values from [Supabase Dashboard](https://app.supabase.com/) → Project Settings → API.
+`VITE_ALLOWED_EMAIL_DOMAIN` restricts sign-ups to a specific email domain (defaults to `@lht.dlh.de`).
 
 </details>
 
@@ -149,22 +151,6 @@ pnpm test:coverage
 </details>
 
 <details>
-<summary><strong>🐳 Docker Development</strong></summary>
-
-```bash
-# Start development environment
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-</details>
-
-<details>
 <summary><strong>📁 Project Structure</strong></summary>
 
 ```
@@ -172,13 +158,14 @@ park-it-easy-office/
 ├── src/
 │   ├── components/      # React components
 │   │   └── ui/          # shadcn/ui components
-│   ├── hooks/           # Custom React hooks
+│   ├── hooks/           # Custom React hooks (React Query)
 │   ├── pages/           # Route pages
-│   ├── services/        # Business logic
+│   ├── services/        # Business logic & validation
+│   ├── types/           # Canonical TypeScript types
 │   └── lib/             # Utilities
 ├── supabase/
 │   └── migrations/      # Database migrations
-└── e2e/                 # Playwright tests
+└── e2e/                 # Playwright E2E tests
 ```
 
 </details>
@@ -192,13 +179,21 @@ Build for production:
 pnpm build
 ```
 
-Deploy the `dist/` folder to:
+Deploy the `dist/` folder to GitHub Pages, Vercel, or Netlify.
 
-- **Vercel** — Connect GitHub for auto-deploy
-- **Netlify** — Set publish directory to `dist`
-- **GitHub Pages** — Use the provided workflow
+The included `release.yml` workflow handles releases end-to-end: build, SLSA provenance, SBOM generation, attestation, GitHub Release creation, and deployment to GitHub Pages.
 
 </details>
+
+---
+
+## ⚙️ CI / CD
+
+| Workflow            | Trigger                        | What it does                                                                  |
+| ------------------- | ------------------------------ | ----------------------------------------------------------------------------- |
+| `ci.yml`            | Push / PR to `main`, `develop` | Lint, unit tests, build, E2E (Playwright cached)                              |
+| `release.yml`       | Tag push (`v*`) or manual      | Build, SLSA v3 provenance, SBOM, attestation, GitHub Release, deploy to Pages |
+| `security-scan.yml` | Daily (8:00 UTC) or manual     | Scan SBOM for vulnerabilities with Grype                                      |
 
 ---
 

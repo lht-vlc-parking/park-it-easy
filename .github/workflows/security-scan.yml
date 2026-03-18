@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get latest release tag
         id: get-release
@@ -46,13 +46,13 @@ jobs:
             echo "No SBOM files found in release, generating from package-lock..."
             mkdir -p ./sbom-files
           }
-          
+
           # List downloaded files
           echo "Downloaded SBOM files:"
           ls -la ./sbom-files/ || echo "No files downloaded"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 
@@ -73,14 +73,14 @@ jobs:
         continue-on-error: true
         run: |
           echo "Scanning for vulnerabilities..."
-          
+
           SBOM_FILE=""
           if [ -f ./sbom-files/sbom-cyclonedx.json ]; then
             SBOM_FILE="./sbom-files/sbom-cyclonedx.json"
           elif [ -f ./sbom-files/sbom.json ]; then
             SBOM_FILE="./sbom-files/sbom.json"
           fi
-          
+
           if [ -n "$SBOM_FILE" ]; then
             echo "Scanning $SBOM_FILE..."
             grype sbom:$SBOM_FILE -o json > vulnerability-report.json 2>&1 || true
@@ -121,7 +121,7 @@ jobs:
           fi
 
       - name: Upload vulnerability report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: vulnerability-report
@@ -137,7 +137,7 @@ jobs:
         run: |
           # Check if there's already an open security issue
           EXISTING_ISSUE=$(gh issue list --label "security" --state open --json number -q '.[0].number' 2>/dev/null || echo "")
-          
+
           if [ -z "$EXISTING_ISSUE" ]; then
             gh issue create \
               --title "🚨 Security: ${{ steps.scan.outputs.critical }} Critical, ${{ steps.scan.outputs.high }} High vulnerabilities found" \

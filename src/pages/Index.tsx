@@ -1,190 +1,145 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { ParkingSpotCard } from '@/components/ParkingSpotCard';
 import { BookingDialogWithValidation } from '@/components/BookingDialogWithValidation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { BarChart3, Calendar, LogOut, User, Clock, Activity } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
 import { getUserErrorMessage } from '@/lib/errorMessages';
-
-interface Booking {
-  id: string;
-  date: string;
-  duration: 'morning' | 'afternoon' | 'full';
-  vehicleType: 'car' | 'motorcycle';
-  userName: string;
-  spotNumber: number;
-  createdAt?: string;
-}
+import { useBookings } from '@/hooks/useBookings';
+import { useCreateBooking } from '@/hooks/useCreateBooking';
+import { useDeleteBooking } from '@/hooks/useDeleteBooking';
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedSpot, setSelectedSpot] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch bookings from database
-  useEffect(() => {
-    if (user) {
-      fetchBookings();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  const today = new Date().toISOString().split('T')[0];
 
-  const fetchBookings = async () => {
-    try {
-      if (!user) return;
-
-      // Fetch ALL bookings to show correct parking spot availability
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-
-      // Transform database data to match our interface
-      const transformedBookings: Booking[] = (data || []).map(booking => ({
-        id: booking.id,
-        date: booking.date,
-        duration: booking.duration as 'morning' | 'afternoon' | 'full',
-        vehicleType: booking.vehicle_type as 'car' | 'motorcycle',
-        userName: booking.user_name,
-        spotNumber: booking.spot_number,
-        createdAt: booking.created_at,
-      }));
-
-      setBookings(transformedBookings);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-      toast.error(getUserErrorMessage(error, 'booking_fetch'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: bookings = [], isLoading: loading } = useBookings({ dateFrom: today });
+  const createBooking = useCreateBooking();
+  const deleteBooking = useDeleteBooking();
 
   const handleBookSpot = (spotNumber: number) => {
     setSelectedSpot(spotNumber);
     setDialogOpen(true);
   };
 
-  const handleConfirmBooking = async (booking: Omit<Booking, 'id'>) => {
-    try {
-      if (!user) {
-        toast.error('You must be logged in to book a spot');
-        return;
-      }
+  const handleConfirmBooking = (booking: {
+    date: string;
+    duration: 'morning' | 'afternoon' | 'full';
+    vehicle_type: 'car' | 'motorcycle';
+    spot_number: number;
+  }) => {
+    if (!user) {
+      toast.error('You must be logged in to book a spot');
+      return;
+    }
 
-      const { error } = await supabase.from('bookings').insert({
-        user_id: user.id,
-        user_name: user.user_metadata?.user_name || user.email || 'Unknown',
+    createBooking.mutate(
+      {
         date: booking.date,
         duration: booking.duration,
-        vehicle_type: booking.vehicleType,
-        spot_number: booking.spotNumber,
-      });
-
-      if (error) {
-        console.error('Error creating booking:', error);
-        toast.error(getUserErrorMessage(error, 'booking_create'));
-        return;
+        vehicle_type: booking.vehicle_type,
+        spot_number: booking.spot_number,
+        userId: user.id,
+        userName: user.user_metadata?.user_name || user.email || 'Unknown',
+      },
+      {
+        onSuccess: () => toast.success('Parking spot booked successfully!'),
+        onError: error => {
+          console.error('Error creating booking:', error);
+          toast.error(getUserErrorMessage(error, 'booking_create'));
+        },
       }
-
-      toast.success('Parking spot booked successfully!');
-      fetchBookings(); // Refresh the list
-    } catch (error: unknown) {
-      console.error('Error creating booking:', error);
-      toast.error(getUserErrorMessage(error, 'booking_create'));
-    }
+    );
   };
 
-  const handleUnbook = async (bookingId: string) => {
-    try {
-      const { error } = await supabase.from('bookings').delete().eq('id', bookingId);
-
-      if (error) {
+  const handleUnbook = (bookingId: string) => {
+    deleteBooking.mutate(bookingId, {
+      onSuccess: () => toast.success('Booking cancelled successfully!'),
+      onError: error => {
         console.error('Error cancelling booking:', error);
         toast.error(getUserErrorMessage(error, 'booking_cancel'));
-        return;
-      }
-
-      toast.success('Booking cancelled successfully!');
-      fetchBookings(); // Refresh the list
-    } catch (error: unknown) {
-      console.error('Error cancelling booking:', error);
-      toast.error(getUserErrorMessage(error, 'booking_cancel'));
-    }
+      },
+    });
   };
 
-  // Filter out expired bookings (past dates)
-  const today = new Date().toISOString().split('T')[0];
-  const activeBookings = bookings.filter(b => b.date >= today);
+  // All bookings are already filtered to >= today by the query
+  const allUpcomingBookings = bookings;
 
-  // Show ALL upcoming bookings (not just current user's)
-  const allUpcomingBookings = activeBookings;
-
-  const spot84Bookings = activeBookings.filter(b => b.spotNumber === 84);
-  const spot85Bookings = activeBookings.filter(b => b.spotNumber === 85);
+  const spot84Bookings = useMemo(() => bookings.filter(b => b.spot_number === 84), [bookings]);
+  const spot85Bookings = useMemo(() => bookings.filter(b => b.spot_number === 85), [bookings]);
 
   // Personal statistics
   const userName = user?.user_metadata?.user_name || user?.email;
-  const myBookings = bookings.filter(b => b.userName === userName);
-  const _myActiveBookings = activeBookings.filter(b => b.userName === userName);
-  const _myCarBookings = myBookings.filter(b => b.vehicleType === 'car').length;
-  const _myMotorcycleBookings = myBookings.filter(b => b.vehicleType === 'motorcycle').length;
-  const mySpot84Count = myBookings.filter(b => b.spotNumber === 84).length;
-  const mySpot85Count = myBookings.filter(b => b.spotNumber === 85).length;
-  const myMostUsedSpot = mySpot84Count >= mySpot85Count ? 84 : 85;
+  const myBookings = useMemo(
+    () => bookings.filter(b => b.user_name === userName),
+    [bookings, userName]
+  );
 
-  // More meaningful personal stats
-  const thisWeekStart = new Date(today);
-  const weekday = thisWeekStart.getDay();
-  thisWeekStart.setDate(thisWeekStart.getDate() - weekday);
-  const thisWeekEnd = new Date(thisWeekStart);
-  thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
+  // Personal computed stats
+  const myStats = useMemo(() => {
+    const spot84Count = myBookings.filter(b => b.spot_number === 84).length;
+    const spot85Count = myBookings.filter(b => b.spot_number === 85).length;
 
-  const myWeekBookings = myBookings.filter(b => {
-    const bookingDate = new Date(b.date);
-    return bookingDate >= thisWeekStart && bookingDate <= thisWeekEnd;
-  });
+    // Week bookings
+    const weekStart = new Date(today);
+    const wd = weekStart.getDay();
+    weekStart.setDate(weekStart.getDate() - wd);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const weekBookings = myBookings.filter(b => {
+      const bookingDate = new Date(b.date);
+      return bookingDate >= weekStart && bookingDate <= weekEnd;
+    });
 
-  // Calculate preferred time slot
-  const myMorningCount = myBookings.filter(
-    b => b.duration === 'morning' || b.duration === 'full'
-  ).length;
-  const myAfternoonCount = myBookings.filter(
-    b => b.duration === 'afternoon' || b.duration === 'full'
-  ).length;
-  const myFullDayCount = myBookings.filter(b => b.duration === 'full').length;
+    // Preferred time
+    const morningCount = myBookings.filter(
+      b => b.duration === 'morning' || b.duration === 'full'
+    ).length;
+    const afternoonCount = myBookings.filter(
+      b => b.duration === 'afternoon' || b.duration === 'full'
+    ).length;
+    const fullDayCount = myBookings.filter(b => b.duration === 'full').length;
 
-  let myPreferredTime = 'Not set';
-  if (myFullDayCount > myMorningCount * 0.5 && myFullDayCount > myAfternoonCount * 0.5) {
-    myPreferredTime = 'Full Day';
-  } else if (myMorningCount > myAfternoonCount) {
-    myPreferredTime = 'Morning';
-  } else if (myAfternoonCount > myMorningCount) {
-    myPreferredTime = 'Afternoon';
-  }
+    let preferredTime = 'Not set';
+    if (fullDayCount > morningCount * 0.5 && fullDayCount > afternoonCount * 0.5) {
+      preferredTime = 'Full Day';
+    } else if (morningCount > afternoonCount) {
+      preferredTime = 'Morning';
+    } else if (afternoonCount > morningCount) {
+      preferredTime = 'Afternoon';
+    }
 
-  // Average bookings per week for user
-  const weeksActive =
-    myBookings.length > 0
-      ? Math.max(
-          1,
-          Math.ceil(
-            (new Date().getTime() - new Date(myBookings[0].date).getTime()) /
-              (7 * 24 * 60 * 60 * 1000)
+    // Average bookings per week
+    const weeksActive =
+      myBookings.length > 0
+        ? Math.max(
+            1,
+            Math.ceil(
+              (new Date().getTime() - new Date(myBookings[0].date).getTime()) /
+                (7 * 24 * 60 * 60 * 1000)
+            )
           )
-        )
-      : 0;
-  const avgBookingsPerWeek = weeksActive > 0 ? (myBookings.length / weeksActive).toFixed(1) : '0';
+        : 0;
+    const avgPerWeek = weeksActive > 0 ? (myBookings.length / weeksActive).toFixed(1) : '0';
+
+    return {
+      spot84Count,
+      spot85Count,
+      mostUsedSpot: spot84Count >= spot85Count ? 84 : 85,
+      weekBookings,
+      preferredTime,
+      avgPerWeek,
+    };
+  }, [myBookings, today]);
 
   return (
     <div className="mesh-gradient min-h-screen bg-background">
@@ -284,8 +239,7 @@ const Index = () => {
                       // Check if booking is today
                       const isToday = booking.date === today;
 
-                      const isMyBooking =
-                        booking.userName === (user?.user_metadata?.user_name || user?.email);
+                      const isMyBooking = booking.user_id === user?.id;
 
                       return (
                         <div
@@ -355,7 +309,7 @@ const Index = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 truncate font-semibold">
-                                {booking.userName}
+                                {booking.user_name}
                                 {isToday && (
                                   <span className="rounded-full bg-warning px-2 py-0.5 text-xs text-white shadow-sm">
                                     Today
@@ -368,26 +322,26 @@ const Index = () => {
                                 )}
                               </div>
                               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-                                <span className="font-medium">Spot {booking.spotNumber}</span>
-                                <span className="text-muted-foreground/50">•</span>
+                                <span className="font-medium">Spot {booking.spot_number}</span>
+                                <span className="text-muted-foreground/50">&bull;</span>
                                 <span
-                                  className={`font-medium ${booking.vehicleType === 'car' ? 'text-info' : 'text-accent'}`}
+                                  className={`font-medium ${booking.vehicle_type === 'car' ? 'text-info' : 'text-accent'}`}
                                 >
-                                  {booking.vehicleType === 'car' ? '🚗 Car' : '🏍️ Moto'}
+                                  {booking.vehicle_type === 'car' ? '🚗 Car' : '🏍️ Moto'}
                                 </span>
                               </div>
-                              {booking.createdAt && (
+                              {booking.created_at && (
                                 <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground/75">
                                   <Clock className="h-3 w-3" />
                                   <span>
                                     Created{' '}
-                                    {new Date(booking.createdAt).toLocaleDateString('en-US', {
+                                    {new Date(booking.created_at).toLocaleDateString('en-US', {
                                       month: 'short',
                                       day: 'numeric',
                                       year: 'numeric',
                                     })}{' '}
                                     at{' '}
-                                    {new Date(booking.createdAt).toLocaleTimeString('en-US', {
+                                    {new Date(booking.created_at).toLocaleTimeString('en-US', {
                                       hour: '2-digit',
                                       minute: '2-digit',
                                     })}
@@ -424,7 +378,7 @@ const Index = () => {
                           <p className="text-sm font-medium text-muted-foreground">
                             Booking Frequency
                           </p>
-                          <p className="text-3xl font-bold text-info">{avgBookingsPerWeek}</p>
+                          <p className="text-3xl font-bold text-info">{myStats.avgPerWeek}</p>
                           <p className="mt-1 text-xs text-muted-foreground">
                             bookings/week average
                           </p>
@@ -441,7 +395,9 @@ const Index = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">This Week</p>
-                          <p className="text-3xl font-bold text-success">{myWeekBookings.length}</p>
+                          <p className="text-3xl font-bold text-success">
+                            {myStats.weekBookings.length}
+                          </p>
                           <p className="mt-1 text-xs text-muted-foreground">
                             {myBookings.length} all-time total
                           </p>
@@ -460,7 +416,7 @@ const Index = () => {
                           <p className="text-sm font-medium text-muted-foreground">
                             Preferred Time
                           </p>
-                          <p className="text-3xl font-bold text-warning">{myPreferredTime}</p>
+                          <p className="text-3xl font-bold text-warning">{myStats.preferredTime}</p>
                           <p className="mt-1 text-xs text-muted-foreground">most common choice</p>
                         </div>
                         <div className="rounded-xl bg-warning/10 p-3">
@@ -475,9 +431,11 @@ const Index = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Favorite Spot</p>
-                          <p className="text-3xl font-bold text-accent">Spot {myMostUsedSpot}</p>
+                          <p className="text-3xl font-bold text-accent">
+                            Spot {myStats.mostUsedSpot}
+                          </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {Math.max(mySpot84Count, mySpot85Count)} times booked
+                            {Math.max(myStats.spot84Count, myStats.spot85Count)} times booked
                           </p>
                         </div>
                         <div className="rounded-xl bg-accent/10 p-3">

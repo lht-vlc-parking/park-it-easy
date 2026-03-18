@@ -1,6 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ParkingSpotCard } from '../components/ParkingSpotCard';
+import type { Booking } from '../types/booking';
+
+const makeBooking = (overrides: Partial<Booking> & { id: string; date: string }): Booking => ({
+  duration: 'full',
+  vehicle_type: 'car',
+  user_name: 'Test User',
+  spot_number: 84,
+  user_id: 'user-1',
+  created_at: new Date().toISOString(),
+  ...overrides,
+});
 
 describe('ParkingSpotCard', () => {
   describe('Book button behavior', () => {
@@ -18,13 +29,13 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'full' as const,
-          vehicleType: 'car' as const,
-          userName: 'John Doe',
-        },
+          duration: 'full',
+          vehicle_type: 'car',
+          user_name: 'John Doe',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
@@ -40,13 +51,13 @@ describe('ParkingSpotCard', () => {
 
       // Fully booked with car for full day
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'full' as const,
-          vehicleType: 'car' as const,
-          userName: 'John Doe',
-        },
+          duration: 'full',
+          vehicle_type: 'car',
+          user_name: 'John Doe',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={85} currentBookings={currentBookings} onBook={onBook} />);
@@ -61,13 +72,15 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       // 4 motorcycles (at capacity) - this is "partial" status
-      const currentBookings = Array.from({ length: 4 }, (_, i) => ({
-        id: `${i + 1}`,
-        date: today,
-        duration: 'full' as const,
-        vehicleType: 'motorcycle' as const,
-        userName: `Biker ${i + 1}`,
-      }));
+      const currentBookings = Array.from({ length: 4 }, (_, i) =>
+        makeBooking({
+          id: `${i + 1}`,
+          date: today,
+          duration: 'full',
+          vehicle_type: 'motorcycle',
+          user_name: `Biker ${i + 1}`,
+        })
+      );
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
 
@@ -81,27 +94,29 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'morning' as const,
-          vehicleType: 'car' as const,
-          userName: 'Morning Car',
-        },
-        {
+          duration: 'morning',
+          vehicle_type: 'car',
+          user_name: 'Morning Car',
+        }),
+        makeBooking({
           id: '2',
           date: today,
-          duration: 'afternoon' as const,
-          vehicleType: 'car' as const,
-          userName: 'Afternoon Car',
-        },
-        ...Array.from({ length: 4 }, (_, i) => ({
-          id: `${i + 3}`,
-          date: today,
-          duration: 'full' as const,
-          vehicleType: 'motorcycle' as const,
-          userName: `Biker ${i + 1}`,
-        })),
+          duration: 'afternoon',
+          vehicle_type: 'car',
+          user_name: 'Afternoon Car',
+        }),
+        ...Array.from({ length: 4 }, (_, i) =>
+          makeBooking({
+            id: `${i + 3}`,
+            date: today,
+            duration: 'full',
+            vehicle_type: 'motorcycle',
+            user_name: `Biker ${i + 1}`,
+          })
+        ),
       ];
 
       render(<ParkingSpotCard spotNumber={85} currentBookings={currentBookings} onBook={onBook} />);
@@ -116,13 +131,13 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'full' as const,
-          vehicleType: 'car' as const,
-          userName: 'John Doe',
-        },
+          duration: 'full',
+          vehicle_type: 'car',
+          user_name: 'John Doe',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
@@ -147,13 +162,13 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'full' as const,
-          vehicleType: 'car' as const,
-          userName: 'John Doe',
-        },
+          duration: 'full',
+          vehicle_type: 'car',
+          user_name: 'John Doe',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
@@ -168,13 +183,13 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'morning' as const,
-          vehicleType: 'car' as const,
-          userName: 'Morning User',
-        },
+          duration: 'morning',
+          vehicle_type: 'car',
+          user_name: 'Morning User',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
@@ -189,13 +204,13 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'full' as const,
-          vehicleType: 'car' as const,
-          userName: 'John Doe',
-        },
+          duration: 'full',
+          vehicle_type: 'car',
+          user_name: 'John Doe',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
@@ -220,13 +235,13 @@ describe('ParkingSpotCard', () => {
       const today = new Date().toISOString().split('T')[0];
 
       const currentBookings = [
-        {
+        makeBooking({
           id: '1',
           date: today,
-          duration: 'morning' as const,
-          vehicleType: 'car' as const,
-          userName: 'Morning User',
-        },
+          duration: 'morning',
+          vehicle_type: 'car',
+          user_name: 'Morning User',
+        }),
       ];
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);

@@ -3,16 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Line } from 'recharts';
 import { Flame, Car, Bike, MapPin, Clock, Calendar, Award, Zap } from 'lucide-react';
-
-interface Booking {
-  id: string;
-  date: string;
-  duration: 'morning' | 'afternoon' | 'full';
-  vehicle_type: 'car' | 'motorcycle';
-  user_name: string;
-  spot_number: number;
-  created_at?: string;
-}
+import type { Booking } from '@/types/booking';
 
 interface MyProfileTabProps {
   bookings: Booking[];

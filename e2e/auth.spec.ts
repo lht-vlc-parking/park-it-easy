@@ -1,55 +1,56 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
-  test('should load the authentication page', async ({ page }) => {
+  test('should load the authentication page with app title', async ({ page }) => {
     await page.goto('/');
-    
-    // Should see the login page
-    await expect(page.locator('h1')).toContainText('Park it easy office');
-    await expect(page.getByText('Login')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('heading', { name: 'Park It Easy' })).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  test('should show login and sign-up tabs', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByText('Login')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Sign Up')).toBeVisible();
+  });
+
+  test('should show sign-up form fields', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByText('Sign Up').click();
+
+    await expect(page.locator('#signup-name')).toBeVisible();
+    await expect(page.locator('#signup-email')).toBeVisible();
+    await expect(page.locator('#signup-password')).toBeVisible();
   });
 
   test('should show email validation error for invalid domain', async ({ page }) => {
     await page.goto('/');
-    
-    // Click on Sign Up tab
+    await page.waitForLoadState('networkidle');
+
     await page.getByText('Sign Up').click();
-    
-    // Fill in the form with invalid email
-    await page.fill('input[type="email"]', 'test@gmail.com');
-    await page.fill('input[type="text"]', 'Test User');
-    await page.fill('input[type="password"]', 'TestPassword123');
-    
-    // Try to submit
-    await page.getByRole('button', { name: 'Create Account' }).click();
-    
-    // Should see validation error
-    await expect(page.getByText(/must be a.*@lht.dlh.de email/i)).toBeVisible();
+
+    await page.fill('#signup-name', 'Test User');
+    await page.fill('#signup-email', 'test@gmail.com');
+    await page.fill('#signup-password', 'TestPassword123!');
+
+    await page.getByRole('button', { name: 'Sign Up' }).click();
+
+    await expect(page.getByText(/@lht\.dlh\.de/).first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should accept valid LHT email domain', async ({ page }) => {
+  test('should show reset tab with email field', async ({ page }) => {
     await page.goto('/');
-    
-    // Click on Sign Up tab
-    await page.getByText('Sign Up').click();
-    
-    // Fill in the form with valid email
-    const testEmail = `test${Date.now()}@lht.dlh.de`;
-    await page.fill('input[type="email"]', testEmail);
-    
-    // Should not show domain validation error immediately
-    await expect(page.getByText(/must be a.*@lht.dlh.de email/i)).not.toBeVisible();
-  });
+    await page.waitForLoadState('networkidle');
 
-  test('should have password reset functionality', async ({ page }) => {
-    await page.goto('/');
-    
-    // Click on Reset Password tab
-    await page.getByText('Reset Password').click();
-    
-    // Should see reset password form
-    await expect(page.getByText('Enter your email')).toBeVisible();
-    await expect(page.getByPlaceholder(/email/i)).toBeVisible();
+    await page.getByText('Reset').click();
+
+    await expect(page.locator('#reset-email')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send Reset Link' })).toBeVisible();
   });
 });

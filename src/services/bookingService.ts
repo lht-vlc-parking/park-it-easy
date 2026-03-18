@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import type { Booking } from '@/types/booking';
 
 // Types
 export const durationSchema = z.enum(['morning', 'afternoon', 'full']);
@@ -8,20 +9,11 @@ export const vehicleTypeSchema = z.enum(['car', 'motorcycle']);
 export type Duration = z.infer<typeof durationSchema>;
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 
-export interface Booking {
-  id: string;
-  date: string;
-  duration: Duration;
-  vehicleType: VehicleType;
-  userName: string;
-  spotNumber: number;
-}
-
 export interface CreateBookingData {
   date: string;
   duration: Duration;
-  vehicleType: VehicleType;
-  spotNumber: number;
+  vehicle_type: VehicleType;
+  spot_number: number;
 }
 
 export interface BookingResult {
@@ -53,7 +45,7 @@ export class BookingService {
   /**
    * Check if two time durations overlap
    */
-  private static overlaps(a: Duration, b: Duration): boolean {
+  static overlaps(a: Duration, b: Duration): boolean {
     if (a === 'full' || b === 'full') return true;
     return a === b;
   }
@@ -87,7 +79,7 @@ export class BookingService {
     const bookingDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (bookingDate < today) {
       return {
         valid: false,
@@ -111,20 +103,21 @@ export class BookingService {
     }
 
     // Validate each booking from database
-    const validatedBookings = existingBookings?.map(b => {
-      try {
-        return dbBookingSchema.parse(b);
-      } catch (e) {
-        console.error('Invalid booking data from database:', e);
-        return null;
-      }
-    }).filter(Boolean) || [];
+    const validatedBookings =
+      existingBookings
+        ?.map(b => {
+          try {
+            return dbBookingSchema.parse(b);
+          } catch (e) {
+            console.error('Invalid booking data from database:', e);
+            return null;
+          }
+        })
+        .filter(Boolean) || [];
 
     // Check for car conflicts
     if (vehicleType === 'car') {
-      const hasConflict = validatedBookings.some(b => 
-        this.overlaps(duration, b.duration)
-      );
+      const hasConflict = validatedBookings.some(b => this.overlaps(duration, b.duration));
 
       if (hasConflict) {
         return {
@@ -173,10 +166,10 @@ export class BookingService {
     try {
       // Validate booking
       const validation = await this.validateBooking(
-        data.spotNumber,
+        data.spot_number,
         data.date,
         data.duration,
-        data.vehicleType
+        data.vehicle_type
       );
 
       if (!validation.valid) {
@@ -194,15 +187,15 @@ export class BookingService {
           user_name: userName,
           date: data.date,
           duration: data.duration,
-          vehicle_type: data.vehicleType,
-          spot_number: data.spotNumber,
+          vehicle_type: data.vehicle_type,
+          spot_number: data.spot_number,
         })
         .select()
         .single();
 
       if (error) {
         console.error('Error creating booking:', error);
-        
+
         // Check for unique constraint violation
         if (error.code === '23505') {
           return {
@@ -217,19 +210,9 @@ export class BookingService {
         };
       }
 
-      // Transform to our type
-      const booking: Booking = {
-        id: newBooking.id,
-        date: newBooking.date,
-        duration: newBooking.duration as Duration,
-        vehicleType: newBooking.vehicle_type as VehicleType,
-        userName: newBooking.user_name,
-        spotNumber: newBooking.spot_number,
-      };
-
       return {
         success: true,
-        data: booking,
+        data: newBooking,
       };
     } catch (error) {
       console.error('Unexpected error creating booking:', error);
@@ -241,55 +224,11 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a user
-   */
-  static async getUserBookings(userId: string): Promise<Booking[]> {
-    try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching bookings:', error);
-        return [];
-      }
-
-      // Transform and validate
-      return (data || [])
-        .map(booking => {
-          try {
-            const validated = dbBookingSchema.parse(booking);
-            return {
-              id: validated.id,
-              date: validated.date,
-              duration: validated.duration,
-              vehicleType: validated.vehicle_type,
-              userName: validated.user_name,
-              spotNumber: validated.spot_number,
-            };
-          } catch (e) {
-            console.error('Invalid booking data:', e);
-            return null;
-          }
-        })
-        .filter((b): b is Booking => b !== null);
-    } catch (error) {
-      console.error('Unexpected error fetching bookings:', error);
-      return [];
-    }
-  }
-
-  /**
    * Cancel a booking
    */
   static async cancelBooking(bookingId: string): Promise<BookingResult> {
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('id', bookingId);
+      const { error } = await supabase.from('bookings').delete().eq('id', bookingId);
 
       if (error) {
         console.error('Error cancelling booking:', error);
@@ -318,10 +257,7 @@ export class BookingService {
     endDate?: string
   ): Promise<Booking[]> {
     try {
-      let query = supabase
-        .from('bookings')
-        .select('*')
-        .eq('spot_number', spotNumber);
+      let query = supabase.from('bookings').select('*').eq('spot_number', spotNumber);
 
       if (startDate) {
         query = query.gte('date', startDate);
@@ -338,24 +274,7 @@ export class BookingService {
         return [];
       }
 
-      return (data || [])
-        .map(booking => {
-          try {
-            const validated = dbBookingSchema.parse(booking);
-            return {
-              id: validated.id,
-              date: validated.date,
-              duration: validated.duration,
-              vehicleType: validated.vehicle_type,
-              userName: validated.user_name,
-              spotNumber: validated.spot_number,
-            };
-          } catch (e) {
-            console.error('Invalid booking data:', e);
-            return null;
-          }
-        })
-        .filter((b): b is Booking => b !== null);
+      return data || [];
     } catch (error) {
       console.error('Unexpected error fetching spot bookings:', error);
       return [];

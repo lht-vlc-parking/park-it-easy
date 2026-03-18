@@ -1,10 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, BarChart3, User, Users, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useStatistics } from '@/hooks/useStatistics';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
@@ -12,49 +10,14 @@ import OverviewTab from '@/components/statistics/OverviewTab';
 import MyProfileTab from '@/components/statistics/MyProfileTab';
 import TeamTab from '@/components/statistics/TeamTab';
 import { TrendsTab } from '@/components/statistics/TrendsTab';
-
-interface Booking {
-  id: string;
-  date: string;
-  duration: 'morning' | 'afternoon' | 'full';
-  vehicle_type: 'car' | 'motorcycle';
-  user_name: string;
-  spot_number: number;
-  created_at?: string;
-}
+import { useBookings } from '@/hooks/useBookings';
 
 const Statistics = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
 
+  const { data: bookings = [], isLoading: loading } = useBookings();
   const { fairness } = useStatistics();
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  const fetchBookings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching bookings:', error);
-        toast.error('Failed to load statistics');
-      } else {
-        setBookings(data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-      toast.error('Failed to load statistics');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Shared computed values
   const uniqueUsers = useMemo(() => [...new Set(bookings.map(b => b.user_name))], [bookings]);

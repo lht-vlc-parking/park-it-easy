@@ -18,15 +18,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-// Type guards for runtime validation
-const isDuration = (value: unknown): value is 'morning' | 'afternoon' | 'full' => {
-  return value === 'morning' || value === 'afternoon' || value === 'full';
-};
-
-const isVehicleType = (value: unknown): value is 'car' | 'motorcycle' => {
-  return value === 'car' || value === 'motorcycle';
-};
-
 interface BookingDialogWithValidationProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,8 +25,8 @@ interface BookingDialogWithValidationProps {
   onConfirm: (booking: {
     date: string;
     duration: 'morning' | 'afternoon' | 'full';
-    vehicleType: 'car' | 'motorcycle';
-    spotNumber: number;
+    vehicle_type: 'car' | 'motorcycle';
+    spot_number: number;
   }) => void;
 }
 
@@ -64,14 +55,13 @@ export const BookingDialogWithValidation = ({
 
     setIsValidating(true);
     const selectedDateStr = format(date, 'yyyy-MM-dd');
-    const userName = user.user_metadata?.user_name || user.email;
 
     try {
-      // First, check if user already has a booking on this date
+      // Check if user already has a booking on this date
       const { data: userBookings, error: userError } = await supabase
         .from('bookings')
         .select('*')
-        .eq('user_name', userName)
+        .eq('user_id', user.id)
         .eq('date', selectedDateStr);
 
       if (userError) throw userError;
@@ -85,78 +75,12 @@ export const BookingDialogWithValidation = ({
         return;
       }
 
-      // Fetch ALL bookings for this spot and date to validate conflicts
-      const { data: existingBookings, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('spot_number', spotNumber)
-        .eq('date', selectedDateStr);
-
-      if (error) throw error;
-
-      const bookingsForDate = existingBookings || [];
-
-      // Overlap helper
-      const overlaps = (
-        a: 'morning' | 'afternoon' | 'full',
-        b: 'morning' | 'afternoon' | 'full'
-      ) => {
-        if (a === 'full' || b === 'full') return true;
-        return a === b;
-      };
-
-      // Validation for car booking: must not overlap with any car or motorcycle
-      if (vehicleType === 'car') {
-        const conflict = bookingsForDate.some(b => {
-          if (!isDuration(b.duration)) {
-            console.error('Invalid duration in booking:', b.duration);
-            return false;
-          }
-          return overlaps(duration, b.duration);
-        });
-        if (conflict) {
-          toast.error('This spot already has a booking at that time');
-          setIsValidating(false);
-          return;
-        }
-      }
-
-      // Validation for motorcycle booking: must not overlap with cars and max 4 overlapping motorcycles
-      if (vehicleType === 'motorcycle') {
-        const carConflict = bookingsForDate.some(b => {
-          if (!isDuration(b.duration) || !isVehicleType(b.vehicle_type)) {
-            console.error('Invalid booking data:', b);
-            return false;
-          }
-          return b.vehicle_type === 'car' && overlaps(duration, b.duration);
-        });
-        if (carConflict) {
-          toast.error('A car is booked for that time on this spot');
-          setIsValidating(false);
-          return;
-        }
-
-        const overlappingMotoCount = bookingsForDate.filter(b => {
-          if (!isDuration(b.duration) || !isVehicleType(b.vehicle_type)) {
-            console.error('Invalid booking data:', b);
-            return false;
-          }
-          return b.vehicle_type === 'motorcycle' && overlaps(duration, b.duration);
-        }).length;
-
-        if (overlappingMotoCount >= 4) {
-          toast.error('Maximum 4 motorcycles allowed at the same time on this spot');
-          setIsValidating(false);
-          return;
-        }
-      }
-
-      // All validation passed
+      // All pre-validation passed — delegate conflict validation to the service via onConfirm
       onConfirm({
         date: selectedDateStr,
         duration,
-        vehicleType,
-        spotNumber,
+        vehicle_type: vehicleType,
+        spot_number: spotNumber,
       });
 
       // Reset form

@@ -9,19 +9,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface Booking {
-  id: string;
-  date: string;
-  duration: 'morning' | 'afternoon' | 'full';
-  vehicle_type: 'car' | 'motorcycle';
-  user_name: string;
-  spot_number: number;
-  created_at?: string;
-}
+import type { Booking } from '@/types/booking';
 
 interface OverviewTabProps {
   bookings: Booking[];

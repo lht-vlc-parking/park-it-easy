@@ -69,8 +69,8 @@ describe('BookingService', () => {
         {
           date: '2026-01-15',
           duration: 'full' as Duration,
-          vehicleType: 'car' as VehicleType,
-          spotNumber: 84,
+          vehicle_type: 'car' as VehicleType,
+          spot_number: 84,
         },
         'user-123',
         'Test User'
@@ -78,7 +78,7 @@ describe('BookingService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      expect(result.data?.spotNumber).toBe(84);
+      expect(result.data?.spot_number).toBe(84);
     });
 
     it('should reject invalid spot numbers', async () => {
@@ -86,8 +86,8 @@ describe('BookingService', () => {
         {
           date: '2026-01-15',
           duration: 'full' as Duration,
-          vehicleType: 'car' as VehicleType,
-          spotNumber: 99, // Invalid spot
+          vehicle_type: 'car' as VehicleType,
+          spot_number: 99, // Invalid spot
         },
         'user-123',
         'Test User'
@@ -102,8 +102,8 @@ describe('BookingService', () => {
         {
           date: '2025-12-01', // Past date
           duration: 'full' as Duration,
-          vehicleType: 'car' as VehicleType,
-          spotNumber: 84,
+          vehicle_type: 'car' as VehicleType,
+          spot_number: 84,
         },
         'user-123',
         'Test User'
@@ -118,8 +118,8 @@ describe('BookingService', () => {
         {
           date: '01-15-2026', // Wrong format
           duration: 'full' as Duration,
-          vehicleType: 'car' as VehicleType,
-          spotNumber: 84,
+          vehicle_type: 'car' as VehicleType,
+          spot_number: 84,
         },
         'user-123',
         'Test User'
@@ -135,14 +135,6 @@ describe('BookingService', () => {
       const result = await BookingService.cancelBooking('booking-123');
 
       expect(result.success).toBe(true);
-    });
-  });
-
-  describe('getUserBookings', () => {
-    it('should return empty array when no bookings', async () => {
-      const result = await BookingService.getUserBookings('user-123');
-
-      expect(result).toEqual([]);
     });
   });
 
@@ -163,39 +155,19 @@ describe('BookingService', () => {
 
 describe('Booking Overlap Logic', () => {
   it('full day overlaps with morning', () => {
-    const overlaps = (a: Duration, b: Duration): boolean => {
-      if (a === 'full' || b === 'full') return true;
-      return a === b;
-    };
-
-    expect(overlaps('full', 'morning')).toBe(true);
+    expect(BookingService.overlaps('full', 'morning')).toBe(true);
   });
 
   it('full day overlaps with afternoon', () => {
-    const overlaps = (a: Duration, b: Duration): boolean => {
-      if (a === 'full' || b === 'full') return true;
-      return a === b;
-    };
-
-    expect(overlaps('full', 'afternoon')).toBe(true);
+    expect(BookingService.overlaps('full', 'afternoon')).toBe(true);
   });
 
   it('morning does not overlap with afternoon', () => {
-    const overlaps = (a: Duration, b: Duration): boolean => {
-      if (a === 'full' || b === 'full') return true;
-      return a === b;
-    };
-
-    expect(overlaps('morning', 'afternoon')).toBe(false);
+    expect(BookingService.overlaps('morning', 'afternoon')).toBe(false);
   });
 
   it('morning overlaps with morning', () => {
-    const overlaps = (a: Duration, b: Duration): boolean => {
-      if (a === 'full' || b === 'full') return true;
-      return a === b;
-    };
-
-    expect(overlaps('morning', 'morning')).toBe(true);
+    expect(BookingService.overlaps('morning', 'morning')).toBe(true);
   });
 });
 

@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
-    window.location.href = '/park-it-easy-office/';
+    window.location.href = import.meta.env.BASE_URL;
   };
 
   render() {

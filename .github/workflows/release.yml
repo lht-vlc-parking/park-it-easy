@@ -1,4 +1,4 @@
-name: Release with SLSA v3, SBOM & Signatures
+name: Release
 
 on:
   push:
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and Generate Artifacts
+    name: Build & Generate Artifacts
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -54,19 +54,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run linter
+      - name: Lint
         run: pnpm run lint
 
-      - name: Run tests
+      - name: Unit tests
         run: pnpm test -- --run
 
-      - name: Build application
+      - name: Build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: pnpm run build
 
-      - name: Create release archive
+      - name: Create release archives
         run: |
           cd dist
           tar -czvf ../park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz .
@@ -82,7 +82,6 @@ jobs:
       - name: Generate SBOM (SPDX)
         run: |
           npx @cyclonedx/cyclonedx-npm --output-format JSON --output-file sbom-cyclonedx.json || true
-          # Also create SPDX format
           cat > sbom-spdx.json << 'EOF'
           {
             "spdxVersion": "SPDX-2.3",
@@ -100,12 +99,9 @@ jobs:
       - name: Generate file hashes
         id: hash
         run: |
-          # Generate SHA256 hashes for all release artifacts
           sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.tar.gz > checksums.txt
           sha256sum park-it-easy-office-${{ steps.version.outputs.version }}.zip >> checksums.txt
           sha256sum sbom.json >> checksums.txt
-
-          # Output hashes for SLSA provenance
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> $GITHUB_OUTPUT
 
       - name: Upload build artifacts
@@ -121,9 +117,8 @@ jobs:
             checksums.txt
           retention-days: 5
 
-  # SLSA Provenance Generation (Level 3)
   provenance:
-    name: Generate SLSA Provenance
+    name: SLSA Provenance
     needs: [build]
     permissions:
       actions: read
@@ -135,9 +130,8 @@ jobs:
       upload-assets: true
       compile-generator: true
 
-  # Artifact Attestation (Sigstore)
   attest:
-    name: Generate Attestations
+    name: Attestations
     needs: [build]
     runs-on: ubuntu-latest
     outputs:
@@ -169,7 +163,6 @@ jobs:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.zip'
 
       - name: Attest SBOM
-        id: attest-sbom
         uses: actions/attest-sbom@v3
         with:
           subject-path: 'park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz'
@@ -178,32 +171,17 @@ jobs:
       - name: Extract Rekor Log Index
         id: extract-rekor
         run: |
-          # Install jq if not available
-          which jq || sudo apt-get update && sudo apt-get install -y jq
-
-          # Extract Rekor log index from the bundle files
           if [ -f "${{ steps.attest-tar.outputs.bundle-path }}" ]; then
-            LOG_INDEX_TAR=$(cat "${{ steps.attest-tar.outputs.bundle-path }}" | jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty')
+            LOG_INDEX_TAR=$(jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty' "${{ steps.attest-tar.outputs.bundle-path }}")
             echo "log-index-tar=$LOG_INDEX_TAR" >> $GITHUB_OUTPUT
-            echo "✅ Attestation signature uploaded to Rekor transparency log (tar.gz)"
-            echo "   https://search.sigstore.dev?logIndex=$LOG_INDEX_TAR"
           fi
-
           if [ -f "${{ steps.attest-zip.outputs.bundle-path }}" ]; then
-            LOG_INDEX_ZIP=$(cat "${{ steps.attest-zip.outputs.bundle-path }}" | jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty')
+            LOG_INDEX_ZIP=$(jq -r '.verificationMaterial.tlogEntries[0].logIndex // empty' "${{ steps.attest-zip.outputs.bundle-path }}")
             echo "log-index-zip=$LOG_INDEX_ZIP" >> $GITHUB_OUTPUT
-            echo "✅ Attestation signature uploaded to Rekor transparency log (zip)"
-            echo "   https://search.sigstore.dev?logIndex=$LOG_INDEX_ZIP"
           fi
 
-          echo ""
-          echo "📄 Attestation URLs:"
-          echo "   TAR: ${{ steps.attest-tar.outputs.attestation-url }}"
-          echo "   ZIP: ${{ steps.attest-zip.outputs.attestation-url }}"
-
-  # Create GitHub Release
   release:
-    name: Create GitHub Release
+    name: GitHub Release
     needs: [build, provenance, attest]
     runs-on: ubuntu-latest
     permissions:
@@ -221,135 +199,58 @@ jobs:
           name: release-artifacts
 
       - name: Generate Changelog
-        id: changelog
         run: |
-          # Get previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-          if [ -n "$PREV_TAG" ]; then
-            echo "## 📋 Changes since $PREV_TAG" > CHANGELOG.md
-            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
-          else
-            echo "## 🎉 Initial Release" > CHANGELOG.md
-            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
-          fi
-
-          # Get artifact hashes for display
-          TAR_HASH=$(sha256sum park-it-easy-office-${{ needs.build.outputs.version }}.tar.gz | cut -d' ' -f1)
-          ZIP_HASH=$(sha256sum park-it-easy-office-${{ needs.build.outputs.version }}.zip | cut -d' ' -f1)
-          SBOM_HASH=$(sha256sum sbom.json | cut -d' ' -f1)
           VERSION="${{ needs.build.outputs.version }}"
           REPO="${{ github.repository }}"
 
-          # Extract attestation information
+          if [ -n "$PREV_TAG" ]; then
+            echo "## Changes since $PREV_TAG" > CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
+          else
+            echo "## Initial Release" > CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+          fi
+
+          TAR_HASH=$(sha256sum park-it-easy-office-${VERSION}.tar.gz | cut -d' ' -f1)
+          ZIP_HASH=$(sha256sum park-it-easy-office-${VERSION}.zip | cut -d' ' -f1)
+          SBOM_HASH=$(sha256sum sbom.json | cut -d' ' -f1)
           ATTESTATION_TAR="${{ needs.attest.outputs.attestation-url-tar }}"
           ATTESTATION_ZIP="${{ needs.attest.outputs.attestation-url-zip }}"
           REKOR_INDEX_TAR="${{ needs.attest.outputs.rekor-log-index-tar }}"
           REKOR_INDEX_ZIP="${{ needs.attest.outputs.rekor-log-index-zip }}"
 
-          # Build attestation section
           {
             echo ""
             echo "---"
             echo ""
-            echo "## 🔐 Attestation & Transparency"
-            echo ""
-            echo "### ✅ Attestation Signatures"
-            echo ""
-            echo "Cryptographic attestations have been generated and uploaded to the Rekor transparency log:"
+            echo "## Attestation & Transparency"
             echo ""
             if [ -n "$ATTESTATION_TAR" ]; then
-              echo "**tar.gz attestation:**"
-              if [ -n "$REKOR_INDEX_TAR" ]; then
-                echo "- 🔍 **Attestation signature uploaded to Rekor transparency log**"
-                echo "  https://search.sigstore.dev?logIndex=${REKOR_INDEX_TAR}"
-              fi
-              echo "- 📄 Attestation uploaded to repository: ${ATTESTATION_TAR}"
-              echo ""
+              echo "**tar.gz:** [attestation](${ATTESTATION_TAR})"
+              [ -n "$REKOR_INDEX_TAR" ] && echo " | [Rekor log](https://search.sigstore.dev?logIndex=${REKOR_INDEX_TAR})"
             fi
             if [ -n "$ATTESTATION_ZIP" ]; then
-              echo "**zip attestation:**"
-              if [ -n "$REKOR_INDEX_ZIP" ]; then
-                echo "- 🔍 **Attestation signature uploaded to Rekor transparency log**"
-                echo "  https://search.sigstore.dev?logIndex=${REKOR_INDEX_ZIP}"
-              fi
-              echo "- 📄 Attestation uploaded to repository: ${ATTESTATION_ZIP}"
-              echo ""
+              echo "**zip:** [attestation](${ATTESTATION_ZIP})"
+              [ -n "$REKOR_INDEX_ZIP" ] && echo " | [Rekor log](https://search.sigstore.dev?logIndex=${REKOR_INDEX_ZIP})"
             fi
-            echo "### 🔍 How to Verify"
             echo ""
-            echo "\`\`\`bash"
-            echo "# Verify attestations using GitHub CLI"
+            echo "### Verify"
+            echo ""
+            echo '```bash'
             echo "gh attestation verify park-it-easy-office-${VERSION}.tar.gz -R ${REPO}"
-            echo "gh attestation verify park-it-easy-office-${VERSION}.zip -R ${REPO}"
-            echo "\`\`\`"
-            echo ""
-          } >> CHANGELOG.md
-
-          # Build SLSA compliance section
-          {
-            echo ""
-            echo "---"
-            echo ""
-            echo "## 🛡️ SLSA Level 3 Compliance"
-            echo ""
-            echo "<table>"
-            echo "<tr>"
-            echo "<td>"
-            echo ""
-            echo "### ✅ Supply Chain Security"
-            echo ""
-            echo "| Requirement | Status | Details |"
-            echo "|:------------|:------:|:--------|"
-            echo "| 🏗️ **Build as Code** | ✅ | Workflow defined in version control |"
-            echo "| 🔐 **Verified Builder** | ✅ | Official SLSA GitHub Generator v2.1.0 |"
-            echo "| 📦 **Hermetic Build** | ✅ | Source pinned to specific commit |"
-            echo "| 🔒 **Isolated Build** | ✅ | Ephemeral GitHub-hosted runner |"
-            echo "| ⚙️ **Parameterless** | ✅ | No user-defined build parameters |"
-            echo "| ✍️ **Signed Provenance** | ✅ | Cryptographically signed attestation |"
-            echo "| 🛡️ **Non-falsifiable** | ✅ | Generated by trusted third-party |"
-            echo ""
-            echo "</td>"
-            echo "</tr>"
-            echo "</table>"
-            echo ""
-            echo "### 📜 Security Artifacts"
-            echo ""
-            echo "| Artifact | Description | Verification |"
-            echo "|:---------|:------------|:-------------|"
-            echo "| 📄 \`multiple.intoto.jsonl\` | SLSA Provenance | \`gh attestation verify <file> --repo ${REPO}\` |"
-            echo "| 📋 \`sbom.json\` | CycloneDX SBOM | Software Bill of Materials (50+ components) |"
-            echo "| 📋 \`sbom-spdx.json\` | SPDX SBOM | Alternative SBOM format |"
-            echo "| 🔑 \`checksums.txt\` | SHA256 Hashes | \`shasum -a 256 -c checksums.txt\` |"
-            echo ""
-            echo "### 🔍 Verify This Release"
-            echo ""
-            echo "\`\`\`bash"
-            echo "# Download and verify with GitHub CLI"
-            echo "gh release download ${VERSION} --repo ${REPO}"
-            echo "gh attestation verify park-it-easy-office-${VERSION}.tar.gz --repo ${REPO}"
-            echo "\`\`\`"
+            echo '```'
             echo ""
             echo "<details>"
-            echo "<summary>📊 <b>SHA256 Checksums</b></summary>"
+            echo "<summary>SHA256 Checksums</summary>"
             echo ""
-            echo "\`\`\`"
+            echo '```'
             echo "${TAR_HASH}  park-it-easy-office-${VERSION}.tar.gz"
             echo "${ZIP_HASH}  park-it-easy-office-${VERSION}.zip"
             echo "${SBOM_HASH}  sbom.json"
-            echo "\`\`\`"
+            echo '```'
             echo ""
             echo "</details>"
-            echo ""
-            echo "---"
-            echo ""
-            echo "<div align=\"center\">"
-            echo ""
-            echo "🔒 **This release is protected by [SLSA Level 3](https://slsa.dev/spec/v1.0/levels)** 🔒"
-            echo ""
-            echo "*Provenance generated by [slsa-framework/slsa-github-generator](https://github.com/slsa-framework/slsa-github-generator)*"
-            echo ""
-            echo "</div>"
           } >> CHANGELOG.md
 
       - name: Create Release
@@ -371,7 +272,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Deploy to GitHub Pages (optional, on release)
   deploy:
     name: Deploy to GitHub Pages
     needs: [build, release]

@@ -22,19 +22,7 @@ import {
 } from 'recharts';
 import { Trophy, Medal, Users, Car, Bike, Crown, Star } from 'lucide-react';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface Booking {
-  id: string;
-  date: string;
-  duration: 'morning' | 'afternoon' | 'full';
-  vehicle_type: 'car' | 'motorcycle';
-  user_name: string;
-  spot_number: number;
-  created_at?: string;
-}
+import type { Booking } from '@/types/booking';
 
 interface TeamTabProps {
   bookings: Booking[];
