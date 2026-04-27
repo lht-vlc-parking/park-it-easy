@@ -1,0 +1,148 @@
+name: Weekly Dependabot Auto-Merge & Patch Release
+
+# Runs every Monday at 09:00 UTC, after Dependabot has had time to open PRs.
+# For each open Dependabot PR whose checks are fully green (mergeStateStatus=CLEAN):
+#   1. Auto-approves the PR
+#   2. Squash-merges it into the default branch
+# If at least one PR was merged, it then:
+#   3. Bumps the patch version in package.json
+#   4. Triggers the release pipeline (release.yml) via workflow_dispatch
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Every Monday at 09:00 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  merge-and-release:
+    name: Merge Dependabot PRs & Create Patch Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure git credentials
+        run: |
+          git remote set-url origin \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Find and merge passing Dependabot PRs
+        id: merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          MERGED=0
+
+          PRS=$(gh pr list \
+            --author "app/dependabot" \
+            --state open \
+            --json number,title,mergeStateStatus \
+            --limit 100)
+
+          PR_COUNT=$(echo "$PRS" | jq length)
+          echo "Found ${PR_COUNT} open Dependabot PR(s)."
+
+          if [ "$PR_COUNT" -eq 0 ]; then
+            echo "No open Dependabot PRs — nothing to do."
+            echo "merged_count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          while IFS= read -r PR_JSON; do
+            PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+            TITLE=$(echo "$PR_JSON" | jq -r '.title')
+            MERGE_STATE=$(echo "$PR_JSON" | jq -r '.mergeStateStatus')
+
+            echo "PR #${PR_NUMBER} '${TITLE}' — mergeStateStatus=${MERGE_STATE}"
+
+            if [ "$MERGE_STATE" = "CLEAN" ]; then
+              echo "  → Approving..."
+              gh pr review "$PR_NUMBER" \
+                --approve \
+                --body "Auto-approved by weekly dependabot merge workflow" || true
+
+              echo "  → Merging..."
+              if gh pr merge "$PR_NUMBER" --squash --delete-branch; then
+                MERGED=$((MERGED + 1))
+                echo "  ✓ Merged PR #${PR_NUMBER}"
+              else
+                echo "  ✗ Merge failed for PR #${PR_NUMBER} — skipping"
+              fi
+            else
+              echo "  → Skipped (checks not passing or merge is blocked)"
+            fi
+          done < <(echo "$PRS" | jq -c '.[]')
+
+          echo "merged_count=${MERGED}" >> "$GITHUB_OUTPUT"
+          echo "Total Dependabot PRs merged: ${MERGED}"
+
+      - name: Pull latest changes
+        if: steps.merge.outputs.merged_count > 0
+        run: git pull origin "${{ github.ref_name }}"
+
+      - name: Compute new patch version
+        id: version
+        if: steps.merge.outputs.merged_count > 0
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          IFS='.' read -ra V <<< "$CURRENT"
+          NEW_VERSION="${V[0]}.${V[1]}.$((V[2] + 1))"
+          echo "new_version=v${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Bumping ${CURRENT} → ${NEW_VERSION}"
+
+      - name: Bump version in package.json and push
+        if: steps.merge.outputs.merged_count > 0
+        run: |
+          VER="${{ steps.version.outputs.new_version }}"
+          VER_NO_V="${VER#v}"
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${VER_NO_V}';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          git add package.json
+          git commit -m "chore: bump version to ${VER_NO_V} [skip ci]"
+          git push origin "HEAD:${{ github.ref_name }}" || \
+            echo "Warning: Could not push version bump (branch may be protected). Release will still be triggered."
+
+      - name: Trigger release pipeline
+        if: steps.merge.outputs.merged_count > 0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
+          echo "Triggering release pipeline for ${VERSION}..."
+          gh workflow run release.yml \
+            --ref "${{ github.ref_name }}" \
+            -f "version=${VERSION}"
+          echo "Release pipeline successfully dispatched for ${VERSION}."
+
+      - name: Summary
+        if: always()
+        run: |
+          MERGED="${{ steps.merge.outputs.merged_count }}"
+          if [ "${MERGED:-0}" -gt 0 ]; then
+            echo "## ✅ Weekly Dependabot merge complete" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **PRs merged:** ${MERGED}" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **New version:** ${{ steps.version.outputs.new_version }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Release pipeline:** triggered" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ℹ️ No Dependabot PRs were merged this week" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Either no PRs were open, or their checks had not yet passed." >> "$GITHUB_STEP_SUMMARY"
+          fi
