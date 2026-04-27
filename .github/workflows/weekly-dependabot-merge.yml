@@ -90,12 +90,12 @@ jobs:
           echo "Total Dependabot PRs merged: ${MERGED}"
 
       - name: Pull latest changes
-        if: steps.merge.outputs.merged_count > 0
+        if: steps.merge.outputs.merged_count != '0'
         run: git pull origin "${{ github.ref_name }}"
 
       - name: Compute new patch version
         id: version
-        if: steps.merge.outputs.merged_count > 0
+        if: steps.merge.outputs.merged_count != '0'
         run: |
           CURRENT=$(node -p "require('./package.json').version")
           IFS='.' read -ra V <<< "$CURRENT"
@@ -104,7 +104,7 @@ jobs:
           echo "Bumping ${CURRENT} → ${NEW_VERSION}"
 
       - name: Bump version in package.json and push
-        if: steps.merge.outputs.merged_count > 0
+        if: steps.merge.outputs.merged_count != '0'
         run: |
           VER="${{ steps.version.outputs.new_version }}"
           VER_NO_V="${VER#v}"
@@ -120,7 +120,7 @@ jobs:
             echo "Warning: Could not push version bump (branch may be protected). Release will still be triggered."
 
       - name: Trigger release pipeline
-        if: steps.merge.outputs.merged_count > 0
+        if: steps.merge.outputs.merged_count != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
