@@ -1,0 +1,25 @@
+name: Trigger Weekly Dependabot Merge (Test)
+
+on:
+  push:
+    branches:
+      - 'copilot/trigger-weekly-dependabot-test'
+
+permissions: {}
+
+jobs:
+  dispatch:
+    name: Dispatch weekly-dependabot-merge workflow
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+
+    steps:
+      - name: Trigger weekly-dependabot-merge on main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run weekly-dependabot-merge.yml \
+            --repo "${{ github.repository }}" \
+            --ref main
+          echo "Dispatched weekly-dependabot-merge.yml on main."
