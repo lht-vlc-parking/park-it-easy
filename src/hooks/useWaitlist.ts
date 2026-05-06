@@ -45,6 +45,7 @@ export const useWaitlist = () => {
   }, [user]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch, setState is deferred
     fetchMyWaitlist();
   }, [fetchMyWaitlist]);
 

@@ -37,6 +37,7 @@ export const useBookingAudit = (limit: number = 50) => {
   }, [user, limit]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch, setState is deferred
     fetchAuditHistory();
   }, [fetchAuditHistory]);
 

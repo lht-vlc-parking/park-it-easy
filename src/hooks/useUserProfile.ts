@@ -37,6 +37,7 @@ export const useUserProfile = () => {
 
   useEffect(() => {
     if (!isSupabaseConfigured || !user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guard clause, intentional sync update
       setLoading(false);
       return;
     }
