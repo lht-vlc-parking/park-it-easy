@@ -115,7 +115,7 @@
     "jsdom": "^29.0.1",
     "lint-staged": "^16.2.7",
     "lovable-tagger": "^1.1.10",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.10",
     "prettier": "^3.8.2",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "sharp": "^0.34.5",
