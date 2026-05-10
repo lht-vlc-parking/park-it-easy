@@ -77,6 +77,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright browsers
+        # Install the Chromium build matching the installed @playwright/test
+        # version. The container ships system deps for v1.58.0-noble, but
+        # Dependabot bumps may require a newer browser binary not preinstalled.
+        run: pnpm exec playwright install chromium
+
       - name: Build
         run: pnpm run build
         env:
