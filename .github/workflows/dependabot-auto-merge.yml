@@ -26,23 +26,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wait for CI checks to succeed
-        uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          check-name: 'lint-test-build'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 30
-          allowed-conclusions: success
-
-      - name: Wait for E2E tests to succeed
-        uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          check-name: 'e2e'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 30
-          allowed-conclusions: success
+      # No wait-on-check-action needed: GitHub's --auto merge will hold the PR
+      # until all required status checks (configured in branch protection)
+      # succeed. This makes the workflow finish in seconds instead of minutes.
 
       - name: Approve PR
         run: gh pr review --approve "$PR_URL"
