@@ -31,6 +31,11 @@ jobs:
       # succeed. This makes the workflow finish in seconds instead of minutes.
 
       - name: Approve PR
+        # Requires "Allow GitHub Actions to create and approve pull requests"
+        # under Settings → Actions → General → Workflow permissions.
+        # Non-fatal: if branch protection doesn't require approvals, the
+        # merge step below can still proceed.
+        continue-on-error: true
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
