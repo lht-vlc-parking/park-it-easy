@@ -127,13 +127,14 @@ export const BookingDialogWithValidation = ({
                   {date ? format(date, 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="glass-card w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={date}
                   onSelect={setDate}
                   disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   autoFocus
+                  weekStartsOn={1}
                   className="pointer-events-auto"
                 />
               </PopoverContent>
