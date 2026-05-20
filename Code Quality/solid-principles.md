@@ -1,6 +1,5 @@
 Evaluate this application and its adherence to SOLID principles:
 
-
 Check each principle:
 
 1. SINGLE RESPONSIBILITY (SRP)

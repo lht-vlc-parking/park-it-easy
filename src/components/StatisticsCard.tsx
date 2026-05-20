@@ -50,9 +50,9 @@ export const StatisticsCard = ({ bookings }: StatisticsCardProps) => {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map(stat => (
-        <Card key={stat.title} className="overflow-hidden transition-smooth hover:shadow-lg">
+        <Card key={stat.title} className="transition-smooth overflow-hidden hover:shadow-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               {stat.title}
             </CardTitle>
           </CardHeader>

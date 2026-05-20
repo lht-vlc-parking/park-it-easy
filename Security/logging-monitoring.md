@@ -3,6 +3,7 @@
 Review logging and monitoring implementation in this application.
 
 Verify:
+
 1. Sensitive data not logged
    - Passwords, tokens, PII
    - Credit card numbers

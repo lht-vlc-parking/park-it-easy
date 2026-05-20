@@ -68,7 +68,9 @@ describe('Statistics Functionality', () => {
       expect(supabase.from).toHaveBeenCalledWith('bookings');
       expect(selectMock).toHaveBeenCalledWith('*');
       // Should NOT have .eq('user_id', ...) call
-      expect(selectMock).not.toHaveBeenCalledWith(expect.objectContaining({ user_id: expect.anything() }));
+      expect(selectMock).not.toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: expect.anything() })
+      );
     });
   });
 
@@ -93,7 +95,9 @@ describe('Statistics Functionality', () => {
       ];
 
       const carCount = bookings.filter((b: MockBooking) => b.vehicle_type === 'car').length;
-      const motorcycleCount = bookings.filter((b: MockBooking) => b.vehicle_type === 'motorcycle').length;
+      const motorcycleCount = bookings.filter(
+        (b: MockBooking) => b.vehicle_type === 'motorcycle'
+      ).length;
 
       expect(carCount).toBe(2);
       expect(motorcycleCount).toBe(2);
@@ -166,7 +170,9 @@ describe('Statistics Functionality', () => {
 
       const total = bookings.length;
       const carCount = bookings.filter((b: MockBooking) => b.vehicle_type === 'car').length;
-      const motorcycleCount = bookings.filter((b: MockBooking) => b.vehicle_type === 'motorcycle').length;
+      const motorcycleCount = bookings.filter(
+        (b: MockBooking) => b.vehicle_type === 'motorcycle'
+      ).length;
 
       expect(total).toBe(0);
       expect(carCount).toBe(0);
@@ -186,9 +192,7 @@ describe('Statistics Functionality', () => {
 
   describe('Occupancy Calculation (2 spots per day)', () => {
     it('should calculate 50% occupancy with 1 spot booked', () => {
-      const dayBookings = [
-        { id: '1', spot_number: 84, date: '2025-11-08' },
-      ];
+      const dayBookings = [{ id: '1', spot_number: 84, date: '2025-11-08' }];
 
       const uniqueSpots = new Set(dayBookings.map((b: MockBooking) => b.spot_number));
       const maxSpots = 2;
@@ -266,10 +270,12 @@ describe('Statistics Functionality', () => {
       ];
 
       const uniqueUsers = [...new Set(bookings.map(b => b.user_name))];
-      const userCounts = uniqueUsers.map(userName => ({
-        name: userName,
-        count: bookings.filter(b => b.user_name === userName).length,
-      })).sort((a, b) => b.count - a.count);
+      const userCounts = uniqueUsers
+        .map(userName => ({
+          name: userName,
+          count: bookings.filter(b => b.user_name === userName).length,
+        }))
+        .sort((a, b) => b.count - a.count);
 
       expect(userCounts[0].name).toBe('Alice');
       expect(userCounts[0].count).toBe(3);
@@ -293,9 +299,7 @@ describe('Statistics Functionality', () => {
     });
 
     it('should handle spots with no bookings', () => {
-      const bookings: MockBooking[] = [
-        { id: '1', spot_number: 84 },
-      ];
+      const bookings: MockBooking[] = [{ id: '1', spot_number: 84 }];
 
       const spot84Usage = bookings.filter((b: MockBooking) => b.spot_number === 84).length;
       const spot85Usage = bookings.filter((b: MockBooking) => b.spot_number === 85).length;
@@ -317,25 +321,25 @@ describe('Statistics Functionality', () => {
         { id: '5', date: '2025-11-04' },
       ];
 
-      const weeklyGrowth = lastWeekBookings.length > 0
-        ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
-        : 0;
+      const weeklyGrowth =
+        lastWeekBookings.length > 0
+          ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
+          : 0;
 
       expect(weeklyGrowth).toBe(50); // 3 vs 2 = 50% growth
     });
 
     it('should calculate negative growth correctly', () => {
-      const thisWeekBookings = [
-        { id: '1', date: '2025-11-10' },
-      ];
+      const thisWeekBookings = [{ id: '1', date: '2025-11-10' }];
       const lastWeekBookings = [
         { id: '4', date: '2025-11-03' },
         { id: '5', date: '2025-11-04' },
       ];
 
-      const weeklyGrowth = lastWeekBookings.length > 0
-        ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
-        : 0;
+      const weeklyGrowth =
+        lastWeekBookings.length > 0
+          ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
+          : 0;
 
       expect(weeklyGrowth).toBe(-50); // 1 vs 2 = -50% decline
     });
@@ -350,9 +354,10 @@ describe('Statistics Functionality', () => {
         { id: '5', date: '2025-11-04' },
       ];
 
-      const weeklyGrowth = lastWeekBookings.length > 0
-        ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
-        : 0;
+      const weeklyGrowth =
+        lastWeekBookings.length > 0
+          ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
+          : 0;
 
       expect(weeklyGrowth).toBe(0); // 2 vs 2 = 0% growth
     });
@@ -370,9 +375,8 @@ describe('Statistics Functionality', () => {
       ];
 
       const uniqueUsers = [...new Set(bookings.map(b => b.user_name))];
-      const avgBookingsPerUser = uniqueUsers.length > 0
-        ? (bookings.length / uniqueUsers.length).toFixed(1)
-        : '0';
+      const avgBookingsPerUser =
+        uniqueUsers.length > 0 ? (bookings.length / uniqueUsers.length).toFixed(1) : '0';
 
       expect(avgBookingsPerUser).toBe('2.0'); // 6 bookings / 3 users = 2.0
     });
@@ -395,7 +399,15 @@ describe('Statistics Functionality', () => {
       });
 
       const peakDayIndex = dayOfWeekCounts.indexOf(Math.max(...dayOfWeekCounts));
-      const peakDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][peakDayIndex];
+      const peakDay = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ][peakDayIndex];
 
       expect(peakDay).toBe('Tuesday');
       expect(dayOfWeekCounts[2]).toBe(3); // Tuesday (index 2) has 3 bookings

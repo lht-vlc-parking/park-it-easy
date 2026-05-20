@@ -1,8 +1,8 @@
 ---
 name: Bug Report
 description: Report a bug or unexpected behavior
-title: "[BUG] "
-labels: ["bug", "triage"]
+title: '[BUG] '
+labels: ['bug', 'triage']
 assignees: []
 body:
   - type: markdown
@@ -15,7 +15,7 @@ body:
     attributes:
       label: Describe the bug
       description: A clear and concise description of what the bug is.
-      placeholder: "When I click the book button, nothing happens..."
+      placeholder: 'When I click the book button, nothing happens...'
     validations:
       required: true
 
@@ -37,7 +37,7 @@ body:
     attributes:
       label: Expected behavior
       description: A clear and concise description of what you expected to happen.
-      placeholder: "The booking should be confirmed and I should see a success message."
+      placeholder: 'The booking should be confirmed and I should see a success message.'
     validations:
       required: true
 
@@ -46,21 +46,21 @@ body:
     attributes:
       label: Screenshots
       description: If applicable, add screenshots to help explain your problem.
-      placeholder: "Drag and drop images here or paste links."
+      placeholder: 'Drag and drop images here or paste links.'
 
   - type: input
     id: browser
     attributes:
       label: Browser
       description: What browser are you using?
-      placeholder: "Chrome 119.0.0.0"
+      placeholder: 'Chrome 119.0.0.0'
 
   - type: input
     id: os
     attributes:
       label: Operating System
       description: What operating system are you using?
-      placeholder: "Windows 11, macOS 14.1, Ubuntu 22.04"
+      placeholder: 'Windows 11, macOS 14.1, Ubuntu 22.04'
 
   - type: dropdown
     id: environment
@@ -79,7 +79,7 @@ body:
     attributes:
       label: Additional context
       description: Add any other context about the problem here.
-      placeholder: "Any additional information that might be helpful..."
+      placeholder: 'Any additional information that might be helpful...'
 
   - type: checkboxes
     id: checklist

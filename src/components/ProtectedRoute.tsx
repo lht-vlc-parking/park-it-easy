@@ -16,7 +16,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         role="status"
         aria-label="Loading"
       >
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+        <div className="border-primary h-12 w-12 animate-spin rounded-full border-b-2"></div>
       </div>
     );
   }

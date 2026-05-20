@@ -40,11 +40,11 @@ const Statistics = () => {
   }, [bookings, uniqueUsers, fairness]);
 
   return (
-    <div className="mesh-gradient min-h-screen bg-background">
+    <div className="mesh-gradient bg-background min-h-screen">
       {/* Hero Section */}
       <div className="gradient-hero relative overflow-hidden px-4 py-6 text-white shadow-lg sm:py-8 md:py-10">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-        <div className="container relative z-10 mx-auto max-w-6xl">
+        <div className="relative z-10 container mx-auto max-w-6xl">
           <div className="mb-3 flex items-center justify-between sm:mb-4">
             <Button
               variant="ghost"
@@ -71,23 +71,23 @@ const Statistics = () => {
       <div className="container mx-auto max-w-6xl px-4 py-4 sm:py-6 md:py-8">
         {loading ? (
           <div className="animate-fade-in py-12 text-center">
-            <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
+            <div className="border-primary mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2" />
             <p className="text-muted-foreground">Loading statistics...</p>
           </div>
         ) : (
           <Tabs defaultValue="overview" className="animate-fade-in-up">
             {/* Tab Navigation - scrollable on mobile */}
-            <TabsList className="mb-6 grid h-auto w-full grid-cols-4 gap-1 rounded-xl bg-muted/60 p-1 backdrop-blur-sm sm:gap-2 sm:p-1.5">
+            <TabsList className="bg-muted/60 mb-6 grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1 backdrop-blur-sm sm:gap-2 sm:p-1.5">
               <TabsTrigger
                 value="overview"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
+                className="data-[state=active]:bg-background flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
               >
                 <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Overview</span>
               </TabsTrigger>
               <TabsTrigger
                 value="profile"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
+                className="data-[state=active]:bg-background flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
               >
                 <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">My Profile</span>
@@ -95,14 +95,14 @@ const Statistics = () => {
               </TabsTrigger>
               <TabsTrigger
                 value="team"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
+                className="data-[state=active]:bg-background flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
               >
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Team</span>
               </TabsTrigger>
               <TabsTrigger
                 value="trends"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
+                className="data-[state=active]:bg-background flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all data-[state=active]:shadow-md sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
               >
                 <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Trends</span>

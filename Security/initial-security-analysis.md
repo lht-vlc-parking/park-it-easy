@@ -14,6 +14,7 @@ Analyze the entire project structure and identify:
 8. API rate limiting implementation
 
 Start by examining these core files:
+
 - package.json (for vulnerable dependencies)
 - app.js or server.js (for middleware configuration)
 - All files in routes/

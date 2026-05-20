@@ -26,11 +26,11 @@ describe('Authentication Service', () => {
     it('should fail when BASE_URL is undefined', async () => {
       // This test documents the current bug
       const email = 'test@lht.dlh.de';
-      
+
       // Simulate BASE_URL being undefined
       const baseUrl = import.meta.env.BASE_URL || '/';
-      const redirectUrl = `${window.location.origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, "$1");
-      
+      const redirectUrl = `${window.location.origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, '$1');
+
       // Mock the resetPasswordForEmail call
       vi.mocked(supabase.auth.resetPasswordForEmail).mockResolvedValue({
         data: {},
@@ -54,9 +54,9 @@ describe('Authentication Service', () => {
       const origin = 'http://localhost:8080';
       const baseUrl = '/park-it-easy-office/';
       const expected = `${origin}/park-it-easy-office/auth`;
-      
-      const redirectUrl = `${origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, "$1");
-      
+
+      const redirectUrl = `${origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, '$1');
+
       expect(redirectUrl).toBe(expected);
     });
 
@@ -65,17 +65,17 @@ describe('Authentication Service', () => {
       const origin = 'https://miguel11nines.github.io';
       const baseUrl = '/park-it-easy-office/';
       const expected = `${origin}/park-it-easy-office/auth`;
-      
-      const redirectUrl = `${origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, "$1");
-      
+
+      const redirectUrl = `${origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, '$1');
+
       expect(redirectUrl).toBe(expected);
     });
 
     it('should handle missing BASE_URL gracefully', () => {
       const origin = 'http://localhost:8080';
       const baseUrl = '/'; // Default when BASE_URL is undefined
-      const redirectUrl = `${origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, "$1");
-      
+      const redirectUrl = `${origin}${baseUrl}auth`.replace(/([^:]\/)\/+/g, '$1');
+
       expect(redirectUrl).toBe('http://localhost:8080/auth');
     });
 
@@ -114,11 +114,7 @@ describe('Authentication Service', () => {
 
   describe('Email Validation', () => {
     it('should accept valid LHT email addresses', () => {
-      const validEmails = [
-        'john.doe@lht.dlh.de',
-        'test.user@lht.dlh.de',
-        'admin@lht.dlh.de',
-      ];
+      const validEmails = ['john.doe@lht.dlh.de', 'test.user@lht.dlh.de', 'admin@lht.dlh.de'];
 
       validEmails.forEach(email => {
         expect(email.endsWith('@lht.dlh.de')).toBe(true);
@@ -126,12 +122,7 @@ describe('Authentication Service', () => {
     });
 
     it('should reject invalid email domains', () => {
-      const invalidEmails = [
-        'test@gmail.com',
-        'user@yahoo.com',
-        'admin@lht.com',
-        'test@dlh.de',
-      ];
+      const invalidEmails = ['test@gmail.com', 'user@yahoo.com', 'admin@lht.com', 'test@dlh.de'];
 
       invalidEmails.forEach(email => {
         expect(email.endsWith('@lht.dlh.de')).toBe(false);

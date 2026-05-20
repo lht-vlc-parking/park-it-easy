@@ -17,21 +17,21 @@ function execCommand(command, args = []) {
   return new Promise((resolve, reject) => {
     const process = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: true
+      shell: true,
     });
 
     let stdout = '';
     let stderr = '';
 
-    process.stdout.on('data', (data) => {
+    process.stdout.on('data', data => {
       stdout += data.toString();
     });
 
-    process.stderr.on('data', (data) => {
+    process.stderr.on('data', data => {
       stderr += data.toString();
     });
 
-    process.on('close', (code) => {
+    process.on('close', code => {
       if (code !== 0) {
         reject(new Error(`Command failed with code ${code}: ${stderr}`));
       } else {
@@ -50,13 +50,13 @@ async function fetchDeployments() {
     const output = await execCommand('gh', [
       'api',
       `repos/${REPO_OWNER}/${REPO_NAME}/deployments`,
-      '--paginate'
+      '--paginate',
     ]);
-    
+
     if (!output) {
       return [];
     }
-    
+
     const deployments = JSON.parse(output);
     return deployments;
   } catch (error) {
@@ -78,7 +78,7 @@ async function deleteDeployment(deploymentId) {
       'POST',
       `repos/${REPO_OWNER}/${REPO_NAME}/deployments/${deploymentId}/statuses`,
       '-f',
-      'state=inactive'
+      'state=inactive',
     ]);
 
     // Now delete the deployment
@@ -87,7 +87,7 @@ async function deleteDeployment(deploymentId) {
       'api',
       '-X',
       'DELETE',
-      `repos/${REPO_OWNER}/${REPO_NAME}/deployments/${deploymentId}`
+      `repos/${REPO_OWNER}/${REPO_NAME}/deployments/${deploymentId}`,
     ]);
 
     console.log(`✓ Successfully deleted deployment ${deploymentId}`);
@@ -114,7 +114,7 @@ async function main() {
   try {
     // Fetch all deployments
     const deployments = await fetchDeployments();
-    
+
     if (deployments.length === 0) {
       console.log('No deployments found.');
       return;
@@ -131,7 +131,7 @@ async function main() {
       console.log(`\n[${i + 1}/${deployments.length}] Processing deployment ID: ${deployment.id}`);
       console.log(`  Environment: ${deployment.environment}`);
       console.log(`  Created: ${deployment.created_at}`);
-      
+
       const success = await deleteDeployment(deployment.id);
       if (success) {
         successCount++;
@@ -149,7 +149,6 @@ async function main() {
     console.log(`Total deployments: ${deployments.length}`);
     console.log(`Successfully deleted: ${successCount}`);
     console.log(`Failed: ${failCount}`);
-
   } catch (error) {
     console.error('\nFatal error:', error.message);
     process.exit(1);

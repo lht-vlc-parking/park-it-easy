@@ -3,6 +3,7 @@
 Review all input validation across the application.
 
 Check for:
+
 1. SQL Injection vulnerabilities
    - Raw SQL queries without parameterization
    - Dynamic query building

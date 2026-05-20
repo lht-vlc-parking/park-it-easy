@@ -8,7 +8,7 @@ Identify and evaluate:
    - Builder pattern (complex object construction)
    - Are they implemented correctly?
 
-2. STRUCTURAL PATTERNS  
+2. STRUCTURAL PATTERNS
    - Adapter pattern (third-party integrations)
    - Facade pattern (simplified interfaces)
    - Decorator pattern (middleware)
@@ -27,6 +27,7 @@ Identify and evaluate:
    - Domain model pattern
 
 For each pattern found:
+
 - Is it appropriate for the use case?
 - Is it implemented correctly?
 - Could a simpler solution work?

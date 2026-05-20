@@ -1,8 +1,10 @@
 # Session and Cookie Security
-Analyze this project's source code. 
+
+Analyze this project's source code.
 Focus on session management and cookie security.
 
 Verify:
+
 1. Session configuration
    - Secure flag (HTTPS only)
    - HttpOnly flag (no JS access)

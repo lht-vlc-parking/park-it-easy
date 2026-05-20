@@ -201,24 +201,24 @@ export default function Auth() {
   return (
     <div className="mesh-gradient relative flex min-h-screen items-center justify-center p-4">
       {/* Decorative elements */}
-      <div className="absolute left-0 top-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl" />
-      <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full bg-accent/20 blur-3xl" />
+      <div className="bg-primary/20 absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" />
+      <div className="bg-accent/20 absolute right-0 bottom-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full blur-3xl" />
 
       {/* Theme toggle */}
-      <div className="absolute right-4 top-4">
+      <div className="absolute top-4 right-4">
         <ThemeToggle variant="minimal" />
       </div>
 
       <Card className="glass-card animate-fade-in-up relative w-full max-w-md overflow-hidden border-2 shadow-2xl">
         {/* Card decorative gradient */}
-        <div className="gradient-primary absolute right-0 top-0 h-32 w-32 opacity-10 blur-2xl" />
+        <div className="gradient-primary absolute top-0 right-0 h-32 w-32 opacity-10 blur-2xl" />
 
         <CardHeader className="relative space-y-4 text-center">
-          <div className="gradient-primary mx-auto flex h-16 w-16 animate-scale-in items-center justify-center rounded-2xl shadow-lg shadow-primary/30">
+          <div className="gradient-primary animate-scale-in shadow-primary/30 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg">
             <Car className="h-8 w-8 text-white" />
           </div>
           <div>
-            <CardTitle className="bg-gradient-to-r from-primary to-accent bg-clip-text text-3xl font-bold text-transparent">
+            <CardTitle className="from-primary to-accent bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent">
               Park It Easy
             </CardTitle>
             <CardDescription className="mt-2 text-base">
@@ -238,7 +238,7 @@ export default function Auth() {
             </Alert>
           ) : (
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid h-12 w-full grid-cols-3 bg-muted/50 p-1">
+              <TabsList className="bg-muted/50 grid h-12 w-full grid-cols-3 p-1">
                 <TabsTrigger
                   value="login"
                   className="data-[state=active]:gradient-primary transition-all data-[state=active]:text-white data-[state=active]:shadow-md"
@@ -266,7 +266,7 @@ export default function Auth() {
                       Email
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         id="login-email"
                         type="email"
@@ -275,7 +275,7 @@ export default function Auth() {
                         onChange={e => setLoginEmail(e.target.value)}
                         required
                         disabled={isLoading}
-                        className="h-12 border-2 pl-10 transition-colors focus:border-primary"
+                        className="focus:border-primary h-12 border-2 pl-10 transition-colors"
                       />
                     </div>
                   </div>
@@ -284,7 +284,7 @@ export default function Auth() {
                       Password
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Lock className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         id="login-password"
                         type="password"
@@ -293,13 +293,13 @@ export default function Auth() {
                         onChange={e => setLoginPassword(e.target.value)}
                         required
                         disabled={isLoading}
-                        className="h-12 border-2 pl-10 transition-colors focus:border-primary"
+                        className="focus:border-primary h-12 border-2 pl-10 transition-colors"
                       />
                     </div>
                   </div>
                   <Button
                     type="submit"
-                    className="gradient-primary h-12 w-full font-semibold text-white shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] hover:shadow-primary/50"
+                    className="gradient-primary shadow-primary/30 hover:shadow-primary/50 h-12 w-full font-semibold text-white shadow-lg transition-all hover:scale-[1.02]"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -321,7 +321,7 @@ export default function Auth() {
                       Full Name
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <User className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         id="signup-name"
                         type="text"
@@ -330,7 +330,7 @@ export default function Auth() {
                         onChange={e => setSignupName(e.target.value)}
                         required
                         disabled={isLoading}
-                        className="h-12 border-2 pl-10 transition-colors focus:border-primary"
+                        className="focus:border-primary h-12 border-2 pl-10 transition-colors"
                       />
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export default function Auth() {
                       Email
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         id="signup-email"
                         type="email"
@@ -348,11 +348,11 @@ export default function Auth() {
                         onChange={e => setSignupEmail(e.target.value)}
                         required
                         disabled={isLoading}
-                        className="h-12 border-2 pl-10 transition-colors focus:border-primary"
+                        className="focus:border-primary h-12 border-2 pl-10 transition-colors"
                       />
                     </div>
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="h-1.5 w-1.5 rounded-full bg-info"></span>
+                    <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <span className="bg-info h-1.5 w-1.5 rounded-full"></span>
                       Only @lht.dlh.de email addresses are allowed
                     </p>
                   </div>
@@ -361,7 +361,7 @@ export default function Auth() {
                       Password
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Lock className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         id="signup-password"
                         type="password"
@@ -371,13 +371,13 @@ export default function Auth() {
                         required
                         disabled={isLoading}
                         minLength={12}
-                        className="h-12 border-2 pl-10 transition-colors focus:border-primary"
+                        className="focus:border-primary h-12 border-2 pl-10 transition-colors"
                       />
                     </div>
                   </div>
                   <Button
                     type="submit"
-                    className="gradient-primary h-12 w-full font-semibold text-white shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] hover:shadow-primary/50"
+                    className="gradient-primary shadow-primary/30 hover:shadow-primary/50 h-12 w-full font-semibold text-white shadow-lg transition-all hover:scale-[1.02]"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -399,7 +399,7 @@ export default function Auth() {
                       Email
                     </Label>
                     <div className="relative">
-                      <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <KeyRound className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         id="reset-email"
                         type="email"
@@ -408,17 +408,17 @@ export default function Auth() {
                         onChange={e => setResetEmail(e.target.value)}
                         required
                         disabled={isLoading}
-                        className="h-12 border-2 pl-10 transition-colors focus:border-primary"
+                        className="focus:border-primary h-12 border-2 pl-10 transition-colors"
                       />
                     </div>
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="h-1.5 w-1.5 rounded-full bg-info"></span>
+                    <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <span className="bg-info h-1.5 w-1.5 rounded-full"></span>
                       Enter your email to receive a password reset link
                     </p>
                   </div>
                   <Button
                     type="submit"
-                    className="gradient-primary h-12 w-full font-semibold text-white shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] hover:shadow-primary/50"
+                    className="gradient-primary shadow-primary/30 hover:shadow-primary/50 h-12 w-full font-semibold text-white shadow-lg transition-all hover:scale-[1.02]"
                     disabled={isLoading}
                   >
                     {isLoading ? (

@@ -342,7 +342,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
         <Card className="glass-card hover-lift animate-fade-in-up stagger-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 md:p-6 md:pb-2">
             <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <BarChart3 className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
             <div className="text-3xl font-bold">{stats.totalBookings}</div>
@@ -355,7 +355,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
         <Card className="glass-card hover-lift animate-fade-in-up stagger-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 md:p-6 md:pb-2">
             <CardTitle className="text-sm font-medium">Utilization</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
             <div className="text-3xl font-bold">{stats.utilization.toFixed(1)}%</div>
@@ -367,7 +367,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
         <Card className="glass-card hover-lift animate-fade-in-up stagger-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 md:p-6 md:pb-2">
             <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
             <div className="text-3xl font-bold">{stats.teamMembers}</div>
@@ -379,7 +379,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
         <Card className="glass-card hover-lift animate-fade-in-up stagger-4">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 md:p-6 md:pb-2">
             <CardTitle className="text-sm font-medium">Avg Lead Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
             <div className="text-3xl font-bold">{stats.avgLeadTime.toFixed(1)}</div>
@@ -451,7 +451,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
                             />
                             <span className="flex flex-1 justify-between gap-4">
                               <span className="text-muted-foreground">Utilization</span>
-                              <span className="font-mono font-medium tabular-nums text-foreground">
+                              <span className="text-foreground font-mono font-medium tabular-nums">
                                 {value}%
                               </span>
                             </span>
@@ -466,7 +466,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
                           />
                           <span className="flex flex-1 justify-between gap-4">
                             <span className="text-muted-foreground">Bookings</span>
-                            <span className="font-mono font-medium tabular-nums text-foreground">
+                            <span className="text-foreground font-mono font-medium tabular-nums">
                               {value}
                             </span>
                           </span>
@@ -520,7 +520,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
         <Card className="glass-card hover-lift animate-fade-in-up stagger-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Busiest Day</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.busiestDay}</div>
@@ -532,7 +532,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
         <Card className="glass-card hover-lift animate-fade-in-up stagger-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Fairness Score</CardTitle>
-            <Scale className="h-4 w-4 text-muted-foreground" />
+            <Scale className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent className="flex flex-col items-center pt-2">
             <FairnessGauge score={fairnessScore} />

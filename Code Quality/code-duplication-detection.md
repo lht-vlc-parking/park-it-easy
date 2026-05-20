@@ -22,6 +22,7 @@ Check for:
    - Schema duplication
 
 For each duplication found:
+
 - Calculate duplication percentage
 - Suggest extraction method (function, class, module)
 - Provide DRY (Don't Repeat Yourself) solution

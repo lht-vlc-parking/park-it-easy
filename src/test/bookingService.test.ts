@@ -189,6 +189,49 @@ describe('Motorcycle Limit', () => {
   });
 });
 
+describe('Capacity System', () => {
+  const SPOT_CAPACITY = 4;
+  const CAR_CAPACITY = 3;
+  const MOTORCYCLE_CAPACITY = 1;
+
+  it('should allow 1 car (3 units)', () => {
+    const usedCapacity = 0;
+    const requiredCapacity = CAR_CAPACITY;
+    expect(usedCapacity + requiredCapacity <= SPOT_CAPACITY).toBe(true);
+  });
+
+  it('should allow 1 car + 1 motorcycle (4 units)', () => {
+    const carUsed = CAR_CAPACITY;
+    const motoRequired = MOTORCYCLE_CAPACITY;
+    expect(carUsed + motoRequired <= SPOT_CAPACITY).toBe(true);
+  });
+
+  it('should allow 4 motorcycles (4 units)', () => {
+    const motos = 4;
+    const usedCapacity = motos * MOTORCYCLE_CAPACITY;
+    expect(usedCapacity <= SPOT_CAPACITY).toBe(true);
+  });
+
+  it('should reject car + car (6 units exceeds 4)', () => {
+    const firstCar = CAR_CAPACITY;
+    const secondCar = CAR_CAPACITY;
+    expect(firstCar + secondCar <= SPOT_CAPACITY).toBe(false);
+  });
+
+  it('should reject car + 2 motorcycles (5 units exceeds 4)', () => {
+    const carUsed = CAR_CAPACITY;
+    const motos = 2;
+    const motoCapacity = motos * MOTORCYCLE_CAPACITY;
+    expect(carUsed + motoCapacity <= SPOT_CAPACITY).toBe(false);
+  });
+
+  it('should reject 5 motorcycles (5 units exceeds 4)', () => {
+    const motos = 5;
+    const usedCapacity = motos * MOTORCYCLE_CAPACITY;
+    expect(usedCapacity <= SPOT_CAPACITY).toBe(false);
+  });
+});
+
 describe('Valid Parking Spots', () => {
   const VALID_SPOTS = [84, 85];
 

@@ -1,11 +1,41 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 /* =============================================================================
    PARK IT EASY V2 - Design System
    All colors use HSL format for consistency
    ============================================================================= */
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -13,7 +43,7 @@
        LIGHT THEME
        Clean, professional, with subtle blue accents
        ========================================================================== */
-    
+
     /* Core Colors */
     --background: 220 30% 98%;
     --foreground: 222 47% 11%;
@@ -64,11 +94,16 @@
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(210 100% 52%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(142 76% 36%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(210 100% 52%) 0%, hsl(217 91% 60%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(262 83% 58%) 50%, hsl(217 91% 60%) 100%);
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(217 91% 60%) 0%,
+      hsl(262 83% 58%) 50%,
+      hsl(217 91% 60%) 100%
+    );
     --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(25 95% 53%) 100%);
     --gradient-cool: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(217 91% 60%) 100%);
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 30% 98%) 100%);
-    
+
     /* Shadows */
     --shadow-xs: 0 1px 2px 0 hsl(220 10% 10% / 0.03);
     --shadow-sm: 0 1px 3px 0 hsl(220 10% 10% / 0.05), 0 1px 2px -1px hsl(220 10% 10% / 0.05);
@@ -104,7 +139,7 @@
        DARK THEME
        Deep, rich colors with vibrant accents
        ========================================================================== */
-    
+
     /* Core Colors */
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
@@ -151,9 +186,14 @@
     /* Gradients - Adjusted for dark mode */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 55%) 0%, hsl(210 100% 47%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(142 71% 40%) 0%, hsl(142 76% 32%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 50%) 0%, hsl(262 83% 50%) 50%, hsl(217 91% 50%) 100%);
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(217 91% 50%) 0%,
+      hsl(262 83% 50%) 50%,
+      hsl(217 91% 50%) 100%
+    );
     --gradient-surface: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 6%) 100%);
-    
+
     /* Shadows - Adjusted for dark mode */
     --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
@@ -177,23 +217,34 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto,
+      'Helvetica Neue', sans-serif;
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1,
+      'calt' 1;
   }
 
   /* Smooth theme transitions */
   html {
-    transition: background-color var(--transition-slow), color var(--transition-slow);
+    transition:
+      background-color var(--transition-slow),
+      color var(--transition-slow);
   }
 
   /* Improved focus styles */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--ring)),
+      0 0 0 4px hsl(var(--ring) / 0.5);
+    border-radius: inherit;
   }
 
   /* Better scrollbar styling */
@@ -203,16 +254,23 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted/30 rounded-full;
+    background-color: hsl(var(--muted) / 0.3);
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
   }
 
   /* Selection color */
   ::selection {
-    @apply bg-primary/20 text-foreground;
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
   }
 }
 
@@ -220,7 +278,7 @@
   /* ==========================================================================
      GLASS MORPHISM EFFECTS
      ========================================================================== */
-  
+
   .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(180%);
@@ -229,12 +287,19 @@
   }
 
   .glass-card {
-    @apply glass;
-    box-shadow: var(--shadow-lg), inset 0 1px 1px hsl(0 0% 100% / 0.1);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 1px 1px hsl(0 0% 100% / 0.1);
   }
 
   .dark .glass-card {
-    box-shadow: var(--shadow-lg), inset 0 1px 1px hsl(0 0% 100% / 0.05);
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 1px 1px hsl(0 0% 100% / 0.05);
   }
 
   .glass-button {
@@ -287,23 +352,30 @@
   }
 
   .liquid-gradient {
-    background: linear-gradient(135deg, 
-      hsl(217 91% 60% / 0.9) 0%, 
-      hsl(262 83% 58% / 0.9) 50%, 
-      hsl(217 91% 60% / 0.9) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(217 91% 60% / 0.9) 0%,
+      hsl(262 83% 58% / 0.9) 50%,
+      hsl(217 91% 60% / 0.9) 100%
+    );
     background-size: 200% 200%;
     animation: gradient-shift 8s ease infinite;
   }
 
   @keyframes gradient-shift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
   }
 
   /* Mesh gradient background */
   .mesh-gradient {
     background-color: hsl(var(--background));
-    background-image: 
+    background-image:
       radial-gradient(at 40% 20%, hsl(217 91% 60% / 0.15) 0px, transparent 50%),
       radial-gradient(at 80% 0%, hsl(262 83% 58% / 0.1) 0px, transparent 50%),
       radial-gradient(at 0% 50%, hsl(142 71% 45% / 0.1) 0px, transparent 50%),
@@ -387,8 +459,12 @@
   }
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes fade-in-up {
@@ -436,53 +512,73 @@
   }
 
   @keyframes bounce-subtle {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
   }
 
   @keyframes pulse-glow {
-    0%, 100% { 
+    0%,
+    100% {
       box-shadow: 0 0 20px hsl(217 91% 60% / 0.3);
     }
-    50% { 
+    50% {
       box-shadow: 0 0 40px hsl(217 91% 60% / 0.5);
     }
   }
 
   @keyframes shimmer {
-    from { background-position: 200% 0; }
-    to { background-position: -200% 0; }
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
   }
 
   /* Stagger animation delays */
-  .stagger-1 { animation-delay: 50ms; }
-  .stagger-2 { animation-delay: 100ms; }
-  .stagger-3 { animation-delay: 150ms; }
-  .stagger-4 { animation-delay: 200ms; }
-  .stagger-5 { animation-delay: 250ms; }
+  .stagger-1 {
+    animation-delay: 50ms;
+  }
+  .stagger-2 {
+    animation-delay: 100ms;
+  }
+  .stagger-3 {
+    animation-delay: 150ms;
+  }
+  .stagger-4 {
+    animation-delay: 200ms;
+  }
+  .stagger-5 {
+    animation-delay: 250ms;
+  }
 
   /* ==========================================================================
      INTERACTIVE STATES
      ========================================================================== */
 
   .hover-lift {
-    @apply transition-transform duration-200;
+    transition: transform 200ms;
   }
 
   .hover-lift:hover {
-    @apply -translate-y-1;
+    transform: translateY(-0.25rem);
   }
 
   .hover-scale {
-    @apply transition-transform duration-200;
+    transition: transform 200ms;
   }
 
   .hover-scale:hover {
-    @apply scale-[1.02];
+    transform: scale(1.02);
   }
 
   .hover-glow {
-    @apply transition-shadow duration-300;
+    transition: box-shadow 300ms;
   }
 
   .hover-glow:hover {
@@ -494,21 +590,32 @@
      ========================================================================== */
 
   .status-dot {
-    @apply w-2 h-2 rounded-full;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
   }
 
   .status-dot-success {
-    @apply status-dot bg-success;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: hsl(var(--success));
     box-shadow: 0 0 8px hsl(var(--success));
   }
 
   .status-dot-warning {
-    @apply status-dot bg-warning;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: hsl(var(--warning));
     box-shadow: 0 0 8px hsl(var(--warning));
   }
 
   .status-dot-destructive {
-    @apply status-dot bg-destructive;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: hsl(var(--destructive));
     box-shadow: 0 0 8px hsl(var(--destructive));
   }
 
@@ -517,8 +624,15 @@
   }
 
   @keyframes status-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.1); }
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.1);
+    }
   }
 
   /* ==========================================================================
@@ -526,15 +640,31 @@
      ========================================================================== */
 
   .container-tight {
-    @apply max-w-4xl mx-auto px-4;
+    max-width: 56rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .container-wide {
-    @apply max-w-7xl mx-auto px-4;
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .section-spacing {
-    @apply py-8 md:py-12;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .section-spacing {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
   }
 
   /* ==========================================================================

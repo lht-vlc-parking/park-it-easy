@@ -95,6 +95,16 @@ cp .env.example .env
 pnpm dev
 ```
 
+#### Windows Users
+
+If you're running on Windows, you may need to use the following commands instead:
+
+```bash
+pnpm install --no-frozen-lockfile
+pnpm approve-builds
+pnpm dev
+```
+
 Open [http://localhost:5173](http://localhost:5173) 🎉
 
 ---

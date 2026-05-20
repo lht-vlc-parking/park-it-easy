@@ -106,7 +106,7 @@ function ScoreGauge({ score }: { score: number }) {
         <span className="text-4xl font-bold sm:text-5xl" style={{ color: getColor(clampedScore) }}>
           {Math.round(clampedScore)}
         </span>
-        <span className="text-xs text-muted-foreground">/ 100</span>
+        <span className="text-muted-foreground text-xs">/ 100</span>
       </div>
     </div>
   );
@@ -125,13 +125,13 @@ function SubScoreBar({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5 text-muted-foreground">
+        <span className="text-muted-foreground flex items-center gap-1.5">
           {icon}
           {label}
         </span>
         <span className="font-semibold">{Math.round(value)}</span>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-muted">
+      <div className="bg-muted h-1.5 w-full rounded-full">
         <div
           className={`h-1.5 rounded-full transition-all duration-700 ${color}`}
           style={{ width: `${Math.min(value, 100)}%` }}
@@ -454,9 +454,9 @@ export default function MyProfileTab({
     return (
       <Card className="glass-card animate-fade-in-up">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Award className="mb-4 h-12 w-12 text-muted-foreground" />
+          <Award className="text-muted-foreground mb-4 h-12 w-12" />
           <p className="text-lg font-semibold">Sign in to see your profile</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Your personal parking stats will appear here.
           </p>
         </CardContent>
@@ -468,9 +468,9 @@ export default function MyProfileTab({
     return (
       <Card className="glass-card animate-fade-in-up">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Zap className="mb-4 h-12 w-12 text-muted-foreground" />
+          <Zap className="text-muted-foreground mb-4 h-12 w-12" />
           <p className="text-lg font-semibold">No bookings yet</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Start booking parking spots to build your profile!
           </p>
         </CardContent>
@@ -481,10 +481,10 @@ export default function MyProfileTab({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* === 1. Parking Score Hero Card === */}
-      <Card className="glass-card animate-fade-in-up overflow-hidden shadow-glow">
+      <Card className="glass-card animate-fade-in-up shadow-glow overflow-hidden">
         <CardHeader className="pb-2 text-center">
           <div className="mx-auto mb-1 flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" />
+            <Award className="text-primary h-5 w-5" />
             <CardTitle className="text-lg sm:text-xl">Your Parking Score</CardTitle>
           </div>
           <CardDescription>A snapshot of your parking habits</CardDescription>
@@ -526,18 +526,18 @@ export default function MyProfileTab({
               {/* Current streak */}
               <div className="text-center">
                 <div className="mb-1 text-5xl font-bold text-orange-500">{streakData.current}</div>
-                <div className="text-sm text-muted-foreground">weeks</div>
+                <div className="text-muted-foreground text-sm">weeks</div>
                 {streakData.current > 0 && (
                   <p className="mt-2 text-xs font-medium text-orange-500">Keep it going!</p>
                 )}
               </div>
-              <div className="h-16 w-px bg-border" />
+              <div className="bg-border h-16 w-px" />
               {/* Longest streak */}
               <div className="text-center">
-                <div className="mb-1 text-3xl font-bold text-muted-foreground">
+                <div className="text-muted-foreground mb-1 text-3xl font-bold">
                   {streakData.longest}
                 </div>
-                <div className="text-xs text-muted-foreground">longest</div>
+                <div className="text-muted-foreground text-xs">longest</div>
               </div>
             </div>
           </CardContent>
@@ -547,7 +547,7 @@ export default function MyProfileTab({
         <Card className="glass-card hover-lift animate-fade-in-up">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Calendar className="h-5 w-5 text-primary" />
+              <Calendar className="text-primary h-5 w-5" />
               Your Booking Pattern
             </CardTitle>
             <CardDescription className="text-xs">
@@ -559,7 +559,7 @@ export default function MyProfileTab({
             <div className="mb-1 grid grid-cols-[auto_repeat(5,1fr)] gap-1">
               <div className="w-8" />
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(d => (
-                <div key={d} className="text-center text-[10px] text-muted-foreground">
+                <div key={d} className="text-muted-foreground text-center text-[10px]">
                   {d}
                 </div>
               ))}
@@ -568,7 +568,7 @@ export default function MyProfileTab({
             <div className="space-y-0.5">
               {heatmapData.weeks.map((week, wi) => (
                 <div key={wi} className="grid grid-cols-[auto_repeat(5,1fr)] gap-1">
-                  <div className="flex w-8 items-center justify-end pr-1 text-[9px] text-muted-foreground">
+                  <div className="text-muted-foreground flex w-8 items-center justify-end pr-1 text-[9px]">
                     {wi % 3 === 0 ? week.weekLabel : ''}
                   </div>
                   {week.days.map((count, di) => (
@@ -590,7 +590,7 @@ export default function MyProfileTab({
               ))}
             </div>
             {/* Legend */}
-            <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-muted-foreground">
+            <div className="text-muted-foreground mt-2 flex items-center justify-end gap-1 text-[10px]">
               <span>Less</span>
               <div
                 className="h-2.5 w-2.5 rounded-sm"
@@ -614,7 +614,7 @@ export default function MyProfileTab({
       <Card className="glass-card hover-lift animate-fade-in-up">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Zap className="h-5 w-5 text-primary" />
+            <Zap className="text-primary h-5 w-5" />
             Your Preferences
           </CardTitle>
           <CardDescription>What defines your parking style</CardDescription>
@@ -622,79 +622,79 @@ export default function MyProfileTab({
         <CardContent>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {/* Primary Vehicle */}
-            <div className="rounded-xl border border-border/50 bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+            <div className="border-border/50 bg-muted/20 hover:bg-muted/40 rounded-xl border p-3 transition-colors">
               <div className="mb-2 flex items-center gap-1.5">
                 {preferences.vehicle.value === 'Car' ? (
                   <Car className="h-4 w-4 text-blue-500" />
                 ) : (
                   <Bike className="h-4 w-4 text-orange-500" />
                 )}
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
                   Vehicle
                 </span>
               </div>
               <p className="text-sm font-bold">{preferences.vehicle.value}</p>
-              <div className="mt-1.5 h-1 w-full rounded-full bg-muted">
+              <div className="bg-muted mt-1.5 h-1 w-full rounded-full">
                 <div
                   className="h-1 rounded-full bg-blue-500 transition-all duration-500"
                   style={{ width: `${preferences.vehicle.pct}%` }}
                 />
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">{preferences.vehicle.pct}%</p>
+              <p className="text-muted-foreground mt-1 text-[10px]">{preferences.vehicle.pct}%</p>
             </div>
 
             {/* Favorite Spot */}
-            <div className="rounded-xl border border-border/50 bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+            <div className="border-border/50 bg-muted/20 hover:bg-muted/40 rounded-xl border p-3 transition-colors">
               <div className="mb-2 flex items-center gap-1.5">
                 <MapPin className="h-4 w-4 text-green-500" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
                   Spot
                 </span>
               </div>
               <p className="text-sm font-bold">{preferences.spot.value}</p>
-              <div className="mt-1.5 h-1 w-full rounded-full bg-muted">
+              <div className="bg-muted mt-1.5 h-1 w-full rounded-full">
                 <div
                   className="h-1 rounded-full bg-green-500 transition-all duration-500"
                   style={{ width: `${preferences.spot.pct}%` }}
                 />
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">{preferences.spot.pct}%</p>
+              <p className="text-muted-foreground mt-1 text-[10px]">{preferences.spot.pct}%</p>
             </div>
 
             {/* Preferred Time */}
-            <div className="rounded-xl border border-border/50 bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+            <div className="border-border/50 bg-muted/20 hover:bg-muted/40 rounded-xl border p-3 transition-colors">
               <div className="mb-2 flex items-center gap-1.5">
                 <Clock className="h-4 w-4 text-purple-500" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
                   Time
                 </span>
               </div>
               <p className="text-sm font-bold">{preferences.time.value}</p>
-              <div className="mt-1.5 h-1 w-full rounded-full bg-muted">
+              <div className="bg-muted mt-1.5 h-1 w-full rounded-full">
                 <div
                   className="h-1 rounded-full bg-purple-500 transition-all duration-500"
                   style={{ width: `${preferences.time.pct}%` }}
                 />
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">{preferences.time.pct}%</p>
+              <p className="text-muted-foreground mt-1 text-[10px]">{preferences.time.pct}%</p>
             </div>
 
             {/* Best Day */}
-            <div className="rounded-xl border border-border/50 bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+            <div className="border-border/50 bg-muted/20 hover:bg-muted/40 rounded-xl border p-3 transition-colors">
               <div className="mb-2 flex items-center gap-1.5">
                 <Calendar className="h-4 w-4 text-amber-500" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
                   Day
                 </span>
               </div>
               <p className="text-sm font-bold">{preferences.day.value}</p>
-              <div className="mt-1.5 h-1 w-full rounded-full bg-muted">
+              <div className="bg-muted mt-1.5 h-1 w-full rounded-full">
                 <div
                   className="h-1 rounded-full bg-amber-500 transition-all duration-500"
                   style={{ width: `${preferences.day.pct}%` }}
                 />
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">{preferences.day.pct}%</p>
+              <p className="text-muted-foreground mt-1 text-[10px]">{preferences.day.pct}%</p>
             </div>
           </div>
         </CardContent>
@@ -704,7 +704,7 @@ export default function MyProfileTab({
       <Card className="glass-card hover-lift animate-fade-in-up">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Award className="h-5 w-5 text-primary" />
+            <Award className="text-primary h-5 w-5" />
             Your Monthly Activity
           </CardTitle>
           <CardDescription>Your bookings vs team average over time</CardDescription>
@@ -748,7 +748,7 @@ export default function MyProfileTab({
               />
             </ComposedChart>
           </ChartContainer>
-          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-2 flex items-center justify-center gap-4 text-xs">
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-sm bg-[hsl(217,91%,60%)]" />
               Your Bookings
