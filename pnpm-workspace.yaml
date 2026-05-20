@@ -7,7 +7,3 @@ ignoredBuiltDependencies:
   - '@swc/core'
   - esbuild
   - sharp
-
-allowBuilds:
-  esbuild: false
-  sharp: false
