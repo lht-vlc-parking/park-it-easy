@@ -347,6 +347,7 @@ const Index = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 truncate font-semibold">
+                                Spot {group.spot_number} -{' '}
                                 {group.bookings?.length === 1
                                   ? rep.user_name
                                   : `${group.bookings?.length} bookings`}
@@ -361,33 +362,14 @@ const Index = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-sm">
-                                <span className="font-medium">Spot {group.spot_number}</span>
-                                <span className="text-muted-foreground/50">&bull;</span>
-                                <span className="font-medium">
-                                  {carCount > 0 && `🚗 ${carCount}`}
-                                  {carCount > 0 && motoCount > 0 && ' • '}
-                                  {motoCount > 0 && `🏍️ ${motoCount}`}
-                                </span>
-                              </div>
-                              {rep.created_at && (
-                                <div className="text-muted-foreground/75 mt-2 flex items-center gap-1.5 text-xs">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    Created{' '}
-                                    {new Date(rep.created_at).toLocaleDateString('en-US', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                    })}{' '}
-                                    at{' '}
-                                    {new Date(rep.created_at).toLocaleTimeString('en-US', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
+                              {group.bookings.map(booking => (
+                                <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-sm">
+                                  <span className="font-medium">
+                                    {booking.vehicle_type === 'car' ? `🚗` : `🏍`}{' '}
+                                    {booking.user_name}
                                   </span>
                                 </div>
-                              )}
+                              ))}
                             </div>
                           </div>
                         </div>
