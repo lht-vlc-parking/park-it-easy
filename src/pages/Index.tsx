@@ -347,10 +347,11 @@ const Index = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 truncate font-semibold">
-                                Spot {group.spot_number} -{' '}
-                                {group.bookings?.length === 1
-                                  ? rep.user_name
-                                  : `${group.bookings?.length} bookings`}
+                                Spot {group.spot_number}
+                                <span className="text-muted-foreground text-xs font-normal">
+                                  · {group.bookings?.length}{' '}
+                                  {group.bookings?.length === 1 ? 'booking' : 'bookings'}
+                                </span>
                                 {isToday && (
                                   <span className="bg-warning rounded-full px-2 py-0.5 text-xs text-white shadow-sm">
                                     Today
