@@ -35,6 +35,8 @@ const Index = () => {
   const handleConfirmBooking = (booking: {
     date: string;
     duration: 'morning' | 'afternoon' | 'full';
+    start_time: string;
+    end_time: string;
     vehicle_type: 'car' | 'motorcycle';
     spot_number: number;
   }) => {
@@ -47,6 +49,8 @@ const Index = () => {
       {
         date: booking.date,
         duration: booking.duration,
+        start_time: booking.start_time,
+        end_time: booking.end_time,
         vehicle_type: booking.vehicle_type,
         spot_number: booking.spot_number,
         userId: user.id,
@@ -85,11 +89,15 @@ const Index = () => {
     });
 
     return Array.from(map.values()).map(group => {
+      // Sort bookings within each group by start_time, then end_time
+      const sortedBookings = [...group.bookings].sort(
+        (a, b) => a.start_time.localeCompare(b.start_time) || a.end_time.localeCompare(b.end_time)
+      );
       // Prefer a car booking as representative when present, otherwise first booking
       const representative =
-        group.bookings.find(x => x.vehicle_type === 'car') || group.bookings[0];
+        sortedBookings.find(x => x.vehicle_type === 'car') || sortedBookings[0];
       return {
-        id: group.bookings.map(x => x.id).join(','),
+        id: sortedBookings.map(x => x.id).join(','),
         date: group.date,
         spot_number: group.spot_number,
         vehicle_type: representative.vehicle_type,
@@ -97,7 +105,7 @@ const Index = () => {
         user_name: representative.user_name,
         user_id: representative.user_id,
         created_at: representative.created_at,
-        bookings: group.bookings,
+        bookings: sortedBookings,
       };
     });
   }, [bookings]);
@@ -262,7 +270,14 @@ const Index = () => {
               {groupedUpcomingBookings.length > 0 ? (
                 <div className="space-y-3">
                   {groupedUpcomingBookings
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .sort((a, b) => {
+                      const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+                      if (dateDiff !== 0) return dateDiff;
+                      // Same date: sort by earliest start_time in each group
+                      return (a.bookings[0]?.start_time ?? '').localeCompare(
+                        b.bookings[0]?.start_time ?? ''
+                      );
+                    })
                     .map((group, index) => {
                       // Check if booking is today
                       const isToday = group.date === today;
@@ -357,11 +372,8 @@ const Index = () => {
                                             'border-warning/50 bg-warning/10 text-warning'
                                         )}
                                       >
-                                        {booking.duration === 'full'
-                                          ? 'All Day'
-                                          : booking.duration === 'morning'
-                                            ? 'AM'
-                                            : 'PM'}
+                                        {booking.start_time.slice(0, 5)}–
+                                        {booking.end_time.slice(0, 5)}
                                       </Badge>
                                       {booking.user_id === user?.id && (
                                         <Button

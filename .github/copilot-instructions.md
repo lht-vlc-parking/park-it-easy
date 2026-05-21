@@ -4,6 +4,10 @@
 
 Do not stage or commit changes. The user reviews and commits all changes themselves.
 
+## Supabase CLI
+
+**NEVER run any `supabase` CLI commands** (e.g. `supabase db push`, `supabase start`, `supabase migration`, etc.). The user runs all Supabase CLI commands themselves.
+
 ## Documentation
 
 Always keep documentation up to date when making code changes:
@@ -129,6 +133,22 @@ supabase db push
 ```
 
 Booking conflict and capacity rules are enforced both in `BookingService` (app layer) **and** via DB triggers — keep both in sync when changing booking logic.
+
+#### Migrations that UPDATE the `bookings` table
+
+The `bookings_future_date` check constraint (`CHECK (date >= CURRENT_DATE)`) causes `UPDATE` statements to fail for past-dated rows, even when the `date` column itself is not being changed (PostgreSQL re-evaluates all constraints on every touched row).
+
+Always wrap backfill `UPDATE`s on `bookings` with a drop/restore of this constraint:
+
+```sql
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_future_date;
+
+-- ... your UPDATE ...
+
+ALTER TABLE public.bookings
+  ADD CONSTRAINT bookings_future_date CHECK (date >= CURRENT_DATE) NOT VALID;
+-- NOT VALID = enforced on new rows only, not retroactively on past-dated rows
+```
 
 ### Testing
 

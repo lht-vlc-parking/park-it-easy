@@ -10,31 +10,40 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          capacity: number | null;
           created_at: string;
           date: string;
           duration: Database['public']['Enums']['booking_duration'];
+          end_time: string;
           id: string;
           spot_number: number;
+          start_time: string;
           user_id: string | null;
           user_name: string;
           vehicle_type: Database['public']['Enums']['vehicle_type'];
         };
         Insert: {
+          capacity?: number | null;
           created_at?: string;
           date: string;
           duration: Database['public']['Enums']['booking_duration'];
+          end_time: string;
           id?: string;
           spot_number: number;
+          start_time: string;
           user_id?: string | null;
           user_name: string;
           vehicle_type: Database['public']['Enums']['vehicle_type'];
         };
         Update: {
+          capacity?: number | null;
           created_at?: string;
           date?: string;
           duration?: Database['public']['Enums']['booking_duration'];
+          end_time?: string;
           id?: string;
           spot_number?: number;
+          start_time?: string;
           user_id?: string | null;
           user_name?: string;
           vehicle_type?: Database['public']['Enums']['vehicle_type'];
