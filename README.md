@@ -128,6 +128,67 @@ Open [http://localhost:5173](http://localhost:5173) 🎉
 ## 📖 Documentation
 
 <details>
+<summary><strong>🗄️ Database Setup (Supabase Migrations)</strong></summary>
+
+Follow these steps when setting up the project for the first time with a fresh Supabase project.
+
+#### 1. Install the Supabase CLI
+
+```bash
+# macOS
+brew install supabase/tap/supabase
+
+# npm (cross-platform)
+npm install -g supabase
+```
+
+#### 2. Log in and link your project
+
+```bash
+# Authenticate with your Supabase account
+supabase login
+
+# Link to your remote Supabase project (find the project ID in Project Settings → General)
+supabase link --project-ref <your-project-id>
+```
+
+#### 3. Run all migrations
+
+```bash
+# Push all migrations in supabase/migrations/ to your remote database
+supabase db push
+```
+
+This applies every migration in order, creating all tables, views, RLS policies, triggers, and functions required by the app.
+
+#### 4. (Optional) Reset the database
+
+If you need to start completely fresh and reapply all migrations from zero:
+
+```bash
+supabase db reset --linked
+```
+
+> ⚠️ This will **drop and recreate** the entire database. Use with caution in production.
+
+#### Local development (Docker)
+
+If you prefer to develop against a local Supabase instance:
+
+```bash
+# Start local Supabase stack (requires Docker)
+supabase start
+
+# Apply migrations to the local instance
+supabase db reset
+
+# Stop the local stack
+supabase stop
+```
+
+</details>
+
+<details>
 <summary><strong>🔐 Environment Variables</strong></summary>
 
 Create a `.env` file with your Supabase credentials:
