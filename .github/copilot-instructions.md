@@ -1,5 +1,9 @@
 # Copilot Instructions
 
+## Git
+
+Do not stage or commit changes. The user reviews and commits all changes themselves.
+
 ## Documentation
 
 Always keep documentation up to date when making code changes:

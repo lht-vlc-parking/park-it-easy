@@ -23,9 +23,11 @@
   ],
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "serve:dev": "vite --mode development",
+    "serve:prod": "vite --mode production",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:prod": "vite build --mode production",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

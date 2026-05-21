@@ -156,7 +156,8 @@ export const BookingDialogWithValidation = ({
               onValueChange={v => setVehicleType(v as 'car' | 'motorcycle')}
               className="grid grid-cols-2 gap-3"
             >
-              <div
+              <Label
+                htmlFor="car"
                 className={cn(
                   'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all',
                   vehicleType === 'car'
@@ -165,7 +166,7 @@ export const BookingDialogWithValidation = ({
                 )}
               >
                 <RadioGroupItem value="car" id="car" className="hidden" />
-                <Label htmlFor="car" className="flex cursor-pointer flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-2">
                   <Car
                     className={cn(
                       'h-8 w-8',
@@ -175,9 +176,10 @@ export const BookingDialogWithValidation = ({
                   <span className={cn('font-medium', vehicleType === 'car' && 'text-primary')}>
                     Car
                   </span>
-                </Label>
-              </div>
-              <div
+                </div>
+              </Label>
+              <Label
+                htmlFor="motorcycle"
                 className={cn(
                   'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all',
                   vehicleType === 'motorcycle'
@@ -186,10 +188,7 @@ export const BookingDialogWithValidation = ({
                 )}
               >
                 <RadioGroupItem value="motorcycle" id="motorcycle" className="hidden" />
-                <Label
-                  htmlFor="motorcycle"
-                  className="flex cursor-pointer flex-col items-center gap-2"
-                >
+                <div className="flex flex-col items-center gap-2">
                   <Bike
                     className={cn(
                       'h-8 w-8',
@@ -201,8 +200,8 @@ export const BookingDialogWithValidation = ({
                   >
                     Motorcycle
                   </span>
-                </Label>
-              </div>
+                </div>
+              </Label>
             </RadioGroup>
           </div>
 

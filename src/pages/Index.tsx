@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Calendar, LogOut, User, Clock, Activity } from 'lucide-react';
+import { BarChart3, Calendar, LogOut, User, Clock, Activity, Car, Bike } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
 import { getUserErrorMessage } from '@/lib/errorMessages';
@@ -267,17 +268,7 @@ const Index = () => {
                       const isToday = group.date === today;
 
                       // If the current user has a booking in this group
-                      const userBooking = group.bookings?.find(b => b.user_id === user?.id);
-                      const isMyBooking = Boolean(userBooking);
-
-                      // Summary counts
-                      const carCount =
-                        group.bookings?.filter(b => b.vehicle_type === 'car').length || 0;
-                      const motoCount =
-                        group.bookings?.filter(b => b.vehicle_type === 'motorcycle').length || 0;
-
-                      // Representative for display
-                      const rep = { ...group };
+                      const isMyBooking = group.bookings.some(b => b.user_id === user?.id);
 
                       return (
                         <div
@@ -291,34 +282,7 @@ const Index = () => {
                           } ${isToday ? 'ring-warning/30 ring-offset-background ring-2 ring-offset-2' : ''}`}
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
-                          <div className="absolute top-3 right-3 flex items-center gap-2">
-                            <Badge
-                              className={`px-3 py-1.5 text-xs font-medium shadow-sm sm:text-sm ${
-                                rep.duration === 'full'
-                                  ? 'gradient-primary text-white'
-                                  : rep.duration === 'morning'
-                                    ? 'bg-info text-white'
-                                    : 'bg-warning text-white'
-                              }`}
-                            >
-                              {rep.duration === 'full'
-                                ? 'All Day'
-                                : rep.duration === 'morning'
-                                  ? 'AM'
-                                  : 'PM'}
-                            </Badge>
-                            {isMyBooking && userBooking && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUnbook(userBooking.id)}
-                                className="border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive transition-all hover:text-white"
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                          </div>
-                          <div className="mb-3 flex items-center gap-3 sm:mb-0 sm:gap-4">
+                          <div className="mb-3 flex w-full items-start gap-3 sm:mb-0 sm:gap-4">
                             <div
                               className={`min-w-12.5 rounded-xl p-2 text-center sm:min-w-15 ${
                                 isToday
@@ -357,18 +321,60 @@ const Index = () => {
                                     Today
                                   </span>
                                 )}
-                                {isMyBooking && (
-                                  <span className="bg-success rounded-full px-2 py-0.5 text-xs text-white shadow-sm">
-                                    You
-                                  </span>
-                                )}
                               </div>
-                              {group.bookings.map(booking => (
-                                <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-base">
-                                  <span className="font-medium">
-                                    {booking.vehicle_type === 'car' ? `🚗` : `🏍`}{' '}
-                                    {booking.user_name}
-                                  </span>
+                              {group.bookings.map((booking, i) => (
+                                <div
+                                  key={booking.id}
+                                  className="animate-fade-in border-border/50 bg-muted/50 mt-1.5 rounded-lg border p-2"
+                                  style={{ animationDelay: `${i * 50}ms` }}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      {booking.vehicle_type === 'car' ? (
+                                        <Car className="text-primary h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                                      ) : (
+                                        <Bike className="text-accent h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                                      )}
+                                      <span className="text-xs font-medium break-words sm:text-sm">
+                                        {booking.user_name}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-shrink-0 items-center gap-1.5">
+                                      {booking.user_id === user?.id && (
+                                        <span className="bg-success rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
+                                          You
+                                        </span>
+                                      )}
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          'text-[10px] font-medium whitespace-nowrap sm:text-xs',
+                                          booking.duration === 'full' &&
+                                            'border-primary/50 bg-primary/10 text-primary',
+                                          booking.duration === 'morning' &&
+                                            'border-info/50 bg-info/10 text-info',
+                                          booking.duration === 'afternoon' &&
+                                            'border-warning/50 bg-warning/10 text-warning'
+                                        )}
+                                      >
+                                        {booking.duration === 'full'
+                                          ? 'All Day'
+                                          : booking.duration === 'morning'
+                                            ? 'AM'
+                                            : 'PM'}
+                                      </Badge>
+                                      {booking.user_id === user?.id && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleUnbook(booking.id)}
+                                          className="border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive h-6 px-1.5 text-[10px] transition-all hover:text-white sm:text-xs"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>
