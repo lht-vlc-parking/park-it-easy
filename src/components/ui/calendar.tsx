@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { DayPicker, getDefaultClassNames } from 'react-day-picker';
+import { DayPicker } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
@@ -8,8 +8,6 @@ import { buttonVariants } from '@/components/ui/button';
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
-  const defaultClassNames = getDefaultClassNames();
-
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -40,10 +38,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         range_end: 'range-end',
         selected:
           'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-        today: cn(
-          '[&:not([aria-selected])]:bg-accent [&:not([aria-selected])]:text-accent-foreground',
-          defaultClassNames.today
-        ),
+        today: '[&:not([aria-selected])]:bg-accent [&:not([aria-selected])]:text-accent-foreground',
         outside:
           'outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
         disabled: 'text-muted-foreground opacity-50',
