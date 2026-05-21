@@ -51,7 +51,7 @@
 
 - **Dark Mode** — Easy on the eyes
 - **Responsive Design** — Works on any device
-- **Real-time Updates** — Live availability changes
+- **Live Refresh** — Availability updates on booking changes
 - **Beautiful UI** — Built with shadcn/ui
 
 </td>
@@ -101,7 +101,6 @@ If you're running on Windows, you may need to use the following commands instead
 
 ```bash
 pnpm install --no-frozen-lockfile
-pnpm approve-builds
 pnpm dev
 ```
 
@@ -111,17 +110,17 @@ Open [http://localhost:5173](http://localhost:5173) 🎉
 
 ## 🛠 Tech Stack
 
-| Category       | Technology                            |
-| -------------- | ------------------------------------- |
-| **Frontend**   | React 18.3, TypeScript 5.8, Vite 8    |
-| **Styling**    | Tailwind CSS 3.4, shadcn/ui           |
-| **Backend**    | Supabase (PostgreSQL, Auth, Realtime) |
-| **Data**       | TanStack React Query, React Hook Form |
-| **Charts**     | Recharts 3                            |
-| **Dates**      | react-day-picker 9                    |
-| **Testing**    | Vitest, Playwright, Testing Library   |
-| **Quality**    | ESLint 9, Prettier, Husky             |
-| **Validation** | Zod 4                                 |
+| Category       | Technology                          |
+| -------------- | ----------------------------------- |
+| **Frontend**   | React 19.2, TypeScript 6.0, Vite 8  |
+| **Styling**    | Tailwind CSS 4.3, shadcn/ui         |
+| **Backend**    | Supabase (PostgreSQL, Auth)         |
+| **Data**       | TanStack React Query                |
+| **Charts**     | Recharts 3                          |
+| **Dates**      | react-day-picker 10                 |
+| **Testing**    | Vitest, Playwright, Testing Library |
+| **Quality**    | ESLint 10, Prettier, Husky          |
+| **Validation** | Zod 4                               |
 
 ---
 
@@ -260,11 +259,11 @@ The included `release.yml` workflow handles releases end-to-end: build, SLSA pro
 
 ## ⚙️ CI / CD
 
-| Workflow            | Trigger                        | What it does                                                                  |
-| ------------------- | ------------------------------ | ----------------------------------------------------------------------------- |
-| `ci.yml`            | Push / PR to `main`, `develop` | Lint, unit tests, build, E2E (Playwright cached)                              |
-| `release.yml`       | Tag push (`v*`) or manual      | Build, SLSA v3 provenance, SBOM, attestation, GitHub Release, deploy to Pages |
-| `security-scan.yml` | Daily (8:00 UTC) or manual     | Scan SBOM for vulnerabilities with Grype                                      |
+| Workflow            | Trigger                                           | What it does                                                                  |
+| ------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `ci.yml`            | Push / PR to `main`, `develop`; weekly on Sundays | Lint, unit tests, build, E2E (Playwright cached)                              |
+| `release.yml`       | Tag push (`v*`) or manual                         | Build, SLSA v3 provenance, SBOM, attestation, GitHub Release, deploy to Pages |
+| `security-scan.yml` | Daily (8:00 UTC) or manual                        | Scan SBOM for vulnerabilities with Grype                                      |
 
 ---
 
