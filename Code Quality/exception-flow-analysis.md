@@ -1,6 +1,7 @@
 Trace error flow through the application:
 
 Critical paths to analyze:
+
 1. Database connection failure
 2. Third-party API timeout
 3. Invalid user input
@@ -8,6 +9,7 @@ Critical paths to analyze:
 5. File system errors
 
 For each path, verify:
+
 - Where is the error caught?
 - How is it transformed?
 - What gets logged?
@@ -15,12 +17,14 @@ For each path, verify:
 - Is the system state consistent?
 
 Create an error flow diagram showing:
+
 - Error origin points
 - Transformation layers
 - Final handling points
 - Recovery mechanisms
 
 Anti-patterns to identify:
+
 - Swallowed exceptions (empty catch blocks)
 - Generic catch-all handlers hiding specific errors
 - Errors used for flow control

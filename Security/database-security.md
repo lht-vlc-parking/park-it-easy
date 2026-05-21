@@ -5,156 +5,127 @@ Examine ALL database interactions
 Verify:
 
 1. Parameterized queries or ORM usage
-
-   * Ensure all queries use placeholders (`?`, `$1`, `:param`) or ORM bindings.
-   * Flag any direct string concatenation in queries as CRITICAL.
+   - Ensure all queries use placeholders (`?`, `$1`, `:param`) or ORM bindings.
+   - Flag any direct string concatenation in queries as CRITICAL.
 
 2. Connection string security
-
-   * No passwords or secrets hardcoded in code or committed to source control.
-   * Use environment variables or a secrets manager.
+   - No passwords or secrets hardcoded in code or committed to source control.
+   - Use environment variables or a secrets manager.
 
 3. Database user permissions (principle of least privilege)
-
-   * Application account has only the rights it needs (e.g., no `SUPERUSER`, `DROP`, `GRANT`).
-   * Separate accounts for read-only, migrations, and admin.
+   - Application account has only the rights it needs (e.g., no `SUPERUSER`, `DROP`, `GRANT`).
+   - Separate accounts for read-only, migrations, and admin.
 
 4. Sensitive data encryption at rest
-
-   * Verify disk-level/database-native encryption.
-   * Critical fields (e.g., SSN, tokens) use column-level encryption or tokenization.
+   - Verify disk-level/database-native encryption.
+   - Critical fields (e.g., SSN, tokens) use column-level encryption or tokenization.
 
 5. PII handling compliance
-
-   * Personally identifiable information is minimized, redacted in logs, and handled per GDPR/CCPA.
-   * Retention/deletion policies exist and are enforced.
+   - Personally identifiable information is minimized, redacted in logs, and handled per GDPR/CCPA.
+   - Retention/deletion policies exist and are enforced.
 
 6. Query timeout configurations
-
-   * Query/statement timeouts configured at driver and DB server level to prevent runaway queries.
+   - Query/statement timeouts configured at driver and DB server level to prevent runaway queries.
 
 7. Connection pool settings
-
-   * Pool limits configured (min/max); no unbounded connections.
-   * Idle timeouts enforced to prevent exhaustion.
+   - Pool limits configured (min/max); no unbounded connections.
+   - Idle timeouts enforced to prevent exhaustion.
 
 8. Transaction handling for consistency
-
-   * Transactions wrap multi-step operations.
-   * Rollback paths tested to prevent partial updates.
+   - Transactions wrap multi-step operations.
+   - Rollback paths tested to prevent partial updates.
 
 9. Audit logging for sensitive operations
-
-   * Log access to sensitive tables/fields, schema changes, permission changes, failed logins.
-   * Logs are centralized, immutable, and monitored.
+   - Log access to sensitive tables/fields, schema changes, permission changes, failed logins.
+   - Logs are centralized, immutable, and monitored.
 
 10. NoSQL injection hardening (if applicable)
-
-    * User input never passed directly to filters.
-    * `$where`, `$ne`, `$gt`, `$or` operators blocked/sanitized.
-    * ORM/driver sanitization enabled (e.g., `mongoose.set('sanitizeFilter', true)`).
+    - User input never passed directly to filters.
+    - `$where`, `$ne`, `$gt`, `$or` operators blocked/sanitized.
+    - ORM/driver sanitization enabled (e.g., `mongoose.set('sanitizeFilter', true)`).
 
 11. Row/Tenant isolation
-
-    * Row-level security (Postgres RLS) or server-side ownership/tenant filters enforced.
-    * Multi-tenant queries scoped by server, not client input.
+    - Row-level security (Postgres RLS) or server-side ownership/tenant filters enforced.
+    - Multi-tenant queries scoped by server, not client input.
 
 12. Least-privilege networking
-
-    * Database not publicly exposed; network ACLs, VPC, firewall/security groups in place.
-    * Only whitelisted application servers can connect.
+    - Database not publicly exposed; network ACLs, VPC, firewall/security groups in place.
+    - Only whitelisted application servers can connect.
 
 13. TLS in transit & certificate validation
-
-    * DB connections use TLS (`sslmode=require/verify-full` or equivalent).
-    * Certificates validated and rotated.
+    - DB connections use TLS (`sslmode=require/verify-full` or equivalent).
+    - Certificates validated and rotated.
 
 14. Secret management & rotation
-
-    * Credentials stored in a secrets manager, rotated periodically.
-    * No static passwords in `.env` files without protection.
+    - Credentials stored in a secrets manager, rotated periodically.
+    - No static passwords in `.env` files without protection.
 
 15. Schema & integrity controls
-
-    * Foreign keys, unique constraints, and NOT NULL enforced.
-    * Ownership/tenant columns marked `NOT NULL` and validated.
+    - Foreign keys, unique constraints, and NOT NULL enforced.
+    - Ownership/tenant columns marked `NOT NULL` and validated.
 
 16. Field-level minimization
-
-    * Avoid `SELECT *`; fetch only required fields.
-    * Reduces exposure of sensitive columns.
+    - Avoid `SELECT *`; fetch only required fields.
+    - Reduces exposure of sensitive columns.
 
 17. Pagination & query limits
-
-    * Hard caps on `LIMIT`/page size; prevent unbounded queries that scan entire tables.
+    - Hard caps on `LIMIT`/page size; prevent unbounded queries that scan entire tables.
 
 18. Backup/restore security
-
-    * Backups encrypted, access-controlled, tested for restoration.
-    * No unprotected dumps in CI/CD or object storage.
+    - Backups encrypted, access-controlled, tested for restoration.
+    - No unprotected dumps in CI/CD or object storage.
 
 19. Data retention & deletion
-
-    * Clear policies for retention, archival, and deletion of PII.
-    * Secure erasure when data is removed.
+    - Clear policies for retention, archival, and deletion of PII.
+    - Secure erasure when data is removed.
 
 20. Migrations safety
-
-    * Migrations run with controlled privileges.
-    * Destructive operations reviewed; rollback plans exist.
+    - Migrations run with controlled privileges.
+    - Destructive operations reviewed; rollback plans exist.
 
 21. ORM raw-query escape hatch review
-
-    * Any `queryRaw`/`sequelize.query`/`knex.raw` usage audited.
-    * Must still use parameterized bindings.
+    - Any `queryRaw`/`sequelize.query`/`knex.raw` usage audited.
+    - Must still use parameterized bindings.
 
 22. LIKE / regex input handling
-
-    * Special characters in user input escaped properly (`%`, `_`, regex metacharacters).
-    * Prevents pattern abuse and heavy queries.
+    - Special characters in user input escaped properly (`%`, `_`, regex metacharacters).
+    - Prevents pattern abuse and heavy queries.
 
 23. Query timeouts & resource guards
-
-    * Resource caps enforced (memory, work\_mem, CPU).
-    * Prevent denial-of-service via expensive queries.
+    - Resource caps enforced (memory, work_mem, CPU).
+    - Prevent denial-of-service via expensive queries.
 
 24. Audit & monitoring depth
-
-    * Privileged operations (DDL, GRANT, role changes) logged and alerted.
-    * Centralized monitoring with anomaly detection.
+    - Privileged operations (DDL, GRANT, role changes) logged and alerted.
+    - Centralized monitoring with anomaly detection.
 
 25. PII in logs/metrics
-
-    * ORM debug or query logs do not leak PII or secrets.
-    * Redaction/allowlisting enforced.
+    - ORM debug or query logs do not leak PII or secrets.
+    - Redaction/allowlisting enforced.
 
 26. Indexing of sensitive data
-
-    * Sensitive fields (e.g., SSN, tokens) not indexed in plaintext.
-    * Use hashed/indexed tokens or partial indexes where needed.
+    - Sensitive fields (e.g., SSN, tokens) not indexed in plaintext.
+    - Use hashed/indexed tokens or partial indexes where needed.
 
 27. Service/account lifecycle
-
-    * No shared admin accounts.
-    * Time-bound, purpose-specific service accounts.
-    * Periodic review of granted privileges.
+    - No shared admin accounts.
+    - Time-bound, purpose-specific service accounts.
+    - Periodic review of granted privileges.
 
 28. Caching layers
-
-    * Sensitive data not cached in plaintext unless justified.
-    * Redis/Memcached require auth, not publicly exposed.
+    - Sensitive data not cached in plaintext unless justified.
+    - Redis/Memcached require auth, not publicly exposed.
 
 29. Analytics/ETL exports
-
-    * PII masked or de-identified before export.
-    * Exports encrypted, access-controlled, and scrubbed of secrets.
+    - PII masked or de-identified before export.
+    - Exports encrypted, access-controlled, and scrubbed of secrets.
 
 ---
 
 👉 Critical flags:
 
-* Direct string concatenation in queries = CRITICAL.
-* Passing raw user JSON into NoSQL queries without sanitization = CRITICAL.
+- Direct string concatenation in queries = CRITICAL.
+- Passing raw user JSON into NoSQL queries without sanitization = CRITICAL.
 
 ---
 

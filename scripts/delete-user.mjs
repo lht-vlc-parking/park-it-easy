@@ -22,8 +22,8 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 async function deleteUser(email) {
@@ -31,14 +31,14 @@ async function deleteUser(email) {
 
   // 1. Find the user
   const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-  
+
   if (listError) {
     console.error('❌ Error listing users:', listError);
     return;
   }
 
   const user = users.users.find(u => u.email === email);
-  
+
   if (!user) {
     console.log('❌ User not found');
     return;
@@ -47,10 +47,7 @@ async function deleteUser(email) {
   console.log(`✅ Found user: ${user.email} (ID: ${user.id})\n`);
 
   // 2. Delete associated bookings first (optional)
-  const { error: bookingsError } = await supabase
-    .from('bookings')
-    .delete()
-    .eq('user_id', user.id);
+  const { error: bookingsError } = await supabase.from('bookings').delete().eq('user_id', user.id);
 
   if (bookingsError) {
     console.log('⚠️  Warning: Could not delete bookings:', bookingsError.message);

@@ -19,28 +19,19 @@ async function generateFavicons() {
 
   for (const { name, size } of sizes) {
     const outputPath = path.join(outputDir, name);
-    
-    await sharp(svgPath)
-      .resize(size, size)
-      .png()
-      .toFile(outputPath);
-    
+
+    await sharp(svgPath).resize(size, size).png().toFile(outputPath);
+
     console.log(`✅ Generated ${name} (${size}x${size})`);
   }
 
   // Generate favicon.ico (multi-size .ico file)
   const icoPath = path.join(outputDir, 'favicon.ico');
-  await sharp(svgPath)
-    .resize(32, 32)
-    .png()
-    .toFile(icoPath.replace('.ico', '-temp.png'));
-  
+  await sharp(svgPath).resize(32, 32).png().toFile(icoPath.replace('.ico', '-temp.png'));
+
   // Rename temp file to .ico (sharp doesn't support .ico directly)
-  await fs.rename(
-    icoPath.replace('.ico', '-temp.png'),
-    icoPath
-  );
-  
+  await fs.rename(icoPath.replace('.ico', '-temp.png'), icoPath);
+
   console.log('✅ Generated favicon.ico (32x32)');
   console.log('\n✨ All favicons generated successfully!');
 }

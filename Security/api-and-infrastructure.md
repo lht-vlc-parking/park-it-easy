@@ -2,10 +2,10 @@
 
 Review API-specific security configurations.
 
-
 Check for:
+
 1. CORS configuration
-   - Not using wildcard (*) in production
+   - Not using wildcard (\*) in production
    - Proper origin validation
    - Credentials handling
 

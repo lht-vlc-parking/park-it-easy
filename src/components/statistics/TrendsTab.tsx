@@ -293,7 +293,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
   return (
     <div className="space-y-6">
       {/* ─── Time Range Selector ──────────────────────────────────── */}
-      <div className="sticky top-0 z-10 -mx-4 bg-background/80 px-4 py-3 backdrop-blur-md">
+      <div className="bg-background/80 sticky top-0 z-10 -mx-4 px-4 py-3 backdrop-blur-md">
         <div className="flex flex-wrap gap-2">
           {(Object.entries(TIME_RANGE_LABELS) as [TimeRange, string][]).map(([key, label]) => (
             <Button
@@ -314,7 +314,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
         <Card className="glass-card hover-lift">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Activity className="h-5 w-5 text-primary" />
+              <Activity className="text-primary h-5 w-5" />
               Daily Occupancy Rate
             </CardTitle>
             <CardDescription>Weekday parking utilization over time</CardDescription>
@@ -395,23 +395,23 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
           <Card className="glass-card hover-lift">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <Flame className="h-4 w-4 text-warning" />
+                <Flame className="text-warning h-4 w-4" />
                 Busiest Period
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-warning">
+                  <p className="text-warning text-xs font-medium tracking-wide uppercase">
                     Hottest month
                   </p>
                   <p className="text-lg font-bold">{busiestMonth.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {busiestMonth.occupancy}% avg occupancy
                   </p>
                 </div>
                 <div className="border-t pt-2">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Quietest: {quietestMonth.name} ({quietestMonth.occupancy}%)
                   </p>
                 </div>
@@ -423,7 +423,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
           <Card className="glass-card hover-lift">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <Zap className="h-4 w-4 text-destructive" />
+                <Zap className="text-destructive h-4 w-4" />
                 Unmet Demand
               </CardTitle>
             </CardHeader>
@@ -431,18 +431,18 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
               <div className="space-y-2">
                 <p className="text-2xl font-bold">
                   {demandInsights.fullDayCount}
-                  <span className="text-sm font-normal text-muted-foreground">
+                  <span className="text-muted-foreground text-sm font-normal">
                     {' '}
                     / {demandInsights.totalWorkdays} days
                   </span>
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   at full capacity ({demandInsights.percentage}%)
                 </p>
                 {demandInsights.mostCommonDay && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Most common full day:{' '}
-                    <span className="font-semibold text-foreground">
+                    <span className="text-foreground font-semibold">
                       {demandInsights.mostCommonDay}
                     </span>
                   </p>
@@ -455,7 +455,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
           <Card className="glass-card hover-lift">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <Calendar className="h-4 w-4 text-info" />
+                <Calendar className="text-info h-4 w-4" />
                 Next Month Forecast
               </CardTitle>
               <CardDescription className="text-xs">{nextMonthName} prediction</CardDescription>
@@ -465,12 +465,12 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-3xl font-bold">{prediction.predicted}%</span>
-                    {prediction.trend === 'up' && <TrendingUp className="h-5 w-5 text-warning" />}
+                    {prediction.trend === 'up' && <TrendingUp className="text-warning h-5 w-5" />}
                     {prediction.trend === 'down' && (
-                      <TrendingDown className="h-5 w-5 text-success" />
+                      <TrendingDown className="text-success h-5 w-5" />
                     )}
                     {prediction.trend === 'stable' && (
-                      <Minus className="h-5 w-5 text-muted-foreground" />
+                      <Minus className="text-muted-foreground h-5 w-5" />
                     )}
                   </div>
                   <p
@@ -493,7 +493,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Not enough data for a prediction yet
                 </p>
               )}
@@ -507,7 +507,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
         <Card className="glass-card hover-lift">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <TrendingUp className="h-5 w-5 text-primary" />
+              <TrendingUp className="text-primary h-5 w-5" />
               Bookings by Day of Week
             </CardTitle>
             <CardDescription>Total bookings per weekday in the selected period</CardDescription>
@@ -552,14 +552,14 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Calendar className="h-5 w-5 text-primary" />
+                  <Calendar className="text-primary h-5 w-5" />
                   Monthly Occupancy Calendar
                 </CardTitle>
                 <CardDescription className="mt-1">
                   {MONTH_NAMES[calendarData.month]} {calendarData.year}
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-3 rounded-full bg-muted/50 px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
+              <div className="bg-muted/50 text-muted-foreground flex items-center gap-3 rounded-full px-3 py-1.5 text-[11px] font-medium">
                 <span className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />
                   Free
@@ -581,7 +581,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
               {DAY_NAMES.map(name => (
                 <div
                   key={name}
-                  className="py-2 text-center text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70"
+                  className="text-muted-foreground/70 py-2 text-center text-[11px] font-semibold tracking-widest uppercase"
                 >
                   {name}
                 </div>
@@ -639,7 +639,7 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
                           key={day.dayOfMonth}
                           className={`group relative flex aspect-square cursor-default flex-col items-center justify-center rounded-xl transition-all duration-200 ${statusColor} ${
                             isToday
-                              ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                              ? 'ring-primary ring-offset-background ring-2 ring-offset-1'
                               : ''
                           } ${isPast ? 'opacity-60' : ''} hover:opacity-100 hover:shadow-md`}
                         >
@@ -650,11 +650,11 @@ export function TrendsTab({ bookings }: TrendsTabProps) {
                           >
                             {day.dayOfMonth}
                           </span>
-                          <span className="mt-0.5 text-[10px] tabular-nums text-muted-foreground sm:text-xs">
+                          <span className="text-muted-foreground mt-0.5 text-[10px] tabular-nums sm:text-xs">
                             {day.bookings}/2
                           </span>
                           {/* Occupancy bar */}
-                          <div className="mt-1 h-1 w-3/5 overflow-hidden rounded-full bg-muted/60 sm:mt-1.5 sm:h-1.5">
+                          <div className="bg-muted/60 mt-1 h-1 w-3/5 overflow-hidden rounded-full sm:mt-1.5 sm:h-1.5">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${barColor} ${barWidth}`}
                             />

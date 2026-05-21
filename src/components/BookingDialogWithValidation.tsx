@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,14 @@ export const BookingDialogWithValidation = ({
   const [duration, setDuration] = useState<'morning' | 'afternoon' | 'full'>('full');
   const [vehicleType, setVehicleType] = useState<'car' | 'motorcycle'>('car');
   const [isValidating, setIsValidating] = useState(false);
+
+  // Prefill today's date when dialog opens
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDate(new Date(new Date().setHours(0, 0, 0, 0)));
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!date) {
@@ -119,11 +127,11 @@ export const BookingDialogWithValidation = ({
                 <Button
                   variant="outline"
                   className={cn(
-                    'h-12 w-full justify-start border-2 text-left font-normal transition-all hover:border-primary/50',
+                    'hover:border-primary/50 h-12 w-full justify-start border-2 text-left font-normal transition-all',
                     !date && 'text-muted-foreground'
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                  <CalendarIcon className="text-primary mr-2 h-4 w-4" />
                   {date ? format(date, 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
@@ -148,16 +156,17 @@ export const BookingDialogWithValidation = ({
               onValueChange={v => setVehicleType(v as 'car' | 'motorcycle')}
               className="grid grid-cols-2 gap-3"
             >
-              <div
+              <Label
+                htmlFor="car"
                 className={cn(
                   'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all',
                   vehicleType === 'car'
-                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                    ? 'border-primary bg-primary/10 shadow-primary/10 shadow-lg'
                     : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 )}
               >
                 <RadioGroupItem value="car" id="car" className="hidden" />
-                <Label htmlFor="car" className="flex cursor-pointer flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-2">
                   <Car
                     className={cn(
                       'h-8 w-8',
@@ -167,21 +176,19 @@ export const BookingDialogWithValidation = ({
                   <span className={cn('font-medium', vehicleType === 'car' && 'text-primary')}>
                     Car
                   </span>
-                </Label>
-              </div>
-              <div
+                </div>
+              </Label>
+              <Label
+                htmlFor="motorcycle"
                 className={cn(
                   'flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all',
                   vehicleType === 'motorcycle'
-                    ? 'border-accent bg-accent/10 shadow-lg shadow-accent/10'
+                    ? 'border-accent bg-accent/10 shadow-accent/10 shadow-lg'
                     : 'border-border hover:border-accent/50 hover:bg-muted/50'
                 )}
               >
                 <RadioGroupItem value="motorcycle" id="motorcycle" className="hidden" />
-                <Label
-                  htmlFor="motorcycle"
-                  className="flex cursor-pointer flex-col items-center gap-2"
-                >
+                <div className="flex flex-col items-center gap-2">
                   <Bike
                     className={cn(
                       'h-8 w-8',
@@ -193,8 +200,8 @@ export const BookingDialogWithValidation = ({
                   >
                     Motorcycle
                   </span>
-                </Label>
-              </div>
+                </div>
+              </Label>
             </RadioGroup>
           </div>
 
@@ -223,7 +230,7 @@ export const BookingDialogWithValidation = ({
                   />
                   <div>
                     <div className="font-medium">Full Day</div>
-                    <div className="text-xs text-muted-foreground">8:00 AM - 6:00 PM</div>
+                    <div className="text-muted-foreground text-xs">8:00 AM - 6:00 PM</div>
                   </div>
                 </Label>
               </div>
@@ -245,7 +252,7 @@ export const BookingDialogWithValidation = ({
                   />
                   <div>
                     <div className="font-medium">Morning</div>
-                    <div className="text-xs text-muted-foreground">8:00 AM - 1:00 PM</div>
+                    <div className="text-muted-foreground text-xs">8:00 AM - 1:00 PM</div>
                   </div>
                 </Label>
               </div>
@@ -270,7 +277,7 @@ export const BookingDialogWithValidation = ({
                   />
                   <div>
                     <div className="font-medium">Afternoon</div>
-                    <div className="text-xs text-muted-foreground">1:00 PM - 6:00 PM</div>
+                    <div className="text-muted-foreground text-xs">1:00 PM - 6:00 PM</div>
                   </div>
                 </Label>
               </div>
@@ -289,7 +296,7 @@ export const BookingDialogWithValidation = ({
           </Button>
           <Button
             onClick={handleSubmit}
-            className="gradient-primary h-12 flex-1 font-semibold text-white shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50"
+            className="gradient-primary shadow-primary/30 hover:shadow-primary/50 h-12 flex-1 font-semibold text-white shadow-lg transition-all"
             disabled={isValidating}
           >
             {isValidating ? (

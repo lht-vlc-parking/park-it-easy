@@ -3,6 +3,7 @@
 Scan entire codebase for exposed secrets
 
 Check for:
+
 1. Hardcoded secrets
    - API keys
    - Database passwords

@@ -24,10 +24,11 @@ describe('ParkingSpotCard', () => {
       expect(button).toBeEnabled();
     });
 
-    it('should enable button even when spot has today bookings (shows "View Options")', () => {
+    it('should enable button even when spot has today bookings (shows "Book This Spot")', () => {
       const onBook = vi.fn();
       const today = new Date().toISOString().split('T')[0];
 
+      // Car alone (3/4 units) - partial availability
       const currentBookings = [
         makeBooking({
           id: '1',
@@ -40,8 +41,8 @@ describe('ParkingSpotCard', () => {
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
 
-      // When fully booked, button shows "View Options"
-      const button = screen.getByRole('button', { name: /view options/i });
+      // With new capacity system, a car leaves room for 1 motorcycle
+      const button = screen.getByRole('button', { name: /book this spot/i });
       expect(button).toBeEnabled();
     });
 
@@ -49,7 +50,7 @@ describe('ParkingSpotCard', () => {
       const onBook = vi.fn();
       const today = new Date().toISOString().split('T')[0];
 
-      // Fully booked with car for full day
+      // Fully booked with car (3 units) + motorcycle (1 unit) = 4 units total
       const currentBookings = [
         makeBooking({
           id: '1',
@@ -57,6 +58,13 @@ describe('ParkingSpotCard', () => {
           duration: 'full',
           vehicle_type: 'car',
           user_name: 'John Doe',
+        }),
+        makeBooking({
+          id: '2',
+          date: today,
+          duration: 'full',
+          vehicle_type: 'motorcycle',
+          user_name: 'Jane Doe',
         }),
       ];
 
@@ -67,12 +75,12 @@ describe('ParkingSpotCard', () => {
       expect(button).toBeEnabled();
     });
 
-    it('should enable "Book This Spot" button when motorcycles are at capacity but no car', () => {
+    it('should enable "Book This Spot" button when some motorcycles are present but not at capacity', () => {
       const onBook = vi.fn();
       const today = new Date().toISOString().split('T')[0];
 
-      // 4 motorcycles (at capacity) - this is "partial" status
-      const currentBookings = Array.from({ length: 4 }, (_, i) =>
+      // 3 motorcycles (3/4 units) - room for 1 more motorcycle, so "partial" status
+      const currentBookings = Array.from({ length: 3 }, (_, i) =>
         makeBooking({
           id: `${i + 1}`,
           date: today,
@@ -85,7 +93,7 @@ describe('ParkingSpotCard', () => {
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
 
       const button = screen.getByRole('button', { name: /book this spot/i });
-      // Button should be enabled because users can book for other days
+      // Button should be enabled because users can add more motorcycles
       expect(button).toBeEnabled();
     });
 
@@ -126,10 +134,11 @@ describe('ParkingSpotCard', () => {
       expect(button).toBeEnabled();
     });
 
-    it('should show "View Options" when car fully booked, not "Book This Spot"', () => {
+    it('should show "Book This Spot" when car is present, as room exists for motorcycle', () => {
       const onBook = vi.fn();
       const today = new Date().toISOString().split('T')[0];
 
+      // Car alone (3/4 units) - room for 1 motorcycle, so "Book This Spot"
       const currentBookings = [
         makeBooking({
           id: '1',
@@ -142,9 +151,9 @@ describe('ParkingSpotCard', () => {
 
       render(<ParkingSpotCard spotNumber={84} currentBookings={currentBookings} onBook={onBook} />);
 
-      // Button should say "View Options" when fully booked
-      expect(screen.getByRole('button', { name: /view options/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /book this spot/i })).not.toBeInTheDocument();
+      // With new capacity system, car leaves room for motorcycle, so shows "Book This Spot"
+      expect(screen.getByRole('button', { name: /book this spot/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /view options/i })).not.toBeInTheDocument();
     });
   });
 
@@ -161,6 +170,7 @@ describe('ParkingSpotCard', () => {
       const onBook = vi.fn();
       const today = new Date().toISOString().split('T')[0];
 
+      // Fully booked: car (3 units) + motorcycle (1 unit) = 4 units
       const currentBookings = [
         makeBooking({
           id: '1',
@@ -168,6 +178,13 @@ describe('ParkingSpotCard', () => {
           duration: 'full',
           vehicle_type: 'car',
           user_name: 'John Doe',
+        }),
+        makeBooking({
+          id: '2',
+          date: today,
+          duration: 'full',
+          vehicle_type: 'motorcycle',
+          user_name: 'Jane Doe',
         }),
       ];
 
@@ -203,6 +220,7 @@ describe('ParkingSpotCard', () => {
       const onBook = vi.fn();
       const today = new Date().toISOString().split('T')[0];
 
+      // Fully booked: car (3 units) + motorcycle (1 unit) = 4 units
       const currentBookings = [
         makeBooking({
           id: '1',
@@ -210,6 +228,13 @@ describe('ParkingSpotCard', () => {
           duration: 'full',
           vehicle_type: 'car',
           user_name: 'John Doe',
+        }),
+        makeBooking({
+          id: '2',
+          date: today,
+          duration: 'full',
+          vehicle_type: 'motorcycle',
+          user_name: 'Jane Doe',
         }),
       ];
 

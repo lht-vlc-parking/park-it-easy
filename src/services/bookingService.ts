@@ -14,6 +14,7 @@ export interface CreateBookingData {
   duration: Duration;
   vehicle_type: VehicleType;
   spot_number: number;
+  related_vehicle_type?: VehicleType; // For future car+moto combo bookings
 }
 
 export interface BookingResult {
@@ -30,7 +31,8 @@ const dbBookingSchema = z.object({
   vehicle_type: vehicleTypeSchema,
   user_name: z.string(),
   spot_number: z.number(),
-  user_id: z.string(),
+  user_id: z.string().optional(),
+  capacity: z.number().optional(),
   created_at: z.string().optional(),
 });
 
@@ -41,6 +43,16 @@ const dbBookingSchema = z.object({
 export class BookingService {
   private static readonly MAX_MOTORCYCLES = 4;
   private static readonly VALID_SPOTS = [84, 85];
+  private static readonly SPOT_CAPACITY = 4;
+  private static readonly CAR_CAPACITY = 3;
+  private static readonly MOTORCYCLE_CAPACITY = 1;
+
+  /**
+   * Get capacity required for a vehicle type
+   */
+  private static getCapacityForVehicle(vehicleType: VehicleType): number {
+    return vehicleType === 'car' ? this.CAR_CAPACITY : this.MOTORCYCLE_CAPACITY;
+  }
 
   /**
    * Check if two time durations overlap
@@ -115,20 +127,8 @@ export class BookingService {
         })
         .filter(Boolean) || [];
 
-    // Check for car conflicts
+    // Check for car conflicts (cars cannot overlap with other cars)
     if (vehicleType === 'car') {
-      const hasConflict = validatedBookings.some(b => this.overlaps(duration, b.duration));
-
-      if (hasConflict) {
-        return {
-          valid: false,
-          error: 'This spot already has a booking at that time',
-        };
-      }
-    }
-
-    // Check for motorcycle conflicts
-    if (vehicleType === 'motorcycle') {
       const carConflict = validatedBookings.some(
         b => b.vehicle_type === 'car' && this.overlaps(duration, b.duration)
       );
@@ -136,20 +136,27 @@ export class BookingService {
       if (carConflict) {
         return {
           valid: false,
-          error: 'A car is booked for that time on this spot',
+          error: 'This spot already has a car booking at that time',
         };
       }
+    }
 
-      const motorcycleCount = validatedBookings.filter(
-        b => b.vehicle_type === 'motorcycle' && this.overlaps(duration, b.duration)
-      ).length;
+    // Motorcycles can coexist with cars; capacity check handles the limit
 
-      if (motorcycleCount >= this.MAX_MOTORCYCLES) {
-        return {
-          valid: false,
-          error: `Maximum ${this.MAX_MOTORCYCLES} motorcycles allowed at the same time`,
-        };
-      }
+    // Check total capacity for the time slot
+    const requiredCapacity = this.getCapacityForVehicle(vehicleType);
+    const overlappingBookings = validatedBookings.filter(b => this.overlaps(duration, b.duration));
+    const usedCapacity = overlappingBookings.reduce(
+      (sum, b) => sum + (b.capacity || this.getCapacityForVehicle(b.vehicle_type)),
+      0
+    );
+
+    if (usedCapacity + requiredCapacity > this.SPOT_CAPACITY) {
+      const availableCapacity = this.SPOT_CAPACITY - usedCapacity;
+      return {
+        valid: false,
+        error: `Not enough capacity. Available: ${availableCapacity} units, Required: ${requiredCapacity} units`,
+      };
     }
 
     return { valid: true };
@@ -189,6 +196,7 @@ export class BookingService {
           duration: data.duration,
           vehicle_type: data.vehicle_type,
           spot_number: data.spot_number,
+          capacity: this.getCapacityForVehicle(data.vehicle_type),
         })
         .select()
         .single();

@@ -14,16 +14,25 @@ export const supabase: SupabaseClient<Database> = isSupabaseConfigured
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: true
-      }
+        detectSessionInUrl: true,
+      },
     })
   : ({
       auth: {
         getSession: async () => ({ data: { session: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        signInWithPassword: async () => ({ data: { user: null, session: null }, error: new Error('Supabase not configured') }),
-        signUp: async () => ({ data: { user: null, session: null }, error: new Error('Supabase not configured') }),
+        signInWithPassword: async () => ({
+          data: { user: null, session: null },
+          error: new Error('Supabase not configured'),
+        }),
+        signUp: async () => ({
+          data: { user: null, session: null },
+          error: new Error('Supabase not configured'),
+        }),
         signOut: async () => ({ error: null }),
-        resetPasswordForEmail: async () => ({ data: {}, error: new Error('Supabase not configured') }),
-      }
+        resetPasswordForEmail: async () => ({
+          data: {},
+          error: new Error('Supabase not configured'),
+        }),
+      },
     } as unknown as SupabaseClient<Database>);

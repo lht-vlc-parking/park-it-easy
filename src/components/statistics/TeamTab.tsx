@@ -265,7 +265,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
                     <span className="max-w-[80px] truncate text-center text-xs font-semibold sm:max-w-[100px] sm:text-sm">
                       {u.name}
                     </span>
-                    <span className="text-xs text-muted-foreground">{u.total} bookings</span>
+                    <span className="text-muted-foreground text-xs">{u.total} bookings</span>
 
                     {/* Podium block */}
                     <div
@@ -289,27 +289,27 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
                   return (
                     <div
                       key={u.name}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${isMe ? 'border border-primary/30 bg-primary/5' : 'hover:bg-muted/50'}`}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${isMe ? 'border-primary/30 bg-primary/5 border' : 'hover:bg-muted/50'}`}
                     >
-                      <span className="w-6 text-center text-sm font-bold text-muted-foreground">
+                      <span className="text-muted-foreground w-6 text-center text-sm font-bold">
                         {rank + 1}
                       </span>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                      <div className="bg-primary/20 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold">
                         {getInitials(u.name)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
                           <span className="truncate text-sm font-medium">{u.name}</span>
                           {isMe && (
-                            <span className="shrink-0 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                            <span className="bg-primary/20 text-primary shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                               You
                             </span>
                           )}
                         </div>
                         {/* Progress bar */}
-                        <div className="mt-1 h-1.5 w-full rounded-full bg-muted">
+                        <div className="bg-muted mt-1 h-1.5 w-full rounded-full">
                           <div
-                            className="h-1.5 rounded-full bg-primary/60 transition-all duration-500"
+                            className="bg-primary/60 h-1.5 rounded-full transition-all duration-500"
                             style={{
                               width: `${(u.total / maxTotal) * 100}%`,
                             }}
@@ -324,7 +324,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
             )}
 
             {rankedUsers.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">No booking data yet.</p>
+              <p className="text-muted-foreground py-8 text-center text-sm">No booking data yet.</p>
             )}
           </CardContent>
         </Card>
@@ -336,7 +336,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
         <Card className="glass-card hover-lift">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Car className="h-4 w-4 text-info" />
+              <Car className="text-info h-4 w-4" />
               Team Vehicle Mix
             </CardTitle>
           </CardHeader>
@@ -402,7 +402,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
         <Card className="glass-card hover-lift">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Star className="h-4 w-4 text-primary" />
+              <Star className="text-primary h-4 w-4" />
               Spot Popularity by Day
             </CardTitle>
           </CardHeader>
@@ -428,7 +428,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Users className="h-4 w-4 text-primary" />
+                  <Users className="text-primary h-4 w-4" />
                   Booking Distribution Fairness
                 </CardTitle>
                 <CardDescription>
@@ -447,7 +447,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
                 >
                   {Math.round(fairnessScore)}
                 </div>
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
                   current
                 </span>
               </div>
@@ -508,7 +508,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
         <Card className="glass-card hover-lift">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Bike className="h-4 w-4 text-warning" />
+              <Bike className="text-warning h-4 w-4" />
               Team Member Details
             </CardTitle>
             <CardDescription>All-time stats for every team member</CardDescription>
@@ -516,12 +516,12 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
           <CardContent className="-mx-2 overflow-x-auto px-2 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[600px] text-sm">
               <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="pb-2 pr-2 font-medium">#</th>
-                  <th className="pb-2 pr-4 font-medium">Name</th>
-                  <th className="pb-2 pr-4 text-right font-medium">Bookings</th>
-                  <th className="pb-2 pr-4 font-medium">Car / Motorcycle</th>
-                  <th className="pb-2 pr-4 font-medium">Spot Pref</th>
+                <tr className="text-muted-foreground border-b text-left text-xs">
+                  <th className="pr-2 pb-2 font-medium">#</th>
+                  <th className="pr-4 pb-2 font-medium">Name</th>
+                  <th className="pr-4 pb-2 text-right font-medium">Bookings</th>
+                  <th className="pr-4 pb-2 font-medium">Car / Motorcycle</th>
+                  <th className="pr-4 pb-2 font-medium">Spot Pref</th>
                   <th className="pb-2 font-medium">First Booking</th>
                 </tr>
               </thead>
@@ -548,7 +548,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
                         <div className="flex items-center gap-1.5">
                           {u.name}
                           {isMe && (
-                            <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                            <span className="bg-primary/20 text-primary rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                               You
                             </span>
                           )}
@@ -563,33 +563,33 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
                       {/* Mini stacked bar */}
                       <td className="py-2.5 pr-4">
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-20 overflow-hidden rounded-full bg-muted">
+                          <div className="bg-muted h-2 w-20 overflow-hidden rounded-full">
                             <div
-                              className="h-full bg-info"
+                              className="bg-info h-full"
                               style={{
                                 width: `${carPct}%`,
                               }}
                             />
                           </div>
-                          <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+                          <span className="text-muted-foreground text-[11px] whitespace-nowrap">
                             {u.cars}C / {u.motorcycles}M
                           </span>
                         </div>
                       </td>
 
                       {/* Spot preference */}
-                      <td className="py-2.5 pr-4 text-xs text-muted-foreground">
-                        <span className={u.spot84 >= u.spot85 ? 'font-semibold text-success' : ''}>
+                      <td className="text-muted-foreground py-2.5 pr-4 text-xs">
+                        <span className={u.spot84 >= u.spot85 ? 'text-success font-semibold' : ''}>
                           84: {u.spot84}
                         </span>
                         {' / '}
-                        <span className={u.spot85 > u.spot84 ? 'font-semibold text-primary' : ''}>
+                        <span className={u.spot85 > u.spot84 ? 'text-primary font-semibold' : ''}>
                           85: {u.spot85}
                         </span>
                       </td>
 
                       {/* First booking */}
-                      <td className="py-2.5 text-xs text-muted-foreground">
+                      <td className="text-muted-foreground py-2.5 text-xs">
                         {new Date(u.firstDate).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -603,7 +603,7 @@ export default function TeamTab({ bookings, currentUserName, fairnessScore }: Te
             </table>
 
             {rankedUsers.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">No booking data yet.</p>
+              <p className="text-muted-foreground py-8 text-center text-sm">No booking data yet.</p>
             )}
           </CardContent>
         </Card>

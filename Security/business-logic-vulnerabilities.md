@@ -6,6 +6,7 @@ Critical business operations:
 [paste payment, transfer, or sensitive operations code]
 
 Check for:
+
 1. Race conditions
    - Concurrent request handling
    - Double-spending prevention

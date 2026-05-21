@@ -1,6 +1,7 @@
 Review all file upload functionality:
 
 Check for:
+
 1. File type validation (whitelist, not blacklist)
 2. File size limits
 3. Filename sanitization

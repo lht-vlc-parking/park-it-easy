@@ -1,8 +1,8 @@
 ---
 name: Feature Request
 description: Suggest a new feature or enhancement
-title: "[FEATURE] "
-labels: ["enhancement", "triage"]
+title: '[FEATURE] '
+labels: ['enhancement', 'triage']
 assignees: []
 body:
   - type: markdown
@@ -15,7 +15,7 @@ body:
     attributes:
       label: Feature Summary
       description: A brief description of the feature you'd like to see.
-      placeholder: "Add support for recurring bookings..."
+      placeholder: 'Add support for recurring bookings...'
     validations:
       required: true
 
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Problem/Use Case
       description: What problem would this feature solve? What's the use case?
-      placeholder: "Currently, users have to book parking spots every day. It would be great if they could set up recurring bookings for regular schedules."
+      placeholder: 'Currently, users have to book parking spots every day. It would be great if they could set up recurring bookings for regular schedules.'
     validations:
       required: true
 
@@ -42,7 +42,7 @@ body:
     attributes:
       label: Alternative Solutions
       description: Have you considered any alternative approaches?
-      placeholder: "We could also add calendar integration or bulk booking options."
+      placeholder: 'We could also add calendar integration or bulk booking options.'
 
   - type: dropdown
     id: priority

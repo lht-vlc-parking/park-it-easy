@@ -51,12 +51,14 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Setting Up Your Development Environment
 
 1. Fork and clone the repository:
+
    ```bash
    git clone https://github.com/YOUR-USERNAME/park-it-easy-office.git
    cd park-it-easy-office
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -65,7 +67,6 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
    ```bash
    cp .env.example .env
    ```
-   
 4. Add your Supabase credentials to `.env`
 
 5. Start the development server:
@@ -76,6 +77,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Development Process
 
 1. **Create a new branch** for your feature or bugfix:
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -85,18 +87,20 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 2. **Make your changes** following our coding standards
 
 3. **Test your changes**:
+
    ```bash
    # Run unit tests
    npm test
-   
+
    # Run E2E tests
    npm run test:e2e
-   
+
    # Run linter
    npm run lint
    ```
 
 4. **Commit your changes** with a descriptive commit message:
+
    ```bash
    git commit -m "feat: add new feature X"
    # or
@@ -104,6 +108,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
    ```
 
 5. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -125,25 +130,26 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 - **Use functional components** with hooks
 - **Follow the component structure**:
+
   ```tsx
   // 1. Imports
   import { useState } from "react";
-  
+
   // 2. Types/Interfaces
   interface MyComponentProps {
     // ...
   }
-  
+
   // 3. Component
   export const MyComponent = ({ prop1, prop2 }: MyComponentProps) => {
     // 4. Hooks
     const [state, setState] = useState();
-    
+
     // 5. Event handlers
     const handleClick = () => {
       // ...
     };
-    
+
     // 6. Render
     return (
       // JSX
@@ -183,19 +189,20 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 - **Test edge cases** and error conditions
 
 Example test structure:
+
 ```typescript
 describe('MyComponent', () => {
   it('should render correctly with valid props', () => {
     // Arrange
     const props = { ... };
-    
+
     // Act
     render(<MyComponent {...props} />);
-    
+
     // Assert
     expect(screen.getByText('...')).toBeInTheDocument();
   });
-  
+
   it('should handle error state gracefully', () => {
     // ...
   });
@@ -210,6 +217,7 @@ describe('MyComponent', () => {
 - **Reference issues and pull requests** after the first line
 
 Commit message format:
+
 ```
 <type>: <subject>
 
@@ -219,6 +227,7 @@ Commit message format:
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -228,6 +237,7 @@ Types:
 - `chore`: Maintenance tasks
 
 Example:
+
 ```
 feat: add motorcycle capacity validation
 

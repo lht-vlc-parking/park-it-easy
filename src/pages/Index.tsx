@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Calendar, LogOut, User, Clock, Activity } from 'lucide-react';
+import { BarChart3, Calendar, LogOut, User, Clock, Activity, Car, Bike } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/v2/ThemeToggle';
 import { getUserErrorMessage } from '@/lib/errorMessages';
@@ -71,8 +72,35 @@ const Index = () => {
     });
   };
 
-  // All bookings are already filtered to >= today by the query
-  const allUpcomingBookings = bookings;
+  // Group bookings by date + spot to show one card per spot/day
+  const groupedUpcomingBookings = useMemo(() => {
+    const map = new Map<string, { date: string; spot_number: number; bookings: typeof bookings }>();
+    bookings.forEach(b => {
+      const key = `${b.date}::${b.spot_number}`;
+      if (!map.has(key)) {
+        map.set(key, { date: b.date, spot_number: b.spot_number, bookings: [b] });
+      } else {
+        map.get(key)!.bookings.push(b);
+      }
+    });
+
+    return Array.from(map.values()).map(group => {
+      // Prefer a car booking as representative when present, otherwise first booking
+      const representative =
+        group.bookings.find(x => x.vehicle_type === 'car') || group.bookings[0];
+      return {
+        id: group.bookings.map(x => x.id).join(','),
+        date: group.date,
+        spot_number: group.spot_number,
+        vehicle_type: representative.vehicle_type,
+        duration: representative.duration,
+        user_name: representative.user_name,
+        user_id: representative.user_id,
+        created_at: representative.created_at,
+        bookings: group.bookings,
+      };
+    });
+  }, [bookings]);
 
   const spot84Bookings = useMemo(() => bookings.filter(b => b.spot_number === 84), [bookings]);
   const spot85Bookings = useMemo(() => bookings.filter(b => b.spot_number === 85), [bookings]);
@@ -142,11 +170,11 @@ const Index = () => {
   }, [myBookings, today]);
 
   return (
-    <div className="mesh-gradient min-h-screen bg-background">
+    <div className="mesh-gradient bg-background min-h-screen">
       {/* Hero Section with liquid glass effect */}
       <div className="liquid-gradient relative overflow-hidden px-4 py-8 text-white shadow-xl md:py-12">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-        <div className="container relative z-10 mx-auto max-w-6xl">
+        <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent"></div>
+        <div className="relative z-10 container mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="animate-fade-in-up flex-1">
               <h1 className="mb-2 text-3xl font-bold tracking-tight md:mb-4 md:text-5xl">
@@ -188,7 +216,7 @@ const Index = () => {
       <div className="container mx-auto max-w-6xl space-y-6 px-4 py-6 md:space-y-8 md:py-8">
         {loading ? (
           <div className="animate-fade-in py-12 text-center">
-            <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+            <div className="border-primary mb-4 inline-block h-12 w-12 animate-spin rounded-full border-b-2"></div>
             <p className="text-muted-foreground">Loading bookings...</p>
           </div>
         ) : (
@@ -226,65 +254,39 @@ const Index = () => {
                     Team-wide visibility
                   </Badge>
                 </h2>
-                <p className="ml-10 text-sm text-muted-foreground">
+                <p className="text-muted-foreground ml-10 text-sm">
                   View all team members' parking reservations. Your bookings are marked with a "You"
                   badge.
                 </p>
               </div>
-              {allUpcomingBookings.length > 0 ? (
+              {groupedUpcomingBookings.length > 0 ? (
                 <div className="space-y-3">
-                  {allUpcomingBookings
+                  {groupedUpcomingBookings
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                    .map((booking, index) => {
+                    .map((group, index) => {
                       // Check if booking is today
-                      const isToday = booking.date === today;
+                      const isToday = group.date === today;
 
-                      const isMyBooking = booking.user_id === user?.id;
+                      // If the current user has a booking in this group
+                      const isMyBooking = group.bookings.some(b => b.user_id === user?.id);
 
                       return (
                         <div
-                          key={booking.id}
+                          key={`${group.date}-${group.spot_number}`}
                           className={`glass-card animate-fade-in-up relative flex flex-col justify-between rounded-xl border-2 p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg sm:flex-row sm:items-center ${
                             isToday
                               ? 'border-warning/50 bg-warning/5'
                               : isMyBooking
                                 ? 'border-primary/50 bg-primary/5'
                                 : 'border-border/50'
-                          } ${isToday ? 'ring-2 ring-warning/30 ring-offset-2 ring-offset-background' : ''}`}
+                          } ${isToday ? 'ring-warning/30 ring-offset-background ring-2 ring-offset-2' : ''}`}
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
-                          <div className="absolute right-3 top-3 flex items-center gap-2">
-                            <Badge
-                              className={`px-3 py-1.5 text-xs font-medium shadow-sm sm:text-sm ${
-                                booking.duration === 'full'
-                                  ? 'gradient-primary text-white'
-                                  : booking.duration === 'morning'
-                                    ? 'bg-info text-white'
-                                    : 'bg-warning text-white'
-                              }`}
-                            >
-                              {booking.duration === 'full'
-                                ? 'All Day'
-                                : booking.duration === 'morning'
-                                  ? 'AM'
-                                  : 'PM'}
-                            </Badge>
-                            {isMyBooking && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUnbook(booking.id)}
-                                className="border-destructive/30 text-destructive transition-all hover:border-destructive hover:bg-destructive hover:text-white"
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                          </div>
-                          <div className="mb-3 flex items-center gap-3 sm:mb-0 sm:gap-4">
+                          <div className="mb-3 flex w-full items-start gap-3 sm:mb-0 sm:gap-4">
                             <div
-                              className={`min-w-[50px] rounded-xl p-2 text-center sm:min-w-[60px] ${
+                              className={`min-w-12.5 rounded-xl p-2 text-center sm:min-w-15 ${
                                 isToday
-                                  ? 'bg-warning/20 ring-2 ring-warning'
+                                  ? 'bg-warning/20 ring-warning ring-2'
                                   : isMyBooking
                                     ? 'bg-primary/20'
                                     : 'bg-muted/50'
@@ -299,55 +301,82 @@ const Index = () => {
                                       : 'text-foreground'
                                 }`}
                               >
-                                {new Date(booking.date).getDate()}
+                                {new Date(group.date).getDate()}
                               </div>
-                              <div className="text-xs uppercase text-muted-foreground">
-                                {new Date(booking.date).toLocaleDateString('en-US', {
+                              <div className="text-muted-foreground text-xs uppercase">
+                                {new Date(group.date).toLocaleDateString('en-US', {
                                   month: 'short',
                                 })}
                               </div>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 truncate font-semibold">
-                                {booking.user_name}
+                                Spot {group.spot_number}
+                                <span className="text-muted-foreground text-xs font-normal">
+                                  · {group.bookings?.length}{' '}
+                                  {group.bookings?.length === 1 ? 'booking' : 'bookings'}
+                                </span>
                                 {isToday && (
-                                  <span className="rounded-full bg-warning px-2 py-0.5 text-xs text-white shadow-sm">
+                                  <span className="bg-warning rounded-full px-2 py-0.5 text-xs text-white shadow-sm">
                                     Today
                                   </span>
                                 )}
-                                {isMyBooking && (
-                                  <span className="rounded-full bg-success px-2 py-0.5 text-xs text-white shadow-sm">
-                                    You
-                                  </span>
-                                )}
                               </div>
-                              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-                                <span className="font-medium">Spot {booking.spot_number}</span>
-                                <span className="text-muted-foreground/50">&bull;</span>
-                                <span
-                                  className={`font-medium ${booking.vehicle_type === 'car' ? 'text-info' : 'text-accent'}`}
+                              {group.bookings.map((booking, i) => (
+                                <div
+                                  key={booking.id}
+                                  className="animate-fade-in border-border/50 bg-muted/50 mt-1.5 rounded-lg border p-2"
+                                  style={{ animationDelay: `${i * 50}ms` }}
                                 >
-                                  {booking.vehicle_type === 'car' ? '🚗 Car' : '🏍️ Moto'}
-                                </span>
-                              </div>
-                              {booking.created_at && (
-                                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground/75">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    Created{' '}
-                                    {new Date(booking.created_at).toLocaleDateString('en-US', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                    })}{' '}
-                                    at{' '}
-                                    {new Date(booking.created_at).toLocaleTimeString('en-US', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </span>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      {booking.vehicle_type === 'car' ? (
+                                        <Car className="text-primary h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                                      ) : (
+                                        <Bike className="text-accent h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                                      )}
+                                      <span className="text-xs font-medium break-words sm:text-sm">
+                                        {booking.user_name}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-shrink-0 items-center gap-1.5">
+                                      {booking.user_id === user?.id && (
+                                        <span className="bg-success rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
+                                          You
+                                        </span>
+                                      )}
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          'text-[10px] font-medium whitespace-nowrap sm:text-xs',
+                                          booking.duration === 'full' &&
+                                            'border-primary/50 bg-primary/10 text-primary',
+                                          booking.duration === 'morning' &&
+                                            'border-info/50 bg-info/10 text-info',
+                                          booking.duration === 'afternoon' &&
+                                            'border-warning/50 bg-warning/10 text-warning'
+                                        )}
+                                      >
+                                        {booking.duration === 'full'
+                                          ? 'All Day'
+                                          : booking.duration === 'morning'
+                                            ? 'AM'
+                                            : 'PM'}
+                                      </Badge>
+                                      {booking.user_id === user?.id && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleUnbook(booking.id)}
+                                          className="border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive h-6 px-1.5 text-[10px] transition-all hover:text-white sm:text-xs"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                              )}
+                              ))}
                             </div>
                           </div>
                         </div>
@@ -355,11 +384,9 @@ const Index = () => {
                     })}
                 </div>
               ) : (
-                <div className="glass-card rounded-xl border-2 border-dashed border-muted-foreground/20 py-12 text-center">
-                  <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground opacity-50" />
-                  <p className="font-medium text-muted-foreground">No upcoming bookings</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Book a spot to get started!</p>
-                </div>
+                <p className="text-muted-foreground text-center">
+                  No upcoming bookings yet. Be the first to book a spot!
+                </p>
               )}
             </section>
 
@@ -371,75 +398,75 @@ const Index = () => {
                   My Parking Stats
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <Card className="glass-card hover-lift border-2 border-info/20">
+                  <Card className="glass-card hover-lift border-info/20 border-2">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">
+                          <p className="text-muted-foreground text-sm font-medium">
                             Booking Frequency
                           </p>
-                          <p className="text-3xl font-bold text-info">{myStats.avgPerWeek}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="text-info text-3xl font-bold">{myStats.avgPerWeek}</p>
+                          <p className="text-muted-foreground mt-1 text-xs">
                             bookings/week average
                           </p>
                         </div>
-                        <div className="rounded-xl bg-info/10 p-3">
-                          <Calendar className="h-8 w-8 text-info" />
+                        <div className="bg-info/10 rounded-xl p-3">
+                          <Calendar className="text-info h-8 w-8" />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="glass-card hover-lift border-2 border-success/20">
+                  <Card className="glass-card hover-lift border-success/20 border-2">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">This Week</p>
-                          <p className="text-3xl font-bold text-success">
+                          <p className="text-muted-foreground text-sm font-medium">This Week</p>
+                          <p className="text-success text-3xl font-bold">
                             {myStats.weekBookings.length}
                           </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="text-muted-foreground mt-1 text-xs">
                             {myBookings.length} all-time total
                           </p>
                         </div>
-                        <div className="rounded-xl bg-success/10 p-3">
-                          <BarChart3 className="h-8 w-8 text-success" />
+                        <div className="bg-success/10 rounded-xl p-3">
+                          <BarChart3 className="text-success h-8 w-8" />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="glass-card hover-lift border-2 border-warning/20">
+                  <Card className="glass-card hover-lift border-warning/20 border-2">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">
+                          <p className="text-muted-foreground text-sm font-medium">
                             Preferred Time
                           </p>
-                          <p className="text-3xl font-bold text-warning">{myStats.preferredTime}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">most common choice</p>
+                          <p className="text-warning text-3xl font-bold">{myStats.preferredTime}</p>
+                          <p className="text-muted-foreground mt-1 text-xs">most common choice</p>
                         </div>
-                        <div className="rounded-xl bg-warning/10 p-3">
-                          <Clock className="h-8 w-8 text-warning" />
+                        <div className="bg-warning/10 rounded-xl p-3">
+                          <Clock className="text-warning h-8 w-8" />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="glass-card hover-lift border-2 border-accent/20">
+                  <Card className="glass-card hover-lift border-accent/20 border-2">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Favorite Spot</p>
-                          <p className="text-3xl font-bold text-accent">
+                          <p className="text-muted-foreground text-sm font-medium">Favorite Spot</p>
+                          <p className="text-accent text-3xl font-bold">
                             Spot {myStats.mostUsedSpot}
                           </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="text-muted-foreground mt-1 text-xs">
                             {Math.max(myStats.spot84Count, myStats.spot85Count)} times booked
                           </p>
                         </div>
-                        <div className="rounded-xl bg-accent/10 p-3">
-                          <Activity className="h-8 w-8 text-accent" />
+                        <div className="bg-accent/10 rounded-xl p-3">
+                          <Activity className="text-accent h-8 w-8" />
                         </div>
                       </div>
                     </CardContent>

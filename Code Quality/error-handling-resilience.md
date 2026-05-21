@@ -1,4 +1,4 @@
-Evaluate this entire software package. 
+Evaluate this entire software package.
 
 Perform a comprehensive error handling review:
 
