@@ -6,12 +6,19 @@
 ALTER TABLE public.bookings 
 ADD COLUMN capacity INTEGER NOT NULL DEFAULT 1 CHECK (capacity IN (1, 3));
 
+-- Temporarily drop the future-date constraint so historical rows can be backfilled
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_future_date;
+
 -- Set capacity based on vehicle_type
 UPDATE public.bookings 
 SET capacity = CASE 
   WHEN vehicle_type = 'car' THEN 3
   ELSE 1
 END;
+
+-- Re-add the constraint; NOT VALID skips checking existing historical rows
+ALTER TABLE public.bookings
+  ADD CONSTRAINT bookings_future_date CHECK (date >= CURRENT_DATE) NOT VALID;
 
 -- Create an updated trigger function that validates capacity constraints
 -- Rule: At any given time on a spot, total capacity cannot exceed 4 units

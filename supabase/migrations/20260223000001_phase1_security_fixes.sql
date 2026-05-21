@@ -32,4 +32,4 @@ REVOKE SELECT ON public.booking_availability FROM anon;
 -- FIX M12: Prevent past-date bookings at DB level
 -- ============================================
 ALTER TABLE public.bookings
-  ADD CONSTRAINT bookings_future_date CHECK (date >= CURRENT_DATE);
+  ADD CONSTRAINT bookings_future_date CHECK (date >= CURRENT_DATE) NOT VALID;
