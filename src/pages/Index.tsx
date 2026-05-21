@@ -364,7 +364,7 @@ const Index = () => {
                                 )}
                               </div>
                               {group.bookings.map(booking => (
-                                <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-sm">
+                                <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-base">
                                   <span className="font-medium">
                                     {booking.vehicle_type === 'car' ? `🚗` : `🏍`}{' '}
                                     {booking.user_name}
