@@ -1,5 +1,13 @@
 # Copilot Instructions
 
+## Documentation
+
+Always keep documentation up to date when making code changes:
+
+- Update `README.md` if you change the tech stack, add/remove features, modify commands, or change environment variables
+- Update `supabase/migrations/` descriptions in the README Database Setup section when adding new migrations
+- Update `.github/copilot-instructions.md` if you change architectural patterns, conventions, or tooling
+
 ## Commands
 
 ```bash
