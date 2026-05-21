@@ -1,17 +1,24 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ParkingSpotCard } from '../components/ParkingSpotCard';
+import { DURATION_PRESETS } from '../services/bookingService';
 import type { Booking } from '../types/booking';
 
-const makeBooking = (overrides: Partial<Booking> & { id: string; date: string }): Booking => ({
-  duration: 'full',
-  vehicle_type: 'car',
-  user_name: 'Test User',
-  spot_number: 84,
-  user_id: 'user-1',
-  created_at: new Date().toISOString(),
-  ...overrides,
-});
+const makeBooking = (overrides: Partial<Booking> & { id: string; date: string }): Booking => {
+  const duration = overrides.duration ?? 'full';
+  const preset = DURATION_PRESETS[duration];
+  return {
+    duration,
+    start_time: preset.start_time,
+    end_time: preset.end_time,
+    vehicle_type: 'car',
+    user_name: 'Test User',
+    spot_number: 84,
+    user_id: 'user-1',
+    created_at: new Date().toISOString(),
+    ...overrides,
+  };
+};
 
 describe('ParkingSpotCard', () => {
   describe('Book button behavior', () => {

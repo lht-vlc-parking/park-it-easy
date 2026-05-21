@@ -1,7 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BookingService } from '../services/bookingService';
 
-vi.mock('../integrations/supabase/client');
+// Provide a full mock so the shared module registry (singleFork + isolate:false)
+// doesn't accidentally override the factory mock used in bookingService.test.ts.
+vi.mock('../integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+  isSupabaseConfigured: true,
+}));
 
 /** Helper: do two bookings (given as {start_time, end_time}) overlap? */
 const overlaps = (
