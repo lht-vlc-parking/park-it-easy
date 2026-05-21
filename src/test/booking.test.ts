@@ -1,20 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BookingService } from '../services/bookingService';
 
-// Provide a full mock so the shared module registry (singleFork + isolate:false)
-// doesn't accidentally override the factory mock used in bookingService.test.ts.
+// Must use the SAME factory as bookingService.test.ts.
+// With singleFork + isolate:false, both files share one module cache —
+// whichever file loads first wins, so they must produce identical mocks.
+const createChainableMock = (finalValue: unknown) => {
+  const chainable: Record<string, unknown> = {};
+  const methods = ['select', 'eq', 'gte', 'lte', 'order', 'single'];
+  methods.forEach(method => {
+    chainable[method] = vi.fn(() => {
+      if (method === 'single') return Promise.resolve(finalValue);
+      return { ...chainable, then: (resolve: (v: unknown) => void) => resolve(finalValue) };
+    });
+  });
+  return chainable;
+};
+
 vi.mock('../integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      gte: vi.fn().mockReturnThis(),
-      lte: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    })),
+    from: vi.fn((_table: string) => {
+      const selectChain = createChainableMock({ data: [], error: null });
+      const insertChain = createChainableMock({
+        data: {
+          id: 'test-id',
+          date: '2026-01-15',
+          duration: 'full',
+          start_time: '08:00',
+          end_time: '18:00',
+          vehicle_type: 'car',
+          user_name: 'Test User',
+          spot_number: 84,
+          user_id: 'user-123',
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      });
+      const deleteChain = createChainableMock({ error: null });
+      return {
+        select: vi.fn(() => selectChain),
+        insert: vi.fn(() => ({ select: vi.fn(() => insertChain) })),
+        delete: vi.fn(() => deleteChain),
+      };
+    }),
   },
   isSupabaseConfigured: true,
 }));
