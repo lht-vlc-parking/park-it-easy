@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Car, Bike, Calendar, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BookingService } from '@/services/bookingService';
 import type { Booking } from '@/types/booking';
 
 interface ParkingSpotCardProps {
@@ -13,20 +14,23 @@ interface ParkingSpotCardProps {
 
 export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: ParkingSpotCardProps) => {
   const today = new Date().toISOString().split('T')[0];
-  const todayBookings = currentBookings.filter(b => b.date === today);
+  const todayBookings = currentBookings
+    .filter(b => b.date === today)
+    .sort(
+      (a, b) => a.start_time.localeCompare(b.start_time) || a.end_time.localeCompare(b.end_time)
+    );
 
   const getCapacityForVehicle = (vehicleType: 'car' | 'motorcycle'): number => {
     return vehicleType === 'car' ? 3 : 1;
   };
 
-  const getCapacityInfo = (duration: 'morning' | 'afternoon' | 'full') => {
-    const bookingsForDuration = todayBookings.filter(b => {
-      if (duration === 'full') return true;
-      if (b.duration === 'full') return true;
-      return b.duration === duration;
-    });
+  /** Returns capacity stats for an arbitrary query window [qStart, qEnd). */
+  const getCapacityInfo = (qStart: string, qEnd: string) => {
+    const bookingsForWindow = todayBookings.filter(b =>
+      BookingService.timesOverlap(b.start_time, b.end_time, qStart, qEnd)
+    );
 
-    const usedCapacity = bookingsForDuration.reduce(
+    const usedCapacity = bookingsForWindow.reduce(
       (sum, b) => sum + (b.capacity || getCapacityForVehicle(b.vehicle_type)),
       0
     );
@@ -41,19 +45,22 @@ export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: Parking
   const getAvailabilityStatus = () => {
     if (todayBookings.length === 0) return 'available';
 
-    const fullInfo = getCapacityInfo('full');
-    const morningInfo = getCapacityInfo('morning');
-    const afternoonInfo = getCapacityInfo('afternoon');
+    // Check across the widest possible window (00:00–23:59) and the two preset halves
+    const fullInfo = getCapacityInfo('00:00', '23:59');
+    const morningInfo = getCapacityInfo('08:00', '15:00');
+    const afternoonInfo = getCapacityInfo('15:00', '22:00');
 
-    // Check if all time slots are full
     if (fullInfo.isFull || (morningInfo.isFull && afternoonInfo.isFull)) return 'full';
-
-    // If any capacity is available
     if (fullInfo.available > 0 || morningInfo.available > 0 || afternoonInfo.available > 0)
       return 'partial';
 
     return 'partial';
   };
+
+  /** Strip seconds from a DB time string, e.g. "08:00:00" → "08:00". */
+  const formatTime = (t: string) => t.slice(0, 5);
+  const formatTimeRange = (startTime: string, endTime: string) =>
+    `${formatTime(startTime)}–${formatTime(endTime)}`;
 
   const status = getAvailabilityStatus();
 
@@ -147,13 +154,9 @@ export const ParkingSpotCard = ({ spotNumber, currentBookings, onBook }: Parking
                         'border-warning/50 bg-warning/10 text-warning'
                     )}
                   >
-                    {booking.duration === 'full'
-                      ? 'All Day'
-                      : booking.duration === 'morning'
-                        ? 'AM'
-                        : 'PM'}
+                    {formatTimeRange(booking.start_time, booking.end_time)}
                   </Badge>
-                  <div className="flex min-w-0 items-center gap-2 pr-12">
+                  <div className="flex min-w-0 items-center gap-2 pr-20">
                     {booking.vehicle_type === 'car' ? (
                       <Car className="text-primary h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
                     ) : (

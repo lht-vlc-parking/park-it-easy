@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from '@/components/ui/calendar';
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { DURATION_PRESETS, type Duration } from '@/services/bookingService';
 
 interface BookingDialogWithValidationProps {
   open: boolean;
@@ -24,7 +26,9 @@ interface BookingDialogWithValidationProps {
   spotNumber: number;
   onConfirm: (booking: {
     date: string;
-    duration: 'morning' | 'afternoon' | 'full';
+    duration: Duration;
+    start_time: string;
+    end_time: string;
     vehicle_type: 'car' | 'motorcycle';
     spot_number: number;
   }) => void;
@@ -38,9 +42,12 @@ export const BookingDialogWithValidation = ({
 }: BookingDialogWithValidationProps) => {
   const { user } = useAuth();
   const [date, setDate] = useState<Date>();
-  const [duration, setDuration] = useState<'morning' | 'afternoon' | 'full'>('full');
+  const [duration, setDuration] = useState<Duration>('full');
+  const [startTime, setStartTime] = useState(DURATION_PRESETS.full.start_time);
+  const [endTime, setEndTime] = useState(DURATION_PRESETS.full.end_time);
   const [vehicleType, setVehicleType] = useState<'car' | 'motorcycle'>('car');
   const [isValidating, setIsValidating] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Prefill today's date when dialog opens
   useEffect(() => {
@@ -50,6 +57,12 @@ export const BookingDialogWithValidation = ({
     }
   }, [open]);
 
+  const handleDurationChange = (value: Duration) => {
+    setDuration(value);
+    setStartTime(DURATION_PRESETS[value].start_time);
+    setEndTime(DURATION_PRESETS[value].end_time);
+  };
+
   const handleSubmit = async () => {
     if (!date) {
       toast.error('Please select a date');
@@ -58,6 +71,11 @@ export const BookingDialogWithValidation = ({
 
     if (!user) {
       toast.error('You must be logged in to book');
+      return;
+    }
+
+    if (endTime <= startTime) {
+      toast.error('End time must be after start time');
       return;
     }
 
@@ -87,13 +105,15 @@ export const BookingDialogWithValidation = ({
       onConfirm({
         date: selectedDateStr,
         duration,
+        start_time: startTime,
+        end_time: endTime,
         vehicle_type: vehicleType,
         spot_number: spotNumber,
       });
 
       // Reset form
       setDate(undefined);
-      setDuration('full');
+      handleDurationChange('full');
       setVehicleType('car');
       onOpenChange(false);
     } catch (error) {
@@ -122,7 +142,7 @@ export const BookingDialogWithValidation = ({
         <div className="space-y-6 py-4">
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Select Date</Label>
-            <Popover>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -139,7 +159,10 @@ export const BookingDialogWithValidation = ({
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={d => {
+                    setDate(d);
+                    setCalendarOpen(false);
+                  }}
                   disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   autoFocus
                   weekStartsOn={1}
@@ -206,10 +229,10 @@ export const BookingDialogWithValidation = ({
           </div>
 
           <div className="space-y-3">
-            <Label className="text-sm font-semibold">Duration</Label>
+            <Label className="text-sm font-semibold">Duration Preset</Label>
             <RadioGroup
               value={duration}
-              onValueChange={v => setDuration(v as 'morning' | 'afternoon' | 'full')}
+              onValueChange={v => handleDurationChange(v as Duration)}
               className="space-y-2"
             >
               <div
@@ -230,7 +253,9 @@ export const BookingDialogWithValidation = ({
                   />
                   <div>
                     <div className="font-medium">Full Day</div>
-                    <div className="text-muted-foreground text-xs">8:00 AM - 6:00 PM</div>
+                    <div className="text-muted-foreground text-xs">
+                      {DURATION_PRESETS.full.start_time} – {DURATION_PRESETS.full.end_time}
+                    </div>
                   </div>
                 </Label>
               </div>
@@ -252,7 +277,9 @@ export const BookingDialogWithValidation = ({
                   />
                   <div>
                     <div className="font-medium">Morning</div>
-                    <div className="text-muted-foreground text-xs">8:00 AM - 1:00 PM</div>
+                    <div className="text-muted-foreground text-xs">
+                      {DURATION_PRESETS.morning.start_time} – {DURATION_PRESETS.morning.end_time}
+                    </div>
                   </div>
                 </Label>
               </div>
@@ -277,11 +304,50 @@ export const BookingDialogWithValidation = ({
                   />
                   <div>
                     <div className="font-medium">Afternoon</div>
-                    <div className="text-muted-foreground text-xs">1:00 PM - 6:00 PM</div>
+                    <div className="text-muted-foreground text-xs">
+                      {DURATION_PRESETS.afternoon.start_time} –{' '}
+                      {DURATION_PRESETS.afternoon.end_time}
+                    </div>
                   </div>
                 </Label>
               </div>
             </RadioGroup>
+          </div>
+
+          {/* Custom time override */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">
+              Time Range
+              <span className="text-muted-foreground ml-1 text-xs font-normal">
+                (adjust if needed)
+              </span>
+            </Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="start_time" className="text-muted-foreground text-xs">
+                  Start
+                </Label>
+                <Input
+                  id="start_time"
+                  type="time"
+                  value={startTime}
+                  onChange={e => setStartTime(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="end_time" className="text-muted-foreground text-xs">
+                  End
+                </Label>
+                <Input
+                  id="end_time"
+                  type="time"
+                  value={endTime}
+                  onChange={e => setEndTime(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            </div>
           </div>
         </div>
 

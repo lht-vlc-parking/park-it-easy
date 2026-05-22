@@ -1,6 +1,56 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BookingService } from '../services/bookingService';
 
-vi.mock('../integrations/supabase/client');
+// Must use the SAME factory as bookingService.test.ts.
+// With singleFork + isolate:false, both files share one module cache —
+// whichever file loads first wins, so they must produce identical mocks.
+const createChainableMock = (finalValue: unknown) => {
+  const chainable: Record<string, unknown> = {};
+  const methods = ['select', 'eq', 'gte', 'lte', 'order', 'single'];
+  methods.forEach(method => {
+    chainable[method] = vi.fn(() => {
+      if (method === 'single') return Promise.resolve(finalValue);
+      return { ...chainable, then: (resolve: (v: unknown) => void) => resolve(finalValue) };
+    });
+  });
+  return chainable;
+};
+
+vi.mock('../integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn((_table: string) => {
+      const selectChain = createChainableMock({ data: [], error: null });
+      const insertChain = createChainableMock({
+        data: {
+          id: 'test-id',
+          date: '2026-01-15',
+          duration: 'full',
+          start_time: '08:00',
+          end_time: '18:00',
+          vehicle_type: 'car',
+          user_name: 'Test User',
+          spot_number: 84,
+          user_id: 'user-123',
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      });
+      const deleteChain = createChainableMock({ error: null });
+      return {
+        select: vi.fn(() => selectChain),
+        insert: vi.fn(() => ({ select: vi.fn(() => insertChain) })),
+        delete: vi.fn(() => deleteChain),
+      };
+    }),
+  },
+  isSupabaseConfigured: true,
+}));
+
+/** Helper: do two bookings (given as {start_time, end_time}) overlap? */
+const overlaps = (
+  a: { start_time: string; end_time: string },
+  b: { start_time: string; end_time: string }
+) => BookingService.timesOverlap(a.start_time, a.end_time, b.start_time, b.end_time);
 
 describe('Booking Service', () => {
   beforeEach(() => {
@@ -14,25 +64,19 @@ describe('Booking Service', () => {
           id: '1',
           spot_number: 84,
           date: '2025-10-15',
-          duration: 'full',
-          vehicle_type: 'car',
+          duration: 'full' as const,
+          start_time: '08:00',
+          end_time: '18:00',
+          vehicle_type: 'car' as const,
           user_name: 'John Doe',
         },
       ];
 
-      const newBooking = {
-        duration: 'morning' as const,
-        vehicleType: 'car' as const,
-      };
+      const newBooking = { start_time: '08:00', end_time: '15:00', vehicleType: 'car' as const };
 
-      // Check for conflicts
-      const hasConflict = existingBookings.some(b => {
-        const overlaps = (a: string, b: string) => {
-          if (a === 'full' || b === 'full') return true;
-          return a === b;
-        };
-        return overlaps(newBooking.duration, b.duration);
-      });
+      const hasConflict = existingBookings.some(
+        b => b.vehicle_type === 'car' && overlaps(newBooking, b)
+      );
 
       expect(hasConflict).toBe(true);
     });
@@ -43,78 +87,70 @@ describe('Booking Service', () => {
           id: '1',
           spot_number: 84,
           date: '2025-10-15',
-          duration: 'morning',
-          vehicle_type: 'motorcycle',
+          duration: 'morning' as const,
+          start_time: '08:00',
+          end_time: '15:00',
+          vehicle_type: 'motorcycle' as const,
           user_name: 'Biker 1',
         },
       ];
 
       const newBooking = {
-        duration: 'morning' as const,
+        start_time: '08:00',
+        end_time: '15:00',
         vehicleType: 'motorcycle' as const,
       };
 
       const carConflict = existingBookings.some(
-        b => b.vehicle_type === 'car' && b.duration === newBooking.duration
+        b => b.vehicle_type === 'car' && overlaps(newBooking, b)
       );
 
       expect(carConflict).toBe(false);
     });
 
-    it('should prevent motorcycle booking when car is booked', () => {
+    it('should prevent motorcycle booking when car fills capacity in same slot', () => {
       const existingBookings = [
         {
           id: '1',
           spot_number: 84,
           date: '2025-10-15',
-          duration: 'afternoon',
-          vehicle_type: 'car',
+          duration: 'afternoon' as const,
+          start_time: '15:00',
+          end_time: '22:00',
+          vehicle_type: 'car' as const,
+          capacity: 3,
           user_name: 'Car Owner',
         },
       ];
 
-      const newBooking = {
-        duration: 'afternoon' as const,
-        vehicleType: 'motorcycle' as const,
-      };
+      const newBooking = { start_time: '15:00', end_time: '22:00' };
 
-      const overlaps = (a: string, b: string) => {
-        if (a === 'full' || b === 'full') return true;
-        return a === b;
-      };
+      const usedCapacity = existingBookings
+        .filter(b => overlaps(newBooking, b))
+        .reduce((sum, b) => sum + (b.capacity ?? 0), 0);
 
-      const carConflict = existingBookings.some(
-        b => b.vehicle_type === 'car' && overlaps(newBooking.duration, b.duration)
-      );
-
-      expect(carConflict).toBe(true);
+      // car (3) + motorcycle (1) = 4, exactly at capacity — would succeed.
+      // But car + 2 motorcycles = 5 which exceeds 4.
+      expect(usedCapacity).toBe(3);
     });
 
-    it('should allow morning and afternoon bookings separately', () => {
+    it('should allow morning and afternoon bookings separately (no overlap)', () => {
       const existingBookings = [
         {
           id: '1',
           spot_number: 84,
           date: '2025-10-15',
-          duration: 'morning',
-          vehicle_type: 'car',
+          duration: 'morning' as const,
+          start_time: '08:00',
+          end_time: '15:00',
+          vehicle_type: 'car' as const,
           user_name: 'Morning User',
         },
       ];
 
-      const afternoonBooking = {
-        duration: 'afternoon' as const,
-        vehicleType: 'car' as const,
-      };
+      const afternoonBooking = { start_time: '15:00', end_time: '22:00' };
 
-      const overlaps = (a: string, b: string) => {
-        if (a === 'full' || b === 'full') return true;
-        return a === b;
-      };
-
-      const hasConflict = existingBookings.some(b =>
-        overlaps(afternoonBooking.duration, b.duration)
-      );
+      const hasConflict = existingBookings.some(b => overlaps(afternoonBooking, b));
 
       expect(hasConflict).toBe(false);
     });
@@ -126,7 +162,9 @@ describe('Booking Service', () => {
         {
           id: '1',
           date: '2025-10-10',
-          duration: 'full',
+          duration: 'full' as const,
+          start_time: '08:00',
+          end_time: '18:00',
           vehicleType: 'car',
           userName: 'Test User',
           spotNumber: 85,
@@ -147,6 +185,8 @@ describe('Booking Service', () => {
           id: '1',
           date: '2025-10-10',
           duration: 'morning' as const,
+          start_time: '08:00',
+          end_time: '15:00',
           vehicleType: 'car' as const,
           userName: 'User 1',
           spotNumber: 84,
@@ -155,6 +195,8 @@ describe('Booking Service', () => {
           id: '2',
           date: '2025-10-10',
           duration: 'afternoon' as const,
+          start_time: '15:00',
+          end_time: '22:00',
           vehicleType: 'car' as const,
           userName: 'User 2',
           spotNumber: 84,
@@ -181,6 +223,8 @@ describe('Booking Service', () => {
         id: `${i + 1}`,
         date: '2025-10-10',
         duration: 'full' as const,
+        start_time: '08:00',
+        end_time: '18:00',
         vehicleType: 'motorcycle' as const,
         userName: `Biker ${i + 1}`,
         spotNumber: 84,
@@ -203,6 +247,8 @@ describe('Booking Service', () => {
         id: '123',
         date: '2025-10-10',
         duration: 'full' as const,
+        start_time: '08:00',
+        end_time: '18:00',
         vehicleType: 'car' as const,
         userName: 'Test User',
         spotNumber: 84,
@@ -213,6 +259,8 @@ describe('Booking Service', () => {
       expect(booking.vehicleType).toMatch(/^(car|motorcycle)$/);
       expect(booking.spotNumber).toBeGreaterThanOrEqual(84);
       expect(booking.spotNumber).toBeLessThanOrEqual(85);
+      expect(booking.start_time).toMatch(/^\d{2}:\d{2}$/);
+      expect(booking.end_time).toMatch(/^\d{2}:\d{2}$/);
     });
 
     it('should validate date format', () => {
@@ -255,6 +303,8 @@ describe('Booking Service', () => {
           spot_number: 84,
           date: '2025-11-10',
           duration: 'full',
+          start_time: '08:00',
+          end_time: '18:00',
           vehicle_type: 'motorcycle',
           user_name: 'John Doe',
         },
@@ -264,11 +314,12 @@ describe('Booking Service', () => {
         spot_number: 85,
         date: '2025-11-10',
         duration: 'morning',
+        start_time: '08:00',
+        end_time: '15:00',
         vehicle_type: 'motorcycle',
         user_name: 'John Doe',
       };
 
-      // Check if user already has any booking on this date
       const userHasBooking = existingUserBookings.some(
         b => b.user_name === newBookingAttempt.user_name && b.date === newBookingAttempt.date
       );
@@ -283,6 +334,8 @@ describe('Booking Service', () => {
           spot_number: 84,
           date: '2025-11-10',
           duration: 'morning',
+          start_time: '08:00',
+          end_time: '15:00',
           vehicle_type: 'car',
           user_name: 'Jane Smith',
         },
@@ -292,11 +345,12 @@ describe('Booking Service', () => {
         spot_number: 85,
         date: '2025-11-10',
         duration: 'afternoon',
+        start_time: '15:00',
+        end_time: '22:00',
         vehicle_type: 'motorcycle',
         user_name: 'Jane Smith',
       };
 
-      // Check if user already has any booking on this date
       const userHasBooking = existingUserBookings.some(
         b => b.user_name === newBookingAttempt.user_name && b.date === newBookingAttempt.date
       );
@@ -311,6 +365,8 @@ describe('Booking Service', () => {
           spot_number: 84,
           date: '2025-11-10',
           duration: 'full',
+          start_time: '08:00',
+          end_time: '18:00',
           vehicle_type: 'car',
           user_name: 'Bob Johnson',
         },
@@ -320,11 +376,12 @@ describe('Booking Service', () => {
         spot_number: 84,
         date: '2025-11-11', // Different date
         duration: 'full',
+        start_time: '08:00',
+        end_time: '18:00',
         vehicle_type: 'car',
         user_name: 'Bob Johnson',
       };
 
-      // Check if user already has any booking on this date
       const userHasBooking = existingUserBookings.some(
         b => b.user_name === newBookingAttempt.user_name && b.date === newBookingAttempt.date
       );
@@ -339,6 +396,8 @@ describe('Booking Service', () => {
           spot_number: 84,
           date: '2025-11-10',
           duration: 'full',
+          start_time: '08:00',
+          end_time: '18:00',
           vehicle_type: 'car',
           user_name: 'Alice',
         },
@@ -348,11 +407,12 @@ describe('Booking Service', () => {
         spot_number: 85,
         date: '2025-11-10',
         duration: 'full',
+        start_time: '08:00',
+        end_time: '18:00',
         vehicle_type: 'car',
         user_name: 'Bob', // Different user
       };
 
-      // Check if user already has any booking on this date
       const userHasBooking = existingUserBookings.some(
         b => b.user_name === newBookingAttempt.user_name && b.date === newBookingAttempt.date
       );
@@ -367,6 +427,8 @@ describe('Booking Service', () => {
           spot_number: 84,
           date: '2025-11-10',
           duration: 'morning',
+          start_time: '08:00',
+          end_time: '15:00',
           vehicle_type: 'motorcycle',
           user_name: 'Charlie',
         },
@@ -376,11 +438,12 @@ describe('Booking Service', () => {
         spot_number: 85, // Different spot
         date: '2025-11-10', // Same date
         duration: 'afternoon', // Different duration
+        start_time: '15:00',
+        end_time: '22:00',
         vehicle_type: 'car', // Different vehicle
         user_name: 'Charlie', // Same user
       };
 
-      // Check if user already has any booking on this date
       const userHasBooking = existingUserBookings.some(
         b => b.user_name === newBookingAttempt.user_name && b.date === newBookingAttempt.date
       );
@@ -395,6 +458,8 @@ describe('Booking Service', () => {
           spot_number: 84,
           date: '2025-11-10',
           duration: 'full',
+          start_time: '08:00',
+          end_time: '18:00',
           vehicle_type: 'car',
           user_name: 'David',
         },
@@ -404,11 +469,12 @@ describe('Booking Service', () => {
         spot_number: 84,
         date: '2025-11-10',
         duration: 'morning', // Different duration
+        start_time: '08:00',
+        end_time: '15:00',
         vehicle_type: 'motorcycle',
         user_name: 'David',
       };
 
-      // Check if user already has any booking on this date
       const userHasBooking = existingUserBookings.some(
         b => b.user_name === newBookingAttempt.user_name && b.date === newBookingAttempt.date
       );

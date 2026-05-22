@@ -9,9 +9,18 @@ export const vehicleTypeSchema = z.enum(['car', 'motorcycle']);
 export type Duration = z.infer<typeof durationSchema>;
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 
+/** Default time windows for each preset duration (HH:mm). */
+export const DURATION_PRESETS: Record<Duration, { start_time: string; end_time: string }> = {
+  morning: { start_time: '08:00', end_time: '15:00' },
+  afternoon: { start_time: '15:00', end_time: '22:00' },
+  full: { start_time: '08:00', end_time: '18:00' },
+};
+
 export interface CreateBookingData {
   date: string;
   duration: Duration;
+  start_time: string; // HH:mm
+  end_time: string; // HH:mm
   vehicle_type: VehicleType;
   spot_number: number;
   related_vehicle_type?: VehicleType; // For future car+moto combo bookings
@@ -28,6 +37,8 @@ const dbBookingSchema = z.object({
   id: z.string(),
   date: z.string(),
   duration: durationSchema,
+  start_time: z.string(),
+  end_time: z.string(),
   vehicle_type: vehicleTypeSchema,
   user_name: z.string(),
   spot_number: z.number(),
@@ -55,11 +66,27 @@ export class BookingService {
   }
 
   /**
-   * Check if two time durations overlap
+   * Check if two time intervals overlap by more than 1 minute.
+   * Accepts HH:mm or HH:mm:ss strings (seconds are ignored).
+   * Back-to-back slots like 08:00–15:00 and 15:00–22:00 are NOT considered overlapping.
+   */
+  static timesOverlap(s1: string, e1: string, s2: string, e2: string): boolean {
+    const toMin = (t: string) => {
+      const [h, m] = t.slice(0, 5).split(':').map(Number);
+      return h * 60 + m;
+    };
+    const overlapMinutes = Math.min(toMin(e1), toMin(e2)) - Math.max(toMin(s1), toMin(s2));
+    return overlapMinutes > 1;
+  }
+
+  /**
+   * @deprecated Use timesOverlap() with actual start/end times instead.
+   * Kept temporarily for tests that haven't been migrated yet.
    */
   static overlaps(a: Duration, b: Duration): boolean {
-    if (a === 'full' || b === 'full') return true;
-    return a === b;
+    const pa = DURATION_PRESETS[a];
+    const pb = DURATION_PRESETS[b];
+    return this.timesOverlap(pa.start_time, pa.end_time, pb.start_time, pb.end_time);
   }
 
   /**
@@ -68,7 +95,8 @@ export class BookingService {
   private static async validateBooking(
     spotNumber: number,
     date: string,
-    duration: Duration,
+    startTime: string,
+    endTime: string,
     vehicleType: VehicleType
   ): Promise<{ valid: boolean; error?: string }> {
     // Validate spot number
@@ -84,6 +112,14 @@ export class BookingService {
       return {
         valid: false,
         error: 'Invalid date format. Use YYYY-MM-DD',
+      };
+    }
+
+    // Validate time range
+    if (endTime <= startTime) {
+      return {
+        valid: false,
+        error: 'End time must be after start time',
       };
     }
 
@@ -130,7 +166,9 @@ export class BookingService {
     // Check for car conflicts (cars cannot overlap with other cars)
     if (vehicleType === 'car') {
       const carConflict = validatedBookings.some(
-        b => b.vehicle_type === 'car' && this.overlaps(duration, b.duration)
+        b =>
+          b.vehicle_type === 'car' &&
+          this.timesOverlap(startTime, endTime, b.start_time, b.end_time)
       );
 
       if (carConflict) {
@@ -145,7 +183,9 @@ export class BookingService {
 
     // Check total capacity for the time slot
     const requiredCapacity = this.getCapacityForVehicle(vehicleType);
-    const overlappingBookings = validatedBookings.filter(b => this.overlaps(duration, b.duration));
+    const overlappingBookings = validatedBookings.filter(b =>
+      this.timesOverlap(startTime, endTime, b.start_time, b.end_time)
+    );
     const usedCapacity = overlappingBookings.reduce(
       (sum, b) => sum + (b.capacity || this.getCapacityForVehicle(b.vehicle_type)),
       0
@@ -175,7 +215,8 @@ export class BookingService {
       const validation = await this.validateBooking(
         data.spot_number,
         data.date,
-        data.duration,
+        data.start_time,
+        data.end_time,
         data.vehicle_type
       );
 
@@ -194,6 +235,8 @@ export class BookingService {
           user_name: userName,
           date: data.date,
           duration: data.duration,
+          start_time: data.start_time,
+          end_time: data.end_time,
           vehicle_type: data.vehicle_type,
           spot_number: data.spot_number,
           capacity: this.getCapacityForVehicle(data.vehicle_type),

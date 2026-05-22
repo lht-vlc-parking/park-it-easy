@@ -29,6 +29,17 @@ function toMonthKey(dateStr: string): string {
   return `${y}-${m}`;
 }
 
+/** Reference "full day" duration in hours (08:00–18:00). */
+const FULL_DAY_HOURS = 10;
+
+/** Compute how many hours a booking spans, expressed as a fraction of a full day. */
+function bookingSlotFraction(b: Booking): number {
+  const [sh, sm] = b.start_time.split(':').map(Number);
+  const [eh, em] = b.end_time.split(':').map(Number);
+  const hours = eh + em / 60 - (sh + sm / 60);
+  return hours / FULL_DAY_HOURS;
+}
+
 /** Pretty month label: "Jan '26" */
 function formatMonthLabel(key: string): string {
   const [y, m] = key.split('-');
@@ -237,10 +248,8 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
     const firstDate = new Date(sorted[0].date);
     const today = new Date();
     const totalWorkdays = countWorkdays(firstDate, today);
-    // Each booking occupies a "slot day". Full = 1 day, morning/afternoon = 0.5 day
-    const totalSlotDays = bookings.reduce((sum, b) => {
-      return sum + (b.duration === 'full' ? 1 : 0.5);
-    }, 0);
+    // Each booking occupies a fractional "slot day" based on its actual hours
+    const totalSlotDays = bookings.reduce((sum, b) => sum + bookingSlotFraction(b), 0);
     const utilization =
       totalWorkdays > 0 ? Math.min((totalSlotDays / (totalWorkdays * SPOTS)) * 100, 100) : 0;
 
@@ -274,7 +283,7 @@ export default function OverviewTab({ bookings, uniqueUsers, fairnessScore }: Ov
       const mk = toMonthKey(b.date);
       if (mk in monthCounts) {
         monthCounts[mk]++;
-        monthSlotDays[mk] += b.duration === 'full' ? 1 : 0.5;
+        monthSlotDays[mk] += bookingSlotFraction(b);
       }
     }
 
