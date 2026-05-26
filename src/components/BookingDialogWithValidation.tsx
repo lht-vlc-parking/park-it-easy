@@ -126,8 +126,8 @@ export const BookingDialogWithValidation = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card border-2 sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="bg-background flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden border-2 p-0 shadow-2xl sm:max-w-[500px]">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <div className="gradient-primary flex h-8 w-8 items-center justify-center rounded-lg">
               <CalendarIcon className="h-4 w-4 text-white" />
@@ -139,7 +139,7 @@ export const BookingDialogWithValidation = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-4">
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Select Date</Label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -351,7 +351,7 @@ export const BookingDialogWithValidation = ({
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 border-t px-6 py-4">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
